@@ -12,7 +12,7 @@ import static org.lwjgl.glfw.GLFW.*;
 public class Tetris {
 	private static final int TPS = 60;
 	private static final double SPF = 1.0 / TPS;
-	private static final double ARR = 1.0 * SPF; //20 ticks/move
+	private static final double ARR = 0.0 * SPF; //20 ticks/move
 	private static final double DAS = 8.0 * SPF; //200 ticks before DAS kicks in
 	private static final double SDF = 1.0 * SPF; //20 ticks/move down
 
@@ -24,16 +24,16 @@ public class Tetris {
 	private List<Runnable> nextPieceCallback;
 
 	private PieceName[] bagRandomizer = {PieceName.I, PieceName.O, PieceName.L, PieceName.J, PieceName.S, PieceName.Z, PieceName.T};
-	Random rng;
+	private Random rng;
 
-	ConcurrentLinkedQueue<PieceName> pieceQueue;
-	TileState[][] board;
-	Piece currentPiece;
-	PieceName heldPiece;
+	private ConcurrentLinkedQueue<PieceName> pieceQueue;
+	private TileState[][] board;
+	private Piece currentPiece;
+	private PieceName heldPiece;
 
-	double accumulatorSD;
-	double accumulatorARR;
-	double accumulatorDAS;
+	private double accumulatorSD;
+	private double accumulatorARR;
+	private double accumulatorDAS;
 
 	public Tetris() {
 		pieceQueue = new ConcurrentLinkedQueue<>();
@@ -53,6 +53,8 @@ public class Tetris {
 		}
 		enqueueBag();
 		currentPiece = nextPiece();
+		heldPiece = null;
+
 		KeyListener.registerCallback((long window, int key, int scancode, int action, int mods) -> {
 			if (action == GLFW_PRESS) {
 				switch(key) {
@@ -71,8 +73,14 @@ public class Tetris {
 					case GLFW_KEY_SLASH -> {
 						currentPiece.rotate(Rotation.CW, board);
 					}
+					case GLFW_KEY_COMMA -> {
+						currentPiece.rotate(Rotation.HALF, board);
+					}
 					case GLFW_KEY_SPACE -> {
 						currentPiece.hardDrop(board);
+					}
+					case GLFW_KEY_F -> {
+						hold();
 					}
 					case GLFW_KEY_G -> {
 						printBoard();
@@ -101,6 +109,41 @@ public class Tetris {
 		}
 	}
 
+	private void hold() {
+		if (heldPiece == null) {
+			heldPiece = currentPiece.getName();
+			currentPiece = nextPiece();
+			return;
+		}
+
+		PieceName temp = heldPiece;
+		heldPiece = currentPiece.getName();
+		switch(temp) {
+			case I -> {
+				currentPiece = new IPiece();
+			}
+			case O -> {
+				currentPiece = new OPiece();
+			}
+			case L -> {
+				currentPiece = new LPiece();
+			}
+			case J -> {
+				currentPiece = new JPiece();
+			}
+			case S -> {
+				currentPiece = new SPiece();
+			}
+			case Z -> {
+				currentPiece = new ZPiece();
+			}
+			case T -> {
+				currentPiece = new TPiece();
+			}
+		}
+
+	}
+
 	private void listenKeys(double dt) {
 		if (KeyListener.isKeyPressed(GLFW_KEY_S)) {
 			accumulatorSD += dt;
@@ -115,20 +158,34 @@ public class Tetris {
 		if (KeyListener.isKeyPressed(GLFW_KEY_A)) {
 			accumulatorDAS += dt;
 			if (accumulatorDAS >= DAS) {
-				accumulatorARR += dt;
-				if (accumulatorARR >= ARR) {
-					currentPiece.move(Direction.LEFT, board);
-					accumulatorARR = 0.0;
+				if (ARR == 0.0f) {
+					while (currentPiece.move(Direction.LEFT, board)) {
+						//repeat until wall is hit
+					}
+				}
+				else {
+					accumulatorARR += dt;
+					if (accumulatorARR >= ARR) {
+						currentPiece.move(Direction.LEFT, board);
+						accumulatorARR = 0.0;
+					}
 				}
 			}
 		}
 		if (KeyListener.isKeyPressed(GLFW_KEY_D)) {
 			accumulatorDAS += dt;
 			if (accumulatorDAS >= DAS) {
-				accumulatorARR += dt;
-				if (accumulatorARR >= ARR) {
-					currentPiece.move(Direction.RIGHT, board);
-					accumulatorARR = 0.0;
+				if (ARR == 0.0f) {
+					while (currentPiece.move(Direction.RIGHT, board)) {
+						//repeat until wall is hit
+					}
+				}
+				else {
+					accumulatorARR += dt;
+					if (accumulatorARR >= ARR) {
+						currentPiece.move(Direction.RIGHT, board);
+						accumulatorARR = 0.0;
+					}
 				}
 			}
 		}
@@ -279,6 +336,10 @@ public class Tetris {
 
 	public Piece getCurrentPiece() {
 		return currentPiece;
+	}
+
+	public PieceName getHeldPiece() {
+		return heldPiece;
 	}
 
 	public PieceName[] getPieceQueue() {

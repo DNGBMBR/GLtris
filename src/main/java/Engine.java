@@ -28,6 +28,9 @@ public class Engine {
 	private static final float TILE_SIZE = 1.0f;
 	private static final float PROJECTION_HEIGHT = 30.0f * TILE_SIZE;
 
+	private static final float X_OFFSET_HELD = 4.0f * TILE_SIZE;
+	private static final float Y_OFFSET_HELD = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
+
 	private static final float X_OFFSET_BOARD = 8.0f * TILE_SIZE;
 	private static final float Y_OFFSET_BOARD = 1.0f * TILE_SIZE;
 
@@ -94,24 +97,13 @@ public class Engine {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tileEboID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexDataTile, GL_STATIC_DRAW);
 
-
-
 		updateProjection(windowID);
 
 		game.init();
 
 		currentQueue = game.getPieceQueue();
-		for (PieceName pieceName : currentQueue) {
-			System.out.print(pieceName + " ");
-		}
-		System.out.println();
-
 		game.registerOnNextPieceListener(() -> {
 			currentQueue = game.getPieceQueue();
-			for (PieceName pieceName : currentQueue) {
-				System.out.print(pieceName + " ");
-			}
-			System.out.println();
 		});
 	}
 
@@ -233,45 +225,93 @@ public class Engine {
 			}
 		}
 
+		//draw the held piece
+		PieceName heldPiece = game.getHeldPiece();
+
+		if (heldPiece != null) {
+			switch(heldPiece) {
+				case I -> {
+					currentColour = COLOUR_I;
+					tileMap = IPiece.getTileMapSpawn();
+				}
+				case O -> {
+					currentColour = COLOUR_O;
+					tileMap = OPiece.getTileMapSpawn();
+				}
+				case L -> {
+					currentColour = COLOUR_L;
+					tileMap = LPiece.getTileMapSpawn();
+				}
+				case J -> {
+					currentColour = COLOUR_J;
+					tileMap = JPiece.getTileMapSpawn();
+				}
+				case S -> {
+					currentColour = COLOUR_S;
+					tileMap = SPiece.getTileMapSpawn();
+				}
+				case Z -> {
+					currentColour = COLOUR_Z;
+					tileMap = ZPiece.getTileMapSpawn();
+				}
+				case T -> {
+					currentColour = COLOUR_T;
+					tileMap = TPiece.getTileMapSpawn();
+				}
+			}
+
+			shaderBlocks.uploadUniform4fv("uColour", currentColour);
+			for (int i = 0; i < tileMap.length; i++) {
+				for (int j = 0; j < tileMap[i].length; j++) {
+					if (tileMap[i][j]) {
+						transformMatrix[3] = j + X_OFFSET_HELD;
+						transformMatrix[7] = i + Y_OFFSET_HELD;
+						shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+						glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+					}
+				}
+			}
+		}
+
+
 		//draw the piece queue
-		boolean[][] tileMapPreview = {};
 
 		for (int index = 0; index < Tetris.NUM_PREVIEWS; index++) {
 			PieceName pieceName = currentQueue[index];
 			switch(pieceName) {
 				case I -> {
 					currentColour = COLOUR_I;
-					tileMapPreview = IPiece.getTileMapSpawn();
+					tileMap = IPiece.getTileMapSpawn();
 				}
 				case O -> {
 					currentColour = COLOUR_O;
-					tileMapPreview = OPiece.getTileMapSpawn();
+					tileMap = OPiece.getTileMapSpawn();
 				}
 				case L -> {
 					currentColour = COLOUR_L;
-					tileMapPreview = LPiece.getTileMapSpawn();
+					tileMap = LPiece.getTileMapSpawn();
 				}
 				case J -> {
 					currentColour = COLOUR_J;
-					tileMapPreview = JPiece.getTileMapSpawn();
+					tileMap = JPiece.getTileMapSpawn();
 				}
 				case S -> {
 					currentColour = COLOUR_S;
-					tileMapPreview = SPiece.getTileMapSpawn();
+					tileMap = SPiece.getTileMapSpawn();
 				}
 				case Z -> {
 					currentColour = COLOUR_Z;
-					tileMapPreview = ZPiece.getTileMapSpawn();
+					tileMap = ZPiece.getTileMapSpawn();
 				}
 				case T -> {
 					currentColour = COLOUR_T;
-					tileMapPreview = TPiece.getTileMapSpawn();
+					tileMap = TPiece.getTileMapSpawn();
 				}
 			}
 			shaderBlocks.uploadUniform4fv("uColour", currentColour);
-			for (int i = 0; i < tileMapPreview.length; i++) {
-				for (int j = 0; j < tileMapPreview[i].length; j++) {
-					if (tileMapPreview[i][j]) {
+			for (int i = 0; i < tileMap.length; i++) {
+				for (int j = 0; j < tileMap[i].length; j++) {
+					if (tileMap[i][j]) {
 						transformMatrix[3] = j + X_OFFSET_QUEUE;
 						transformMatrix[7] = i + Y_OFFSET_QUEUE - index * 5.0f;
 						shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
