@@ -17,8 +17,6 @@ public class Window {
 
 	Engine engine;
 
-
-
 	private static Window instance;
 
 	private Window(int width, int height, String title) {

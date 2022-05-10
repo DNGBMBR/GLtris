@@ -1,0 +1,51 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="ArrayCanBeReplacedWithEnumValues" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ArrayCreationWithoutNewKeyword" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ConditionalCanBeOptional" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ConstantExpression" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ControlFlowStatementWithoutBraces" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DiamondCanBeReplacedWithExplicitTypeArguments" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="FieldMayBeFinal" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="FillPermitsList" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="JoinDeclarationAndAssignmentJava" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LambdaBodyCanBeCodeBlock" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LambdaCanBeReplacedWithAnonymous" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LambdaParameterTypeCanBeSpecified" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MethodRefCanBeReplacedWithLambda" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MoveFieldAssignmentToInitializer" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MultiCatchCanBeSplit" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MultipleVariablesInDeclaration" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ObjectsEqualsCanBeSimplified" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="OptionalToIf" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PointlessArithmeticExpression" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="m_ignoreExpressionsContainingConstants" value="true" />
+    </inspection_tool>
+    <inspection_tool class="RecordCanBeClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="RedundantLabeledSwitchRuleCodeBlock" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ReturnSeparatedFromComputation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SimplifiableIfStatement" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SingleElementAnnotation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SingleStatementInBlock" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="StreamToLoop" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="SwitchLabeledRuleCanBeCodeBlock" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="TryStatementWithMultipleResources" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UnclearBinaryExpression" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UnnecessarilyQualifiedInnerClassAccess" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreReferencesNeedingImport" value="false" />
+    </inspection_tool>
+    <inspection_tool class="UnnecessaryBlockStatement" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoreSwitchBranches" value="false" />
+    </inspection_tool>
+    <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreJavadoc" value="false" />
+      <option name="ignoreInModuleStatements" value="true" />
+    </inspection_tool>
+    <inspection_tool class="UnnecessaryParentheses" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoreClarifyingParentheses" value="false" />
+      <option name="ignoreParenthesesOnConditionals" value="false" />
+      <option name="ignoreParenthesesOnLambdaParameter" value="false" />
+    </inspection_tool>
+  </profile>
+</component>

@@ -1,12 +1,13 @@
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
+import pieces.*;
+import pieces.util.*;
 import render.Shader;
-import util.KeyListener;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
@@ -15,14 +16,31 @@ import static org.lwjgl.opengl.GL45.*;
 public class Engine {
 	private static final int NUM_BLOCKS = 100;
 
+	private static final float[] COLOUR_GARBAGE = {0.5f, 0.5f, 0.5f, 1.0f};
+	private static final float[] COLOUR_I = {0.0f, 1.0f, 1.0f, 1.0f};
+	private static final float[] COLOUR_O = {1.0f, 1.0f, 0.0f, 1.0f};
+	private static final float[] COLOUR_L = {1.0f, 0.5f, 0.0f, 1.0f};
+	private static final float[] COLOUR_J = {0.0f, 0.0f, 1.0f, 1.0f};
+	private static final float[] COLOUR_S = {0.0f, 1.0f, 0.0f, 1.0f};
+	private static final float[] COLOUR_Z = {1.0f, 0.0f, 0.0f, 1.0f};
+	private static final float[] COLOUR_T = {0.5f, 0.0f, 0.5f, 1.0f};
+
+	private static final float TILE_SIZE = 1.0f;
+	private static final float PROJECTION_HEIGHT = 30.0f * TILE_SIZE;
+
+	private static final float X_OFFSET_BOARD = 8.0f * TILE_SIZE;
+	private static final float Y_OFFSET_BOARD = 1.0f * TILE_SIZE;
+
+	private static final float X_OFFSET_QUEUE = 20.0f * TILE_SIZE;
+	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 3.0f * TILE_SIZE;
+
 	private Shader shaderBlocks;
-	private Shader shaderTriangle;
 	private Camera camera;
-	private List<Block> blocks;
 	private Matrix4f projection;
 
-	private int vaoID, vboID, eboID;
-	private int triangleVaoID, triangleVboID, triangleEboID;
+	private int tileVaoID, tileVboID, tileEboID;
+
+	private PieceName[] currentQueue;
 
 	private Tetris game;
 
@@ -41,74 +59,64 @@ public class Engine {
 	public Engine() {
 		try {
 			shaderBlocks = new Shader("src/main/shaders/vertex.glsl", "src/main/shaders/fragment.glsl");
-			shaderTriangle = new Shader("src/main/shaders/triangle_vertex.glsl", "src/main/shaders/triangle_fragment.glsl");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		camera = new Camera();
 		game = new Tetris();
-		game.init();
 	}
 
 	public void init(long windowID) {
 		shaderBlocks.compile();
-		shaderTriangle.compile();
 
-		blocks = Collections.synchronizedList(new ArrayList<>());
-		for (int i = 0; i < NUM_BLOCKS; i++) {
-			blocks.add(new Block(new Vector3f((float) Math.random() * 16.0f, (float) Math.random() * 20.0f, 0.0f)));
-		}
-
-		float[] vertexData = {
-			0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-			-0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
-			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-			0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f
+		//vertex format: vec3f pos, vec4f col, vec2f uv texture coords
+		float[] vertexDataTile = {
+			0.5f, 0.5f, 0.0f, 1.0f, 1.0f,
+			-0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+			-0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+			0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
 		};
 
-		int[] indexData = {
+		int[] indexDataTile = {
 			0, 1, 2,
 			2, 3, 0
 		};
 
-		float[] triangleData = {
-			0.0f, 0.86f, 0.0f, 1.0f, 0.5f, 0.0f, 1.0f,
-			-1.0f, -0.86f, 0.0f, 1.0f, 0.5f, 0.0f, 1.0f,
-			1.0f, -0.86f, 0.0f, 1.0f, 0.5f, 0.0f, 1.0f,
-		};
+		tileVaoID = glCreateVertexArrays();
+		glBindVertexArray(tileVaoID);
 
-		int[] triangleIndexData = {
-			0, 1, 2
-		};
+		tileVboID = glGenBuffers();
+		glBindBuffer(GL_ARRAY_BUFFER, tileVboID);
+		glBufferData(GL_ARRAY_BUFFER, vertexDataTile, GL_STATIC_DRAW);
 
-		vaoID = glCreateVertexArrays();
-		glBindVertexArray(vaoID);
+		tileEboID = glGenBuffers();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tileEboID);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexDataTile, GL_STATIC_DRAW);
 
-		vboID = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, vboID);
-		glBufferData(GL_ARRAY_BUFFER, vertexData, GL_STATIC_DRAW);
 
-		eboID = glGenBuffers();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexData, GL_STATIC_DRAW);
-
-		triangleVaoID = glCreateVertexArrays();
-		glBindVertexArray(triangleVaoID);
-
-		triangleVboID = glGenBuffers();
-		glBindBuffer(GL_ARRAY_BUFFER, triangleVboID);
-		glBufferData(GL_ARRAY_BUFFER, triangleData, GL_STATIC_DRAW);
-
-		triangleEboID = glGenBuffers();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEboID);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndexData, GL_STATIC_DRAW);
 
 		updateProjection(windowID);
+
+		game.init();
+
+		currentQueue = game.getPieceQueue();
+		for (PieceName pieceName : currentQueue) {
+			System.out.print(pieceName + " ");
+		}
+		System.out.println();
+
+		game.registerOnNextPieceListener(() -> {
+			currentQueue = game.getPieceQueue();
+			for (PieceName pieceName : currentQueue) {
+				System.out.print(pieceName + " ");
+			}
+			System.out.println();
+		});
 	}
 
 	public void updateProjection(long windowID) {
-		float projectionHeight = 30.0f;
+		float projectionHeight = PROJECTION_HEIGHT;
 		int[] windowWidth = new int[1];
 		int[] windowHeight = new int[1];
 		glfwGetWindowSize(windowID, windowWidth, windowHeight);
@@ -124,54 +132,238 @@ public class Engine {
 		float[] buffer = new float[16];
 
 		shaderBlocks.bind();
-		glBindVertexArray(vaoID);
-		glBindBuffer(GL_ARRAY_BUFFER, vboID);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
+		glBindVertexArray(tileVaoID);
+		glBindBuffer(GL_ARRAY_BUFFER, tileVboID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tileEboID);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 9 * Float.BYTES, 0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 4, GL_FLOAT, false, 9 * Float.BYTES, 3 * Float.BYTES);
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 2, GL_FLOAT, false, 9 * Float.BYTES, 7 * Float.BYTES);
-		glEnableVertexAttribArray(2);
 
 		shaderBlocks.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
 		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-		for (int i = 0; i < blocks.size(); i++) {
-			shaderBlocks.uploadUniformMatrix4fv("uTransform", false, blocks.get(i).getTransform().get(buffer));
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		float[] transformMatrix = {
+			1.0f, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		};
+
+		float[] currentColour = {0.0f, 0.0f, 0.0f, 1.0f};
+
+		TileState[][] board = game.getBoard();
+
+		//draw the board
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++) {
+				if (board[i][j] != TileState.EMPTY) {
+					transformMatrix[3] = j + X_OFFSET_BOARD;
+					transformMatrix[7] = i + Y_OFFSET_BOARD;
+					switch(board[i][j]) {
+						case GARBAGE -> {
+							currentColour = COLOUR_GARBAGE;
+						}
+						case I -> {
+							currentColour = COLOUR_I;
+						}
+						case O -> {
+							currentColour = COLOUR_O;
+						}
+						case L -> {
+							currentColour = COLOUR_L;
+						}
+						case J -> {
+							currentColour = COLOUR_J;
+						}
+						case S -> {
+							currentColour = COLOUR_S;
+						}
+						case Z -> {
+							currentColour = COLOUR_Z;
+						}
+						case T -> {
+							currentColour = COLOUR_T;
+						}
+					}
+					//probably have to transpose but w/e
+					shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+					shaderBlocks.uploadUniform4fv("uColour", currentColour);
+					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+				}
+			}
 		}
 
-		Matrix4f defaultTransform = new Matrix4f().identity();
-		shaderTriangle.bind();
-		glBindVertexArray(triangleVaoID);
-		glBindBuffer(GL_ARRAY_BUFFER, triangleVboID);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleEboID);
+		//draw the current piece the player is placing
+		Piece currentPiece = game.getCurrentPiece();
+		boolean[][] tileMap = currentPiece.getTileMap();
+		for (int i = 0; i < tileMap.length; i++) {
+			for (int j = 0; j < tileMap[i].length; j++) {
+				if (tileMap[i][j]) {
+					transformMatrix[3] = currentPiece.getTopLeftX() + j + X_OFFSET_BOARD;
+					transformMatrix[7] = currentPiece.getTopLeftY() + i + Y_OFFSET_BOARD;
+					switch(currentPiece.getName()) {
+						case I -> {
+							currentColour = COLOUR_I;
+						}
+						case O -> {
+							currentColour = COLOUR_O;
+						}
+						case L -> {
+							currentColour = COLOUR_L;
+						}
+						case J -> {
+							currentColour = COLOUR_J;
+						}
+						case S -> {
+							currentColour = COLOUR_S;
+						}
+						case Z -> {
+							currentColour = COLOUR_Z;
+						}
+						case T -> {
+							currentColour = COLOUR_T;
+						}
+					}
+					shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+					shaderBlocks.uploadUniform4fv("uColour", currentColour);
+					glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+				}
+			}
+		}
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, false, 7 * Float.BYTES, 0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 4, GL_FLOAT, false, 7 * Float.BYTES, 3 * Float.BYTES);
-		glEnableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
+		//draw the piece queue
+		boolean[][] tileMapPreview = {};
 
-		shaderTriangle.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
-		shaderTriangle.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-		shaderTriangle.uploadUniformMatrix4fv("uTransform", false, defaultTransform.get(buffer));
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		for (int index = 0; index < Tetris.NUM_PREVIEWS; index++) {
+			PieceName pieceName = currentQueue[index];
+			switch(pieceName) {
+				case I -> {
+					currentColour = COLOUR_I;
+					tileMapPreview = IPiece.getTileMapSpawn();
+				}
+				case O -> {
+					currentColour = COLOUR_O;
+					tileMapPreview = OPiece.getTileMapSpawn();
+				}
+				case L -> {
+					currentColour = COLOUR_L;
+					tileMapPreview = LPiece.getTileMapSpawn();
+				}
+				case J -> {
+					currentColour = COLOUR_J;
+					tileMapPreview = JPiece.getTileMapSpawn();
+				}
+				case S -> {
+					currentColour = COLOUR_S;
+					tileMapPreview = SPiece.getTileMapSpawn();
+				}
+				case Z -> {
+					currentColour = COLOUR_Z;
+					tileMapPreview = ZPiece.getTileMapSpawn();
+				}
+				case T -> {
+					currentColour = COLOUR_T;
+					tileMapPreview = TPiece.getTileMapSpawn();
+				}
+			}
+			shaderBlocks.uploadUniform4fv("uColour", currentColour);
+			for (int i = 0; i < tileMapPreview.length; i++) {
+				for (int j = 0; j < tileMapPreview[i].length; j++) {
+					if (tileMapPreview[i][j]) {
+						transformMatrix[3] = j + X_OFFSET_QUEUE;
+						transformMatrix[7] = i + Y_OFFSET_QUEUE - index * 5.0f;
+						shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+						glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+					}
+				}
+			}
+		}
 	}
 
 	public void update(double dt) {
-		for (int i = 0; i < blocks.size(); i++) {
-			blocks.get(i).translate(0.0f, -1.0f * (float) dt, 0.0f);
-			if (blocks.get(i).getTransform().m31() < 0.0f) {
-				blocks.remove(i);
-				i--;
+		game.update(dt);
+	}
+
+	private int[] genIndexData(TileState[][] board) {
+		int boardHeight = board.length;
+		int boardWidth = board[0].length;
+		List<Integer> indices = new ArrayList<>();
+		for (int i = 0; i < boardHeight; i++) {
+			for (int j = 0; j < boardWidth; j++) {
+				switch (board[i][j]) {
+					case GARBAGE -> {
+						indices.add(0);
+						indices.add(1);
+						indices.add(2);
+						indices.add(2);
+						indices.add(3);
+						indices.add(0);
+					}
+					case I -> {
+						indices.add(4);
+						indices.add(5);
+						indices.add(6);
+						indices.add(6);
+						indices.add(7);
+						indices.add(4);
+					}
+					case O -> {
+						indices.add(8);
+						indices.add(9);
+						indices.add(10);
+						indices.add(10);
+						indices.add(11);
+						indices.add(8);
+					}
+					case L -> {
+						indices.add(12);
+						indices.add(13);
+						indices.add(14);
+						indices.add(14);
+						indices.add(15);
+						indices.add(12);
+					}
+					case J -> {
+						indices.add(16);
+						indices.add(17);
+						indices.add(18);
+						indices.add(18);
+						indices.add(19);
+						indices.add(16);
+					}
+					case S -> {
+						indices.add(20);
+						indices.add(21);
+						indices.add(22);
+						indices.add(22);
+						indices.add(23);
+						indices.add(20);
+					}
+					case Z -> {
+						indices.add(24);
+						indices.add(25);
+						indices.add(26);
+						indices.add(26);
+						indices.add(27);
+						indices.add(24);
+					}
+					case T -> {
+						indices.add(28);
+						indices.add(29);
+						indices.add(30);
+						indices.add(30);
+						indices.add(31);
+						indices.add(28);
+					}
+				}
 			}
 		}
-		while (blocks.size() < NUM_BLOCKS) {
-			blocks.add(new Block(new Vector3f((float) Math.random() * 20.0f, 20.0f, 0.0f)));
+		int[] ret = new int[indices.size()];
+		for (int i = 0; i < ret.length; i++) {
+			ret[i] = indices.get(i);
 		}
-
-		game.update(dt);
+		return ret;
 	}
 }

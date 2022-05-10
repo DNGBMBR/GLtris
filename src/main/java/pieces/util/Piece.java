@@ -258,4 +258,8 @@ public abstract class Piece {
 	public boolean isPlaced() {
 		return placed;
 	}
+
+	public PieceName getName() {
+		return name;
+	}
 }

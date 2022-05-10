@@ -16,11 +16,6 @@ public class Camera {
 		view.translate(vec);
 	}
 
-	//positive theta -> left, negative angle -> right
-	public void rotate(float theta, float phi) {
-		view.rotateXYZ(theta, phi, 0); //probably wrong lmao
-	}
-
 	public Matrix4f getView() {
 		return view;
 	}

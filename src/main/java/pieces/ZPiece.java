@@ -90,4 +90,8 @@ public class ZPiece extends Piece {
 	public int[][][] getKickTableHALF() {
 		return KICK_HALF;
 	}
+
+	public static boolean[][] getTileMapSpawn() {
+		return TILE_MAP_E;
+	}
 }

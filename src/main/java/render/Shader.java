@@ -100,6 +100,14 @@ public class Shader {
 		glUniform2f(location, x, y);
 	}
 
+	public void uploadUniform2fv(String uniformName, float[] arr) {
+		Integer location = uniformLocations.get(uniformName);
+		if (location == null) {
+			throw new IllegalArgumentException("No uniform with the given name exists.");
+		}
+		glUniform2fv(location, arr);
+	}
+
 	public void uploadUniform3f(String uniformName, float x, float y, float z) {
 		Integer location = uniformLocations.get(uniformName);
 		if (location == null) {
@@ -108,12 +116,28 @@ public class Shader {
 		glUniform3f(location, x, y, z);
 	}
 
+	public void uploadUniform3fv(String uniformName, float[] arr) {
+		Integer location = uniformLocations.get(uniformName);
+		if (location == null) {
+			throw new IllegalArgumentException("No uniform with the given name exists.");
+		}
+		glUniform3fv(location, arr);
+	}
+
 	public void uploadUniform4f(String uniformName, float x, float y, float z, float w) {
 		Integer location = uniformLocations.get(uniformName);
 		if (location == null) {
 			throw new IllegalArgumentException("No uniform with the given name exists.");
 		}
 		glUniform4f(location, x, y, z, w);
+	}
+
+	public void uploadUniform4fv(String uniformName, float[] arr) {
+		Integer location = uniformLocations.get(uniformName);
+		if (location == null) {
+			throw new IllegalArgumentException("No uniform with the given name exists.");
+		}
+		glUniform4fv(location, arr);
 	}
 
 	public void uploadUniform1i(String uniformName, int val) {
