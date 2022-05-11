@@ -1,9 +1,11 @@
+import game.GLTris;
 import org.joml.Matrix4f;
 import pieces.*;
 import pieces.util.*;
 import render.Shader;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class Engine {
 
 	private PieceName[] currentQueue;
 
-	private Tetris game;
+	private GLTris game;
 
 	/*
 	* STEPS FOR DRAWING TO SCREEN:
@@ -61,13 +63,13 @@ public class Engine {
 
 	public Engine() {
 		try {
-			shaderBlocks = new Shader("src/main/shaders/vertex.glsl", "src/main/shaders/fragment.glsl");
-		} catch (IOException e) {
+			shaderBlocks = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+		} catch (IOException | URISyntaxException e) {
 			e.printStackTrace();
 		}
 
 		camera = new Camera();
-		game = new Tetris();
+		game = new GLTris();
 	}
 
 	public void init(long windowID) {
@@ -276,7 +278,7 @@ public class Engine {
 
 		//draw the piece queue
 
-		for (int index = 0; index < Tetris.NUM_PREVIEWS; index++) {
+		for (int index = 0; index < GLTris.NUM_PREVIEWS; index++) {
 			PieceName pieceName = currentQueue[index];
 			switch(pieceName) {
 				case I -> {

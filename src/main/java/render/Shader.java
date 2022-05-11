@@ -2,9 +2,11 @@ package render;
 
 import org.lwjgl.BufferUtils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,9 +21,17 @@ public class Shader {
 
 	private Map<String, Integer> uniformLocations;
 
-	public Shader(String vertexShaderFile, String fragmentShaderFile) throws IOException {
-		this.vertexShaderSrc = Files.readString(new File(vertexShaderFile).toPath());
-		this.fragmentShaderSrc = Files.readString(new File(fragmentShaderFile).toPath());
+	public Shader(String vertexShaderFile, String fragmentShaderFile) throws IOException, URISyntaxException {
+		ClassLoader loader = getClass().getClassLoader();
+
+		InputStream vertexInputStream = loader.getResourceAsStream(vertexShaderFile);
+		this.vertexShaderSrc = new String(vertexInputStream.readAllBytes(), StandardCharsets.UTF_8);
+
+		InputStream fragmentInputStream = loader.getResourceAsStream(fragmentShaderFile);
+		this.fragmentShaderSrc = new String(fragmentInputStream.readAllBytes(), StandardCharsets.UTF_8);
+
+		vertexInputStream.close();
+		fragmentInputStream.close();
 	}
 
 	public void compile() {

@@ -1,7 +1,10 @@
+package game;
+
 import org.joml.Random;
 import pieces.*;
 import pieces.util.*;
 import util.KeyListener;
+import util.LocalSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,12 +12,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Tetris {
-	private static final int TPS = 60;
-	private static final double SPF = 1.0 / TPS;
-	private static final double ARR = 0.0 * SPF; //20 ticks/move
-	private static final double DAS = 8.0 * SPF; //200 ticks before DAS kicks in
-	private static final double SDF = 1.0 * SPF; //20 ticks/move down
+public class GLTris {
+	public static final int TPS = 60;
+	public static final double SPF = 1.0 / TPS;
 
 	public static final int BOARD_HEIGHT = 40;
 	public static final int BOARD_WIDTH = 10;
@@ -31,11 +31,15 @@ public class Tetris {
 	private Piece currentPiece;
 	private PieceName heldPiece;
 
+	private double arr;
+	private double das;
+	private double sdf;
+
 	private double accumulatorSD;
 	private double accumulatorARR;
 	private double accumulatorDAS;
 
-	public Tetris() {
+	public GLTris() {
 		pieceQueue = new ConcurrentLinkedQueue<>();
 		board = new TileState[BOARD_HEIGHT][BOARD_WIDTH];
 		accumulatorSD = 0.0;
@@ -43,6 +47,12 @@ public class Tetris {
 		accumulatorDAS = 0.0;
 		rng = new Random();
 		nextPieceCallback = new ArrayList<>();
+
+		sdf = LocalSettings.getSDF();
+		arr = LocalSettings.getARR();
+		das = LocalSettings.getDAS();
+
+		LocalSettings.saveSettings();
 	}
 
 	public void init() {
@@ -52,7 +62,7 @@ public class Tetris {
 			}
 		}
 		enqueueBag();
-		currentPiece = nextPiece();
+		setNextPiece();
 		heldPiece = null;
 
 		KeyListener.registerCallback((long window, int key, int scancode, int action, int mods) -> {
@@ -83,7 +93,7 @@ public class Tetris {
 						hold();
 					}
 					case GLFW_KEY_G -> {
-						printBoard();
+						LocalSettings.saveSettings();
 					}
 				}
 			}
@@ -97,10 +107,7 @@ public class Tetris {
 		//add garbage(?)
 
 		if (currentPiece.isPlaced()) {
-			currentPiece = nextPiece();
-			for (Runnable runnable : nextPieceCallback) {
-				runnable.run();
-			}
+			setNextPiece();
 			//check for collision of the new piece, and end the game if it collides
 		}
 
@@ -112,7 +119,7 @@ public class Tetris {
 	private void hold() {
 		if (heldPiece == null) {
 			heldPiece = currentPiece.getName();
-			currentPiece = nextPiece();
+			setNextPiece();
 			return;
 		}
 
@@ -147,7 +154,7 @@ public class Tetris {
 	private void listenKeys(double dt) {
 		if (KeyListener.isKeyPressed(GLFW_KEY_S)) {
 			accumulatorSD += dt;
-			if (accumulatorSD >= SDF) {
+			if (accumulatorSD >= sdf * SPF) {
 				currentPiece.move(Direction.DOWN, board);
 				accumulatorSD = 0.0;
 			}
@@ -157,15 +164,15 @@ public class Tetris {
 		}
 		if (KeyListener.isKeyPressed(GLFW_KEY_A)) {
 			accumulatorDAS += dt;
-			if (accumulatorDAS >= DAS) {
-				if (ARR == 0.0f) {
+			if (accumulatorDAS >= das * SPF) {
+				if (arr == 0.0f) {
 					while (currentPiece.move(Direction.LEFT, board)) {
 						//repeat until wall is hit
 					}
 				}
 				else {
 					accumulatorARR += dt;
-					if (accumulatorARR >= ARR) {
+					if (accumulatorARR >= arr * SPF) {
 						currentPiece.move(Direction.LEFT, board);
 						accumulatorARR = 0.0;
 					}
@@ -174,15 +181,15 @@ public class Tetris {
 		}
 		if (KeyListener.isKeyPressed(GLFW_KEY_D)) {
 			accumulatorDAS += dt;
-			if (accumulatorDAS >= DAS) {
-				if (ARR == 0.0f) {
+			if (accumulatorDAS >= das * SPF) {
+				if (arr == 0.0f) {
 					while (currentPiece.move(Direction.RIGHT, board)) {
 						//repeat until wall is hit
 					}
 				}
 				else {
 					accumulatorARR += dt;
-					if (accumulatorARR >= ARR) {
+					if (accumulatorARR >= arr * SPF) {
 						currentPiece.move(Direction.RIGHT, board);
 						accumulatorARR = 0.0;
 					}
@@ -232,7 +239,14 @@ public class Tetris {
 		}
 	}
 
-	private Piece nextPiece() {
+	private void setNextPiece() {
+		currentPiece = nextPieceHelper();
+		for (Runnable runnable : nextPieceCallback) {
+			runnable.run();
+		}
+	}
+
+	private Piece nextPieceHelper() {
 		PieceName nextPieceName = pieceQueue.poll();
 		if (nextPieceName == null) {
 			throw new IllegalStateException("Cannot have empty piece queue.");
@@ -286,52 +300,6 @@ public class Tetris {
 
 	public TileState[][] getBoard() {
 		return this.board;
-	}
-
-	void printBoard() {
-		boolean[][] tileMap = currentPiece.getTileMap();
-		int x = currentPiece.getTopLeftX();
-		int y = currentPiece.getTopLeftY();
-		for (int i = 27; i >= 0; i--) {
-			for (int j = 0; j < board[i].length; j++) {
-				char printable = '.';
-				if ((i - y >= 0 && i - y < tileMap.length && j - x >= 0 && j - x < tileMap[0].length) && tileMap[i - y][j - x]) {
-					printable = 'X';
-				}
-				else {
-					switch(board[i][j]) {
-						case GARBAGE -> {
-							printable = 'R';
-						}
-						case I -> {
-							printable = 'I';
-						}
-						case O -> {
-							printable = 'O';
-						}
-						case L -> {
-							printable = 'L';
-						}
-						case J -> {
-							printable = 'J';
-						}
-						case S -> {
-							printable = 'S';
-						}
-						case Z -> {
-							printable = 'Z';
-						}
-						case T -> {
-							printable = 'T';
-						}
-					}
-				}
-
-				System.out.print(printable);
-			}
-			System.out.println();
-		}
-		System.out.println("__________");
 	}
 
 	public Piece getCurrentPiece() {
