@@ -1,8 +1,8 @@
-package pieces;
+package game.pieces;
 
-import pieces.util.*;
+import game.pieces.util.*;
 
-public class SPiece extends Piece {
+public class ZPiece extends Piece {
 	private static final int[][][] KICK_CW = {
 		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
 		{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
@@ -26,34 +26,34 @@ public class SPiece extends Piece {
 
 	private static final boolean[][] TILE_MAP_E = {
 		{false, false, false},
-		{true, true, false},
-		{false, true, true}
+		{false, true, true},
+		{true, true, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R = {
-		{false, false, true},
+		{false, true, false},
 		{false, true, true},
-		{false, true, false}
+		{false, false, true}
 	};
 
 	private static final boolean[][] TILE_MAP_R2 = {
-		{true, true, false},
 		{false, true, true},
+		{true, true, false},
 		{false, false, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R3 = {
-		{false, true, false},
+		{true, false, false},
 		{true, true, false},
-		{true, false, false}
+		{false, true, false}
 	};
 
-	public SPiece() {
+	public ZPiece() {
 		topLeftX = 3; //magic numbers yay
 		topLeftY = 22;
 		tileMap = TILE_MAP_E;
 		orientation = Orientation.E;
-		name = PieceName.S;
+		name = PieceName.Z;
 	}
 
 	@Override

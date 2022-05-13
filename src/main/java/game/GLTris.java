@@ -1,15 +1,16 @@
 package game;
 
+import game.callbacks.*;
 import org.joml.Random;
-import pieces.*;
-import pieces.util.*;
-import util.KeyListener;
-import util.LocalSettings;
+import game.pieces.*;
+import game.pieces.util.*;
+import util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static game.SpinType.*;
+import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GLTris {
@@ -21,10 +22,15 @@ public class GLTris {
 
 	public static final int NUM_PREVIEWS = 6;
 
-	private List<Runnable> nextPieceCallback;
+	private Set<Runnable> nextPieceCallback;
+	private Set<MoveCallback> pieceMoveCallback;
+	private Set<RotateCallback> pieceRotateCallback;
+	private Set<LineClearCallback> lineClearCallback;
 
 	private PieceName[] bagRandomizer = {PieceName.I, PieceName.O, PieceName.L, PieceName.J, PieceName.S, PieceName.Z, PieceName.T};
 	private Random rng;
+
+	private KeyCallback keyCallback;
 
 	private ConcurrentLinkedQueue<PieceName> pieceQueue;
 	private TileState[][] board;
@@ -39,6 +45,9 @@ public class GLTris {
 	private double accumulatorARR;
 	private double accumulatorDAS;
 
+	private int linesCleared;
+	private SpinType currentSpinType;
+
 	public GLTris() {
 		pieceQueue = new ConcurrentLinkedQueue<>();
 		board = new TileState[BOARD_HEIGHT][BOARD_WIDTH];
@@ -46,7 +55,9 @@ public class GLTris {
 		accumulatorARR = 0.0;
 		accumulatorDAS = 0.0;
 		rng = new Random();
-		nextPieceCallback = new ArrayList<>();
+		nextPieceCallback = Collections.synchronizedSet(new HashSet<>());
+		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
+		lineClearCallback = Collections.synchronizedSet(new HashSet<>());
 
 		sdf = LocalSettings.getSDF();
 		arr = LocalSettings.getARR();
@@ -65,26 +76,26 @@ public class GLTris {
 		setNextPiece();
 		heldPiece = null;
 
-		KeyListener.registerCallback((long window, int key, int scancode, int action, int mods) -> {
+		keyCallback = (long window, int key, int scancode, int action, int mods) -> {
 			if (action == GLFW_PRESS) {
 				switch(key) {
 					case GLFW_KEY_S -> {
-						currentPiece.move(Direction.DOWN, board);
+						movePiece(Direction.DOWN);
 					}
 					case GLFW_KEY_A -> {
-						currentPiece.move(Direction.LEFT, board);
+						movePiece(Direction.LEFT);
 					}
 					case GLFW_KEY_D -> {
-						currentPiece.move(Direction.RIGHT, board);
+						movePiece(Direction.RIGHT);
 					}
 					case GLFW_KEY_PERIOD -> {
-						currentPiece.rotate(Rotation.CCW, board);
+						rotatePiece(Rotation.CCW);
 					}
 					case GLFW_KEY_SLASH -> {
-						currentPiece.rotate(Rotation.CW, board);
+						rotatePiece(Rotation.CW);
 					}
 					case GLFW_KEY_COMMA -> {
-						currentPiece.rotate(Rotation.HALF, board);
+						rotatePiece(Rotation.HALF);
 					}
 					case GLFW_KEY_SPACE -> {
 						currentPiece.hardDrop(board);
@@ -97,14 +108,19 @@ public class GLTris {
 					}
 				}
 			}
+		};
+		KeyListener.registerCallback(keyCallback);
+
+		registerOnLineClearListener((int rowsCleared, SpinType spinType) -> {
+			System.out.println("rows cleared: " + rowsCleared + " spin type: " + spinType);
 		});
 	}
 
 	public void update(double dt) {
 		listenKeys(dt);
 
-		checkLineClears();
-		//add garbage(?)
+		clearLines();
+		//add garbage(???)
 
 		if (currentPiece.isPlaced()) {
 			setNextPiece();
@@ -149,6 +165,7 @@ public class GLTris {
 			}
 		}
 
+		currentSpinType = SpinType.NONE;
 	}
 
 	private void listenKeys(double dt) {
@@ -202,7 +219,131 @@ public class GLTris {
 		}
 	}
 
-	private void checkLineClears() {
+	private void movePiece(Direction dir) {
+		boolean hasMoved = currentPiece.move(dir, board);
+		if (hasMoved) {
+			for (MoveCallback callback : pieceMoveCallback) {
+				callback.run(dir);
+			}
+		}
+	}
+
+	private void rotatePiece(Rotation rot) {
+		int kickIndex = currentPiece.rotate(rot, board);
+		//detect spin, if any
+		//can have support for different spin detection methods
+		testSpinDefault(kickIndex);
+
+		for (RotateCallback runnable : pieceRotateCallback) {
+			runnable.run(currentPiece.getName(), rot, kickIndex);
+		}
+	}
+
+	private void testSpinDefault(int kickIndex) {
+		//spins for all pieces except T follow stupid spin rules
+		switch(currentPiece.getName()) {
+			case I -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = I_SPIN;
+				}
+			}
+			case O -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = O_SPIN;
+				}
+			}
+			case L -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = L_SPIN;
+				}
+			}
+			case J -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = J_SPIN;
+				}
+			}
+			case S -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = S_SPIN;
+				}
+			}
+			case Z -> {
+				if (currentPiece.testCollision(board, 1, 0) &&
+					currentPiece.testCollision(board, -1, 0) &&
+					currentPiece.testCollision(board, 0, -1)) {
+					currentSpinType = Z_SPIN;
+				}
+			}
+			case T -> {
+				int forwardCornerCount = 0;
+				int cornerCount = 0;
+				int tCenterX = currentPiece.getTopLeftX() + 1;
+				int tCenterY = currentPiece.getTopLeftY() + 1;
+				Orientation orientation = currentPiece.getOrientation();
+				if (tCenterX - 1 < 0 || tCenterY - 1 < 0 || board[tCenterY - 1][tCenterX - 1] != TileState.EMPTY) {
+					if (orientation == R2 || orientation == R3) {
+						forwardCornerCount++;
+					}
+					cornerCount++;
+				}
+				if (tCenterX - 1 < 0 || tCenterY + 1 >= board.length || board[tCenterY + 1][tCenterX - 1] != TileState.EMPTY) {
+					if (orientation == E || orientation == R3) {
+						forwardCornerCount++;
+					}
+					cornerCount++;
+				}
+				if (tCenterX + 1 >= board[0].length || tCenterY - 1 < 0 || board[tCenterY - 1][tCenterX + 1] != TileState.EMPTY) {
+					if (orientation == R || orientation == R2) {
+						forwardCornerCount++;
+					}
+					cornerCount++;
+				}
+				if (tCenterX + 1 >= board[0].length || tCenterY + 1 >= board.length || board[tCenterY + 1][tCenterX + 1] != TileState.EMPTY) {
+					if (orientation == E || orientation == R) {
+						forwardCornerCount++;
+					}
+					cornerCount++;
+				}
+
+				if (cornerCount >= 3) {
+					//4 is the magic index in SRS that uses the t-spin triple kick
+					if (kickIndex >= 4) {
+						currentSpinType = T_SPIN;
+					}
+					else if (forwardCornerCount < 2) {
+						currentSpinType = T_SPIN_MINI;
+					}
+					else {
+						currentSpinType = T_SPIN;
+					}
+				}
+			}
+			default -> {
+				currentSpinType = NONE;
+			}
+		}
+	}
+
+	private void clearLines() {
+		int linesCleared = checkLineClears();
+		if (linesCleared > 0) {
+			for (LineClearCallback callback : lineClearCallback) {
+				callback.run(linesCleared, currentSpinType);
+			}
+		}
+	}
+
+	private int checkLineClears() {
 		ArrayList<Integer> indices = new ArrayList<>();
 		for (int i = 0; i < board.length; i++) {
 			boolean isClearable = true;
@@ -224,7 +365,7 @@ public class GLTris {
 		}
 
 		if (indices.isEmpty()) {
-			return;
+			return 0;
 		}
 
 		int index = 0;
@@ -237,10 +378,13 @@ public class GLTris {
 			}
 			System.arraycopy(board[i], 0, board[i - index], 0, board[i].length);
 		}
+
+		return indices.size();
 	}
 
 	private void setNextPiece() {
 		currentPiece = nextPieceHelper();
+		currentSpinType = SpinType.NONE;
 		for (Runnable runnable : nextPieceCallback) {
 			runnable.run();
 		}
@@ -275,7 +419,7 @@ public class GLTris {
 				nextPiece = new TPiece();
 			}
 			default -> {
-				throw new IllegalStateException("Bag has piece that is not one of the standard pieces.");
+				throw new IllegalStateException("Bag has piece that is not one of the standard game pieces.");
 			}
 		}
 		return nextPiece;
@@ -318,5 +462,17 @@ public class GLTris {
 
 	public void registerOnNextPieceListener(Runnable listener) {
 		nextPieceCallback.add(listener);
+	}
+
+	public void registerOnRotateListener(RotateCallback callback) {
+		pieceRotateCallback.add(callback);
+	}
+
+	public void registerOnLineClearListener(LineClearCallback callback) {
+		lineClearCallback.add(callback);
+	}
+
+	public void destroy() {
+		KeyListener.unregisterCallback(keyCallback);
 	}
 }

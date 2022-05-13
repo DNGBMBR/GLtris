@@ -1,20 +1,20 @@
-package pieces;
+package game.pieces;
 
-import pieces.util.*;
+import game.pieces.util.*;
 
-public class ZPiece extends Piece {
+public class IPiece extends Piece {
 	private static final int[][][] KICK_CW = {
-		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
-		{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
-		{{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
-		{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}
+		{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}},
+		{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}},
+		{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}},
+		{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}}
 	};
 
 	private static final int[][][] KICK_CCW = {
-		{{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
-		{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
-		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
-		{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}
+		{{0, 0}, {-1, 0}, {2, 0}, {-1, 2}, {2, -1}},
+		{{0, 0}, {2, 0}, {-1, 0}, {2, 1}, {-1, -2}},
+		{{0, 0}, {1, 0}, {-2, 0}, {1, -2}, {-2, 1}},
+		{{0, 0}, {-2, 0}, {1, 0}, {-2, -1}, {1, 2}}
 	};
 
 	private static final int[][][] KICK_HALF = {
@@ -25,35 +25,39 @@ public class ZPiece extends Piece {
 	};
 
 	private static final boolean[][] TILE_MAP_E = {
-		{false, false, false},
-		{false, true, true},
-		{true, true, false}
+		{false, false, false, false},
+		{false, false, false, false},
+		{true, true, true, true},
+		{false, false, false, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R = {
-		{false, true, false},
-		{false, true, true},
-		{false, false, true}
+		{false, false, true, false},
+		{false, false, true, false},
+		{false, false, true, false},
+		{false, false, true, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R2 = {
-		{false, true, true},
-		{true, true, false},
-		{false, false, false}
+		{false, false, false, false},
+		{true, true, true, true},
+		{false, false, false, false},
+		{false, false, false, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R3 = {
-		{true, false, false},
-		{true, true, false},
-		{false, true, false}
+		{false, true, false, false},
+		{false, true, false, false},
+		{false, true, false, false},
+		{false, true, false, false}
 	};
 
-	public ZPiece() {
+	public IPiece() {
 		topLeftX = 3; //magic numbers yay
 		topLeftY = 22;
 		tileMap = TILE_MAP_E;
 		orientation = Orientation.E;
-		name = PieceName.Z;
+		name = PieceName.I;
 	}
 
 	@Override

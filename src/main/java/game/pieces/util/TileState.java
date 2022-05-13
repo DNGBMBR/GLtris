@@ -1,4 +1,4 @@
-package pieces.util;
+package game.pieces.util;
 
 public enum TileState {
 	I, O, L, J, S, Z, T, EMPTY, GARBAGE

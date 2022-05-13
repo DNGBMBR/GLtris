@@ -1,17 +1,24 @@
-package pieces;
+package game.pieces;
 
-import pieces.util.*;
+import game.pieces.util.*;
 
-public class LPiece extends Piece {
+public class TPiece extends Piece {
+	//order is:
+	//[0][][] - E
+	//[1][][] - R
+	//[2][][] - R2
+	//[3][][] - R3
+	//kicks are prioritized from 0 to n - 1
 	private static final int[][][] KICK_CW = {
-		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
+		//{1, -3} is a meme kick
+		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}, {1, -3}},
 		{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
 		{{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
 		{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}
 	};
 
 	private static final int[][][] KICK_CCW = {
-		{{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}},
+		{{0, 0}, {1, 0}, {1, 1}, {0, -2}, {1, -2}, {-1, -3}},
 		{{0, 0}, {1, 0}, {1, -1}, {0, 2}, {1, 2}},
 		{{0, 0}, {-1, 0}, {-1, 1}, {0, -2}, {-1, -2}},
 		{{0, 0}, {-1, 0}, {-1, -1}, {0, 2}, {-1, 2}}
@@ -27,33 +34,33 @@ public class LPiece extends Piece {
 	private static final boolean[][] TILE_MAP_E = {
 		{false, false, false},
 		{true, true, true},
-		{false, false, true}
+		{false, true, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R = {
-		{false, true, true},
 		{false, true, false},
+		{false, true, true},
 		{false, true, false}
 	};
 
 	private static final boolean[][] TILE_MAP_R2 = {
-		{true, false, false},
+		{false, true, false},
 		{true, true, true},
-		{false, false, false}
+		{false, false, false},
 	};
 
 	private static final boolean[][] TILE_MAP_R3 = {
 		{false, true, false},
-		{false, true, false},
-		{true, true, false}
+		{true, true, false},
+		{false, true, false}
 	};
 
-	public LPiece() {
+	public TPiece() {
 		topLeftX = 3; //magic numbers yay
 		topLeftY = 22;
 		tileMap = TILE_MAP_E;
 		orientation = Orientation.E;
-		name = PieceName.L;
+		name = PieceName.T;
 	}
 
 	@Override

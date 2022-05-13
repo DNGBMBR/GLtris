@@ -1,4 +1,4 @@
-package pieces.util;
+package game.pieces.util;
 
 public enum Orientation {
 	//notation: cyclic group of order 4, E identity, R CW rotate

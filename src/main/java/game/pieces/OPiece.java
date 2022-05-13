@@ -1,6 +1,6 @@
-package pieces;
+package game.pieces;
 
-import pieces.util.*;
+import game.pieces.util.*;
 
 public class OPiece extends Piece {
 	private static final int[][][] KICK_CW = {

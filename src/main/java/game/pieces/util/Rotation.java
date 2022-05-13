@@ -1,4 +1,4 @@
-package pieces.util;
+package game.pieces.util;
 
 public enum Rotation {
 	CW, CCW, HALF;

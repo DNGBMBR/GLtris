@@ -3,9 +3,7 @@ import util.KeyListener;
 import util.MouseListener;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
@@ -58,12 +56,6 @@ public class Window {
 
 		glViewport(0, 0, width, height);
 
-		glfwSetWindowSizeCallback(windowID, (window, width, height) -> {
-			this.width = width;
-			this.height = height;
-			engine.updateProjection(windowID);
-		});
-
 		MouseListener.getInstance();
 
 		glfwSetKeyCallback(windowID, KeyListener::keyCallback);
@@ -71,31 +63,12 @@ public class Window {
 		glfwSetMouseButtonCallback(windowID, MouseListener::mouseButtonCallback);
 		glfwSetScrollCallback(windowID, MouseListener::mouseScrollCallback);
 
-		engine = new Engine();
-		engine.init(windowID);
+		engine = new Engine(windowID);
+		engine.init();
 	}
 
-	public void loop() {
-		double startTime = glfwGetTime();
-		double endTime = glfwGetTime();
-		double dt = endTime - startTime;
-		while (!glfwWindowShouldClose(windowID)) {
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			engine.draw();
-
-			glfwSwapBuffers(windowID);
-			glfwPollEvents();
-
-			if (dt >= 0.0) {
-				engine.update(dt);
-			}
-
-			endTime = glfwGetTime();
-			dt = endTime - startTime;
-			startTime = glfwGetTime();
-		}
+	public void run() {
+		engine.run();
 	}
 
 	public void destroy() {

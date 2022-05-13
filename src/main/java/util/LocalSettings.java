@@ -1,11 +1,8 @@
 package util;
 
-import game.GLTris;
-import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Wini;
 
 import java.io.*;
-import java.util.Properties;
 
 public class LocalSettings {
 	//units are in seconds

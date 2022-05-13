@@ -1,6 +1,6 @@
-package pieces.util;
+package game.pieces.util;
 
-import static pieces.util.Orientation.*;
+import static game.pieces.util.Orientation.*;
 
 public abstract class Piece {
 	//TODO: IMPLEMENT 180 KICKS FOR ALL PIECES
@@ -13,7 +13,8 @@ public abstract class Piece {
 	protected Orientation orientation;
 	protected PieceName name;
 
-	public boolean rotate(Rotation rot, TileState[][] board) {
+	//returns index of kick used
+	public int rotate(Rotation rot, TileState[][] board) {
 		boolean[][] potentialRotation;
 		Orientation potentialOrientation;
 		int potentialX = topLeftX;
@@ -39,7 +40,7 @@ public abstract class Piece {
 						potentialOrientation = E;
 					}
 					default -> {
-						return false;
+						return -1;
 					}
 				}
 			}
@@ -62,7 +63,7 @@ public abstract class Piece {
 						potentialOrientation = R2;
 					}
 					default -> {
-						return false;
+						return -1;
 					}
 				}
 			}
@@ -85,12 +86,12 @@ public abstract class Piece {
 						potentialOrientation = R;
 					}
 					default -> {
-						return false;
+						return -1;
 					}
 				}
 			}
 			default -> {
-				return false;
+				return -1;
 			}
 		}
 
@@ -107,14 +108,17 @@ public abstract class Piece {
 				kickTable = getKickTableHALF();
 			}
 			default -> {
-				return false;
+				return -1;
 			}
 		}
+
+		int kickUsed = -1;
 
 		for (int i = 0; i < kickTable[orientation.getVal()].length; i++) {
 			potentialX = topLeftX + kickTable[orientation.getVal()][i][0];
 			potentialY = topLeftY + kickTable[orientation.getVal()][i][1];
 			if (!isCollision(board, potentialRotation, potentialX, potentialY)) {
+				kickUsed = i;
 				validKick = true;
 				break;
 			}
@@ -127,7 +131,7 @@ public abstract class Piece {
 			topLeftY = potentialY;
 		}
 
-		return validKick;
+		return kickUsed;
 	}
 
 	public boolean move(Direction dir, TileState[][] board) {
@@ -243,6 +247,10 @@ public abstract class Piece {
 		return false;
 	}
 
+	public boolean testCollision(TileState[][] board, int directionX, int directionY) {
+		return isCollision(board, this.tileMap, this.topLeftX + directionX, this.topLeftY + directionY);
+	}
+
 	public int getTopLeftX() {
 		return topLeftX;
 	}
@@ -261,5 +269,9 @@ public abstract class Piece {
 
 	public PieceName getName() {
 		return name;
+	}
+
+	public Orientation getOrientation() {
+		return orientation;
 	}
 }
