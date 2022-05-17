@@ -46,6 +46,10 @@ public class Engine {
 				}
 			}
 		});
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		currentScene = new GameScene(windowID);
 		currentScene.init();
 	}

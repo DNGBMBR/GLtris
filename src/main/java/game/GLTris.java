@@ -337,6 +337,7 @@ public class GLTris {
 
 	private void clearLines() {
 		int linesCleared = checkLineClears();
+		this.linesCleared += linesCleared;
 		if (linesCleared > 0) {
 			for (LineClearCallback callback : lineClearCallback) {
 				callback.run(linesCleared, currentSpinType);
@@ -459,6 +460,10 @@ public class GLTris {
 		PieceName[] ret = {};
 		ret = pieceQueue.toArray(ret);
 		return ret;
+	}
+
+	public int getLinesCleared() {
+		return linesCleared;
 	}
 
 	public void registerOnNextPieceListener(Runnable listener) {

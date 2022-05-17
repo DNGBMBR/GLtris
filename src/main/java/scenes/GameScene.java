@@ -1,21 +1,15 @@
 package scenes;
 
 import game.GLTris;
-import org.joml.Matrix4f;
 import game.pieces.*;
 import game.pieces.util.*;
-import org.lwjgl.BufferUtils;
+import org.joml.Matrix4f;
 import render.*;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
-import static org.lwjgl.opengl.GL15.*;
 
 public class GameScene extends Scene{
 
@@ -31,16 +25,15 @@ public class GameScene extends Scene{
 	private static final float X_OFFSET_QUEUE = 20.0f * TILE_SIZE;
 	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 3.0f * TILE_SIZE;
 
-	private static final int TEXTURE_SIZE = 128; //image to be sampled is 128x128px
-	private static final int TEXTURE_TILE_SIZE = 32; //each tile in atlas is 32px
-
 	private Shader shaderBlocks;
+	private Shader shaderText;
 	private Camera camera;
 	private Matrix4f projection;
 
-	private Batch batch;
-
-	private int textureID;
+	private BatchTiles batch;
+	private TextureAtlas pieceTexture;
+	private TextureAtlas fontTexture;
+	private TextRenderer textRenderer;
 
 	private PieceName[] currentQueue;
 
@@ -50,51 +43,23 @@ public class GameScene extends Scene{
 		super(windowID);
 		try {
 			shaderBlocks = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+			shaderText = new Shader("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
 		} catch (IOException | URISyntaxException e) {
 			e.printStackTrace();
 		}
 
-		InputStream is = getClass().getClassLoader().getResourceAsStream("images/default_skin.png");
-		if (is == null) {
-			System.out.println("not poggers");
-		}
-		BufferedImage image;
-		try {
-			image = ImageIO.read(is);
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not find skin.");
-		}
-
-		int[] pixels = new int[image.getWidth() * image.getHeight()];
-		image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0 , image.getWidth());
-		ByteBuffer buffer = BufferUtils.createByteBuffer(image.getWidth() * image.getHeight() * 4);
-		for (int i = image.getHeight() - 1; i >= 0; i--) {
-			for (int j = 0; j < image.getWidth(); j++) {
-				int pixel = pixels[i * image.getWidth() + j];
-				buffer.put((byte) ((pixel >> 16) & 0xFF));
-				buffer.put((byte) ((pixel >> 8) & 0xFF));
-				buffer.put((byte) ((pixel >> 0) & 0xFF));
-				buffer.put((byte) ((pixel >> 24) & 0xFF));
-			}
-		}
-		buffer.flip();
-
 		camera = new Camera();
 		game = new GLTris();
-		BatchConfig config = new BatchConfig(GL_TRIANGLES, false, 0);
-		batch = new Batch(shaderBlocks, 600, config);
+		batch = new BatchTiles(24);
+		try {
+			fontTexture = new TextureAtlas("fonts/font.png", 0, 8, 8);
+			pieceTexture = new TextureAtlas("images/default_skin.png", 1, 32, 32);
+			textRenderer = new TextRenderer(fontTexture, 60);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		textureID = glGenTextures();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureID);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	}
 
 	@Override
@@ -114,6 +79,7 @@ public class GameScene extends Scene{
 	@Override
 	public void init() {
 		shaderBlocks.compile();
+		shaderText.compile();
 
 		updateProjection(windowID);
 
@@ -135,10 +101,7 @@ public class GameScene extends Scene{
 		float[] buffer = new float[16];
 
 		shaderBlocks.bind();
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		shaderBlocks.uploadUniform1i("uTexture", 0);
+		pieceTexture.bind(shaderBlocks, "uTexture");
 
 		shaderBlocks.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
 		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
@@ -196,15 +159,12 @@ public class GameScene extends Scene{
 						}
 					}
 
-					float p0x = (px * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-					float p0y = (py * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-					float p1x = ((px + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
-					float p1y = ((py + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
+					float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-					bottomLeft[2] = p0x; bottomLeft[3] = p0y;
-					bottomRight[2] = p1x; bottomRight[3] = p0y;
-					topRight[2] = p1x; topRight[3] = p1y;
-					topLeft[2] = p0x; topLeft[3] = p1y;
+					bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
+					bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
+					topRight[2] = uvs[2]; topRight[3] = uvs[3];
+					topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
 
 					batch.addVertices(bottomLeft);
 					batch.addVertices(bottomRight);
@@ -251,15 +211,12 @@ public class GameScene extends Scene{
 						}
 					}
 
-					float p0x = (px * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-					float p0y = (py * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-					float p1x = ((px + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
-					float p1y = ((py + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
+					float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-					bottomLeft[2] = p0x; bottomLeft[3] = p0y;
-					bottomRight[2] = p1x; bottomRight[3] = p0y;
-					topRight[2] = p1x; topRight[3] = p1y;
-					topLeft[2] = p0x; topLeft[3] = p1y;
+					bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
+					bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
+					topRight[2] = uvs[2]; topRight[3] = uvs[3];
+					topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
 
 					batch.addVertices(bottomLeft);
 					batch.addVertices(bottomRight);
@@ -306,15 +263,12 @@ public class GameScene extends Scene{
 				}
 			}
 
-			float p0x = (px * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-			float p0y = (py * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-			float p1x = ((px + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
-			float p1y = ((py + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
+			float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-			bottomLeft[2] = p0x; bottomLeft[3] = p0y;
-			bottomRight[2] = p1x; bottomRight[3] = p0y;
-			topRight[2] = p1x; topRight[3] = p1y;
-			topLeft[2] = p0x; topLeft[3] = p1y;
+			bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
+			bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
+			topRight[2] = uvs[2]; topRight[3] = uvs[3];
+			topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
 
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
@@ -369,15 +323,12 @@ public class GameScene extends Scene{
 				}
 			}
 
-			float p0x = (px * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-			float p0y = (py * TEXTURE_TILE_SIZE + 0.5f) / TEXTURE_SIZE;
-			float p1x = ((px + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
-			float p1y = ((py + 1) * TEXTURE_TILE_SIZE - 0.5f) / TEXTURE_SIZE;
+			float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-			bottomLeft[2] = p0x; bottomLeft[3] = p0y;
-			bottomRight[2] = p1x; bottomRight[3] = p0y;
-			topRight[2] = p1x; topRight[3] = p1y;
-			topLeft[2] = p0x; topLeft[3] = p1y;
+			bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
+			bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
+			topRight[2] = uvs[2]; topRight[3] = uvs[3];
+			topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
 
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
@@ -399,6 +350,17 @@ public class GameScene extends Scene{
 		}
 
 		batch.flush();
+
+		shaderText.bind();
+
+		fontTexture.bind(shaderText, "uFontTexture");
+
+		shaderText.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
+		shaderText.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
+		shaderText.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+
+		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 1.0f, 27, 18, 0, 0, 0);
+		textRenderer.draw();
 	}
 
 	@Override
