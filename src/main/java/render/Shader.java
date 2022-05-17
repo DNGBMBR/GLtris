@@ -205,4 +205,8 @@ public class Shader {
 		}
 		glUniformMatrix4fv(location, transpose, matrix);
 	}
+
+	public void bindTexture2D(int textureID) {
+		glBindTexture(GL_TEXTURE_2D, textureID);
+	}
 }

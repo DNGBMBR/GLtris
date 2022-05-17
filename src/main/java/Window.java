@@ -1,3 +1,4 @@
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import util.KeyListener;
 import util.MouseListener;
@@ -48,6 +49,8 @@ public class Window {
 			glfwTerminate();
 			System.exit(1);
 		}
+
+		glfwSetErrorCallback(GLFWErrorCallback.createPrint(System.err));
 
 		glfwMakeContextCurrent(windowID);
 		glfwShowWindow(windowID);

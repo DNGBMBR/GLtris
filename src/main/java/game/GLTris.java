@@ -56,6 +56,7 @@ public class GLTris {
 		accumulatorDAS = 0.0;
 		rng = new Random();
 		nextPieceCallback = Collections.synchronizedSet(new HashSet<>());
+		pieceMoveCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
 		lineClearCallback = Collections.synchronizedSet(new HashSet<>());
 
