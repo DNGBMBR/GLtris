@@ -5,6 +5,7 @@ import game.pieces.*;
 import game.pieces.util.*;
 import org.joml.Matrix4f;
 import render.*;
+import render.manager.ResourceManager;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,8 +14,10 @@ import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameScene extends Scene{
 
+	//TODO: make board and text left align, right align, etc to the window so resizing doesn't break it
 	private static final float TILE_SIZE = 1.0f;
-	private static final float PROJECTION_HEIGHT = 30.0f * TILE_SIZE;
+	private static final float PROJECTION_WIDTH = 60.0f * TILE_SIZE;
+	private static final float PROJECTION_HEIGHT = PROJECTION_WIDTH * 9.0f / 16.0f;
 
 	private static final float X_OFFSET_HELD = 4.0f * TILE_SIZE;
 	private static final float Y_OFFSET_HELD = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
@@ -23,16 +26,16 @@ public class GameScene extends Scene{
 	private static final float Y_OFFSET_BOARD = 1.0f * TILE_SIZE;
 
 	private static final float X_OFFSET_QUEUE = 20.0f * TILE_SIZE;
-	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 3.0f * TILE_SIZE;
+	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
 
 	private Shader shaderBlocks;
-	private Shader shaderText;
 	private Camera camera;
 	private Matrix4f projection;
+	private Matrix4f transform;
 
 	private BatchTiles batch;
 	private TextureAtlas pieceTexture;
-	private TextureAtlas fontTexture;
+
 	private TextRenderer textRenderer;
 
 	private PieceName[] currentQueue;
@@ -41,46 +44,57 @@ public class GameScene extends Scene{
 
 	public GameScene(long windowID) {
 		super(windowID);
-		try {
-			shaderBlocks = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-			shaderText = new Shader("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
-		} catch (IOException | URISyntaxException e) {
-			e.printStackTrace();
+
+		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
+		if (shaderBlocks == null) {
+			try {
+				shaderBlocks = ResourceManager.createShader("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
+			} catch (IOException | URISyntaxException e) {
+				e.printStackTrace();
+				assert false;
+			}
 		}
 
+		transform = new Matrix4f();
 		camera = new Camera();
 		game = new GLTris();
-		batch = new BatchTiles(24);
-		try {
-			fontTexture = new TextureAtlas("fonts/font.png", 0, 8, 8);
-			pieceTexture = new TextureAtlas("images/default_skin.png", 1, 32, 32);
-			textRenderer = new TextRenderer(fontTexture, 60);
-		} catch (IOException e) {
-			e.printStackTrace();
+		batch = new BatchTiles(40);
+
+		textRenderer = TextRenderer.getInstance();
+
+		pieceTexture = ResourceManager.getAtlasByName("images/default_skin.png");
+		if (pieceTexture == null) {
+			try {
+				pieceTexture = ResourceManager.createTextureAtlas("images/default_skin.png", 1, 32, 32);
+			} catch (IOException e) {
+				e.printStackTrace();
+				assert false;
+			}
 		}
-
-
 	}
 
 	@Override
 	public void updateProjection(long windowID) {
+		float projectionWidth = PROJECTION_WIDTH;
 		float projectionHeight = PROJECTION_HEIGHT;
 		int[] windowWidth = new int[1];
 		int[] windowHeight = new int[1];
 		glfwGetWindowSize(windowID, windowWidth, windowHeight);
 		float windowAspect = (float) windowWidth[0] / windowHeight[0];
-		float projectionWidth = projectionHeight * windowAspect;
+		if (windowAspect >= 16.0f / 9.0f) {
+			projectionWidth = projectionHeight * windowAspect;
+		}
+		else {
+			projectionHeight = projectionWidth / windowAspect;
+		}
 		projection = new Matrix4f().identity().ortho(
 			0.0f, projectionWidth,
 			0.0f, projectionHeight,
-			0.001f, 10000.0f);
+			0.0f, 100.0f);
 	}
 
 	@Override
 	public void init() {
-		shaderBlocks.compile();
-		shaderText.compile();
-
 		updateProjection(windowID);
 
 		game.init();
@@ -103,17 +117,9 @@ public class GameScene extends Scene{
 		shaderBlocks.bind();
 		pieceTexture.bind(shaderBlocks, "uTexture");
 
-		shaderBlocks.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
 		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-
-		float[] transformMatrix = {
-			1.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		};
-
-		shaderBlocks.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
+		shaderBlocks.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
+		shaderBlocks.uploadUniformMatrix4fv("uTransform", false, transform.get(buffer));
 
 		float[] bottomLeft = new float[4];
 		float[] bottomRight = new float[4];
@@ -351,15 +357,10 @@ public class GameScene extends Scene{
 
 		batch.flush();
 
-		shaderText.bind();
+		textRenderer.bind();
 
-		fontTexture.bind(shaderText, "uFontTexture");
+		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 24.0f, 1200, 720, 0, 0, 0);
 
-		shaderText.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-		shaderText.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
-		shaderText.uploadUniformMatrix4fv("uTransform", true, transformMatrix);
-
-		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 1.0f, 27, 18, 0, 0, 0);
 		textRenderer.draw();
 	}
 

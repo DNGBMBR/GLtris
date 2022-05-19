@@ -42,6 +42,9 @@ public class Window {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+		//we'll cross resizing the window when we get to it
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
 		windowID = glfwCreateWindow(width, height, title, NULL, NULL);
 
 		if (windowID == NULL) {
@@ -58,8 +61,6 @@ public class Window {
 		GL.createCapabilities();
 
 		glViewport(0, 0, width, height);
-
-		MouseListener.getInstance();
 
 		glfwSetKeyCallback(windowID, KeyListener::keyCallback);
 		glfwSetCursorPosCallback(windowID, MouseListener::mousePosCallback);

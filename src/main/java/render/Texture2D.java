@@ -29,7 +29,6 @@ public class Texture2D {
 
 		this.textureWidth = image.getWidth();
 		this.textureHeight = image.getHeight();
-		System.out.println(textureWidth + ", " + textureHeight);
 
 		int[] pixels = new int[image.getWidth() * image.getHeight()];
 		image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0 , image.getWidth());

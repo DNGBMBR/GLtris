@@ -15,12 +15,12 @@ public class BatchTiles extends Batch {
 	private int vaoID;
 	private int vboID;
 
-	public BatchTiles(int maxVertices) {
-		if (maxVertices <= 0) {
+	public BatchTiles(int maxTiles) {
+		if (maxTiles <= 0) {
 			throw new IllegalArgumentException("Cannot have less than or equal to 0 vertices in the batch.");
 		}
 
-		this.maxVertices = maxVertices;
+		this.maxVertices = maxTiles * 6;
 		usedVertices = 0;
 
 		vaoID = glGenVertexArrays();
@@ -51,7 +51,7 @@ public class BatchTiles extends Batch {
 			throw new IllegalArgumentException("Vertex data given does not conform to the given format.");
 		}
 		int numVertices = vertexData.length / FLOATS_PER_VERTEX;
-		if (numVertices > maxVertices) {
+		if (numVertices >= maxVertices) {
 			throw new IllegalArgumentException("Number of vertices passed in exceeds the maximum capacity of the batch.");
 		}
 		if(!isEnoughRoom(numVertices)) {

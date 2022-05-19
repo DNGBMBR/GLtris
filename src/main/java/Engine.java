@@ -1,3 +1,4 @@
+import render.TextRenderer;
 import scenes.*;
 import util.KeyListener;
 
@@ -5,17 +6,15 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
 public class Engine {
-
-
 	/*
 	* STEPS FOR DRAWING TO SCREEN:
 	* - compile shaders, initialize vaos, vbos, and ebos
+	* - initialize vertex data using glVertexAttribPointer() and glEnableVertexAttribArray(), which binds the vbo to the vao on calling them
 	* - in window loop:
 	* 	- for each shader:
 	* 		- bind the shader
-	* 		- bind the vao, vbo, and ebo to be used
-	* 		- initialize vertex data using glVertexAttribPointer() and glEnableVertexAttribArray()
 	* 		- upload uniforms to the shader
+	* 		- bind the vao to be used
 	* 		- call glDrawArrays() or glDrawElements() for vbo data or ebo data respectively
 	* */
 	private Scene currentScene;
@@ -33,7 +32,10 @@ public class Engine {
 
 	public void init() {
 		glfwSetWindowSizeCallback(windowID, (long window, int width, int height) -> {
+			glViewport(0, 0, width, height);
 			currentScene.updateProjection(windowID);
+			TextRenderer renderer = TextRenderer.getInstance();
+			renderer.updateProjection(windowID);
 		});
 		KeyListener.registerCallback((long window, int key, int scancode, int action, int mods) -> {
 			//debug for switching scenes
@@ -59,6 +61,10 @@ public class Engine {
 		double endTime = glfwGetTime();
 		double dt = endTime - startTime;
 		while (!glfwWindowShouldClose(windowID)) {
+			if (currentScene.shouldChangeScene()) {
+				changeScene(currentScene.nextScene());
+			}
+
 			if (dt >= 0.0) {
 				currentScene.update(dt);
 			}

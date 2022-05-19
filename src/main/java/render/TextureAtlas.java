@@ -3,8 +3,8 @@ package render;
 import java.io.IOException;
 
 public class TextureAtlas extends Texture2D {
-	private int elementWidth;
-	private int elementHeight;
+	protected int elementWidth;
+	protected int elementHeight;
 
 	public TextureAtlas(String fileName, int textureSlot, int elementWidth, int elementHeight) throws IOException {
 		super(fileName, textureSlot);
@@ -19,5 +19,13 @@ public class TextureAtlas extends Texture2D {
 		float p1y = ((py + height) * elementHeight - 0.5f) / textureHeight;
 
 		return new float[] {p0x, p0y, p1x, p1y};
+	}
+
+	public int getElementWidth() {
+		return elementWidth;
+	}
+
+	public int getElementHeight() {
+		return elementHeight;
 	}
 }
