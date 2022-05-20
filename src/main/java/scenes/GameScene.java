@@ -7,9 +7,6 @@ import org.joml.Matrix4f;
 import render.*;
 import render.manager.ResourceManager;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameScene extends Scene{
@@ -33,7 +30,7 @@ public class GameScene extends Scene{
 	private Matrix4f projection;
 	private Matrix4f transform;
 
-	private BatchTiles batch;
+	private TileBatch batch;
 	private TextureAtlas pieceTexture;
 
 	private TextRenderer textRenderer;
@@ -46,31 +43,15 @@ public class GameScene extends Scene{
 		super(windowID);
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
-		if (shaderBlocks == null) {
-			try {
-				shaderBlocks = ResourceManager.createShader("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
-			} catch (IOException | URISyntaxException e) {
-				e.printStackTrace();
-				assert false;
-			}
-		}
 
 		transform = new Matrix4f();
 		camera = new Camera();
 		game = new GLTris();
-		batch = new BatchTiles(40);
+		batch = new TileBatch(40);
 
 		textRenderer = TextRenderer.getInstance();
 
 		pieceTexture = ResourceManager.getAtlasByName("images/default_skin.png");
-		if (pieceTexture == null) {
-			try {
-				pieceTexture = ResourceManager.createTextureAtlas("images/default_skin.png", 1, 32, 32);
-			} catch (IOException e) {
-				e.printStackTrace();
-				assert false;
-			}
-		}
 	}
 
 	@Override
@@ -377,5 +358,6 @@ public class GameScene extends Scene{
 	@Override
 	public void destroy() {
 		game.destroy();
+		batch.destroy();
 	}
 }

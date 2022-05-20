@@ -25,7 +25,9 @@ public class Engine {
 	}
 
 	public void changeScene(Scene newScene) {
-		currentScene.destroy();
+		if (currentScene != null) {
+			currentScene.destroy();
+		}
 		currentScene = newScene;
 		newScene.init();
 	}
@@ -41,10 +43,10 @@ public class Engine {
 			//debug for switching scenes
 			if (action == GLFW_PRESS) {
 				if (key == GLFW_KEY_M) {
-					changeScene(new MenuScene(windowID));
+					//changeScene(new MenuScene(windowID));
 				}
 				if (key == GLFW_KEY_N) {
-					changeScene(new GameScene(windowID));
+					//changeScene(new GameScene(windowID));
 				}
 			}
 		});
@@ -52,8 +54,7 @@ public class Engine {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		currentScene = new GameScene(windowID);
-		currentScene.init();
+		changeScene(new MenuScene(windowID));
 	}
 
 	public void run() {

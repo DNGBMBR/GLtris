@@ -37,6 +37,7 @@ public class GLTris {
 	private Piece currentPiece;
 	private PieceName heldPiece;
 
+	//TODO: make SDF like tetr.io's scaling
 	private double arr;
 	private double das;
 	private double sdf;

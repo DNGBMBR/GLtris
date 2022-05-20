@@ -35,8 +35,7 @@ public class TextureNineSlice extends TextureAtlas{
 		return borderHeight;
 	}
 
-	@Override
-	public float[] getElementUVs(int px, int py, int width, int height) {
+	public float[] getElementUVsNineSlice(int px, int py, int width, int height) {
 		float p0x = (px * elementWidth + 0.5f) / textureWidth;
 		float p0y = (py * elementHeight + 0.5f) / textureHeight;
 		//coordinates for p1 and p2 are probably off by 1

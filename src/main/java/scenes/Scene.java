@@ -3,9 +3,11 @@ package scenes;
 public abstract class Scene {
 
 	protected long windowID;
+	protected boolean shouldChangeScene;
 
 	Scene(long windowID) {
 		this.windowID = windowID;
+		shouldChangeScene = false;
 	}
 
 	public abstract void updateProjection(long windowID);

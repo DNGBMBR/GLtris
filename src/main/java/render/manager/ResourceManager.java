@@ -15,6 +15,18 @@ public class ResourceManager {
 
 	private ResourceManager() {}
 
+	public static void initializeResources() throws IOException, URISyntaxException {
+		ResourceManager.createShader("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
+		ResourceManager.createShader("shaders/widget_vertex.glsl", "shaders/widget_fragment.glsl");
+		ResourceManager.createShader("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
+
+		ResourceManager.createTextureAtlas("images/default_skin.png", 1, 32, 32);
+		//ResourceManager.createTextureAtlas("images/slider.png", 1, 32, 32);
+		ResourceManager.createTextureAtlas("fonts/font.png", 0, 8, 8);
+
+		ResourceManager.createTextureNineSlice("images/widgets.png", 2, 32, 32, 8, 8);
+	}
+
 	public static Shader createShader(String vertexFile, String fragmentFile) throws IOException, URISyntaxException {
 		Shader shader = new Shader(vertexFile, fragmentFile);
 		shader.compile();

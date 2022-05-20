@@ -1,7 +1,11 @@
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import render.manager.ResourceManager;
 import util.KeyListener;
 import util.MouseListener;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.glViewport;
@@ -66,6 +70,14 @@ public class Window {
 		glfwSetCursorPosCallback(windowID, MouseListener::mousePosCallback);
 		glfwSetMouseButtonCallback(windowID, MouseListener::mouseButtonCallback);
 		glfwSetScrollCallback(windowID, MouseListener::mouseScrollCallback);
+
+		try {
+			ResourceManager.initializeResources();
+		} catch (IOException | URISyntaxException e) {
+			e.printStackTrace();
+			glfwTerminate();
+			System.exit(1);
+		}
 
 		engine = new Engine(windowID);
 		engine.init();

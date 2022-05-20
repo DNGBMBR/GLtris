@@ -15,7 +15,7 @@ public class TextRenderer{
 	private Camera camera = new Camera();
 	private Matrix4f transform = new Matrix4f();
 
-	private BatchFont batch;
+	private TextBatch batch;
 	private TextureAtlas fontTexture;
 
 	private static TextRenderer instance;
@@ -29,29 +29,13 @@ public class TextRenderer{
 
 		fontTexture = atlas;
 		textShader = ResourceManager.getShaderByName("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
-		if (textShader == null) {
-			try {
-				textShader = ResourceManager.createShader("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
-			} catch (IOException | URISyntaxException e) {
-				e.printStackTrace();
-				assert false;
-			}
-		}
 
-		batch = new BatchFont(capacity * 6);
+		batch = new TextBatch(capacity * 6);
 	}
 
 	public static TextRenderer getInstance() {
 		if (instance == null) {
 			TextureAtlas fontTexture = ResourceManager.getAtlasByName("fonts/font.png");
-			if (fontTexture == null) {
-				try {
-					fontTexture = ResourceManager.createTextureAtlas("fonts/font.png", 0, 8, 8);
-				} catch (IOException e) {
-					e.printStackTrace();
-					assert false;
-				}
-			}
 			instance = new TextRenderer(fontTexture, 100);
 		}
 		return instance;

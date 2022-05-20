@@ -1,13 +1,15 @@
 package render;
 
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.glDrawArrays;
 import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30.*;
 
-public class BatchTiles extends Batch {
-	private static final int FLOATS_PER_VERTEX = 4;
+public class TextBatch extends Batch{
+	private static final int FLOATS_PER_VERTEX = 7;
 	private static final int VERTEX_SIZE = FLOATS_PER_VERTEX * Float.BYTES;
 
 	private int maxVertices;
@@ -15,12 +17,12 @@ public class BatchTiles extends Batch {
 	private int vaoID;
 	private int vboID;
 
-	public BatchTiles(int maxTiles) {
-		if (maxTiles <= 0) {
+	public TextBatch(int maxVertices) {
+		if (maxVertices <= 0) {
 			throw new IllegalArgumentException("Cannot have less than or equal to 0 vertices in the batch.");
 		}
 
-		this.maxVertices = maxTiles * 6;
+		this.maxVertices = maxVertices;
 		usedVertices = 0;
 
 		vaoID = glGenVertexArrays();
@@ -29,11 +31,15 @@ public class BatchTiles extends Batch {
 		vboID = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
 		glVertexAttribPointer(0, 2, GL_FLOAT, false, VERTEX_SIZE, 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_SIZE, 2 * Float.BYTES);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, VERTEX_SIZE, 2 * Float.BYTES);
+		glVertexAttribPointer(2, 2, GL_FLOAT, false, VERTEX_SIZE, 5 * Float.BYTES);
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 
 		glBufferData(GL_ARRAY_BUFFER, (long) maxVertices * VERTEX_SIZE, GL_STREAM_DRAW);
+
+
 	}
 
 	@Override
@@ -51,7 +57,7 @@ public class BatchTiles extends Batch {
 			throw new IllegalArgumentException("Vertex data given does not conform to the given format.");
 		}
 		int numVertices = vertexData.length / FLOATS_PER_VERTEX;
-		if (numVertices >= maxVertices) {
+		if (numVertices > maxVertices) {
 			throw new IllegalArgumentException("Number of vertices passed in exceeds the maximum capacity of the batch.");
 		}
 		if(!isEnoughRoom(numVertices)) {
@@ -75,5 +81,11 @@ public class BatchTiles extends Batch {
 		glDrawArrays(GL_TRIANGLES, 0, usedVertices);
 
 		usedVertices = 0;
+	}
+
+	@Override
+	public void destroy() {
+		glDeleteBuffers(vboID);
+		glDeleteVertexArrays(vaoID);
 	}
 }

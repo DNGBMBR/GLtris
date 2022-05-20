@@ -1,6 +1,6 @@
 package render;
 
-import menu.widgets.Button;
+import menu.widgets.*;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -9,14 +9,13 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.opengl.GL30.*;
 
 public class WidgetBatch extends Batch{
 	//They're all quads?
 	//Always has been.
 	private static final int FLOATS_PER_VERTEX = 4;
-	private static final int VERTICES_PER_QUAD = 4;
+	private static final int VERTICES_PER_QUAD = 6;
 	private static final int VERTEX_SIZE = FLOATS_PER_VERTEX * Float.BYTES;
 
 	private int maxVertices;
@@ -75,72 +74,37 @@ public class WidgetBatch extends Batch{
 		usedVertices += numVertices;
 	}
 
-	public void addButton(Button button, TextureNineSlice texture, int px, int py) {
-		float[][] buttonVertices = button.generateVertices(texture, px, py, 1, 1);
+	public void addWidget(Widget widget) {
+		float[] vertices = widget.generateVertices();
+		addVertices(vertices);
+	}
 
-		//we should probably add an index buffer somewhere in the batcher
-		addVertices(buttonVertices[0]);
-		addVertices(buttonVertices[1]);
-		addVertices(buttonVertices[5]);
-		addVertices(buttonVertices[5]);
-		addVertices(buttonVertices[4]);
-		addVertices(buttonVertices[0]);
+	public void addButton(Button button) {
+		float[] buttonVertices = button.generateVertices();
+		addVertices(buttonVertices);
+	}
 
-		addVertices(buttonVertices[1]);
-		addVertices(buttonVertices[2]);
-		addVertices(buttonVertices[6]);
-		addVertices(buttonVertices[6]);
-		addVertices(buttonVertices[5]);
-		addVertices(buttonVertices[1]);
+	public void addSlider(Slider slider, TextureAtlas texture, int px, int py) {
+		float[] uvs = texture.getElementUVs(px, py, 1, 1);
 
-		addVertices(buttonVertices[2]);
-		addVertices(buttonVertices[3]);
-		addVertices(buttonVertices[7]);
-		addVertices(buttonVertices[7]);
-		addVertices(buttonVertices[6]);
-		addVertices(buttonVertices[2]);
+		float p0xClicker = (float) (slider.getXPos() + (slider.isHorizontal() ? slider.getPercentage() * slider.getLength() : 0));
+		float p0yClicker = (float) (slider.getYPos() + (!slider.isHorizontal() ? slider.getPercentage() * slider.getLength() : 0));
+		float p1xClicker = p0xClicker + (float) slider.getClickerSize();
+		float p1yClicker = p0yClicker + (float) slider.getClickerSize();
 
-		addVertices(buttonVertices[4]);
-		addVertices(buttonVertices[5]);
-		addVertices(buttonVertices[9]);
-		addVertices(buttonVertices[9]);
-		addVertices(buttonVertices[8]);
-		addVertices(buttonVertices[4]);
+		float[][] vertices = {
+			{p0xClicker, p0yClicker, uvs[0], uvs[1]},
+			{p1xClicker, p0yClicker, uvs[2], uvs[1]},
+			{p1xClicker, p1yClicker, uvs[2], uvs[3]},
+			{p0xClicker, p1yClicker, uvs[0], uvs[3]},
+		};
 
-		addVertices(buttonVertices[5]);
-		addVertices(buttonVertices[6]);
-		addVertices(buttonVertices[10]);
-		addVertices(buttonVertices[10]);
-		addVertices(buttonVertices[9]);
-		addVertices(buttonVertices[5]);
-
-		addVertices(buttonVertices[6]);
-		addVertices(buttonVertices[7]);
-		addVertices(buttonVertices[11]);
-		addVertices(buttonVertices[11]);
-		addVertices(buttonVertices[10]);
-		addVertices(buttonVertices[6]);
-
-		addVertices(buttonVertices[8]);
-		addVertices(buttonVertices[9]);
-		addVertices(buttonVertices[13]);
-		addVertices(buttonVertices[13]);
-		addVertices(buttonVertices[12]);
-		addVertices(buttonVertices[8]);
-
-		addVertices(buttonVertices[9]);
-		addVertices(buttonVertices[10]);
-		addVertices(buttonVertices[14]);
-		addVertices(buttonVertices[14]);
-		addVertices(buttonVertices[13]);
-		addVertices(buttonVertices[9]);
-
-		addVertices(buttonVertices[10]);
-		addVertices(buttonVertices[11]);
-		addVertices(buttonVertices[15]);
-		addVertices(buttonVertices[15]);
-		addVertices(buttonVertices[14]);
-		addVertices(buttonVertices[10]);
+		addVertices(vertices[0]);
+		addVertices(vertices[1]);
+		addVertices(vertices[2]);
+		addVertices(vertices[2]);
+		addVertices(vertices[3]);
+		addVertices(vertices[0]);
 	}
 
 	@Override
@@ -153,5 +117,11 @@ public class WidgetBatch extends Batch{
 		glDrawArrays(GL_TRIANGLES, 0, usedVertices);
 
 		usedVertices = 0;
+	}
+
+	@Override
+	public void destroy() {
+		glDeleteBuffers(vboID);
+		glDeleteVertexArrays(vaoID);
 	}
 }

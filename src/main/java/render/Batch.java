@@ -8,4 +8,6 @@ public abstract class Batch {
 	//need some way to add arbitrary vertex data
 
 	public abstract void flush();
+
+	public abstract void destroy();
 }
