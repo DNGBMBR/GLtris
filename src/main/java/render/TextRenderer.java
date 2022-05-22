@@ -1,5 +1,6 @@
 package render;
 
+import menu.widgets.Button;
 import org.joml.Matrix4f;
 import render.manager.ResourceManager;
 
@@ -87,6 +88,15 @@ public class TextRenderer{
 			addCharacter(c, scale, horizontalOffset, yPos, r, g, b);
 			horizontalOffset += scale;
 		}
+	}
+
+	public void addText(Button button, float r, float g, float b) {
+		float centerX = ((float) (2.0 * button.getXPos() + button.getWidth())) * 0.5f;
+		float centerY = ((float) (2.0f * button.getYPos() + button.getHeight())) * 0.5f;
+		float fontSize = (float) button.getHeight() * 0.5f;
+		float startX = centerX - fontSize * button.getDisplayText().length() * 0.5f;
+		float startY = centerY - (float) button.getHeight() * 0.25f;
+		addText(button.getDisplayText(), fontSize, startX, startY, r, g, b);
 	}
 
 	public void draw(){

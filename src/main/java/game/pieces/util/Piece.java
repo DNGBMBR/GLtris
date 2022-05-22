@@ -215,7 +215,9 @@ public abstract class Piece {
 		place(board);
 	}
 
-	//public abstract void gravity(TileState[][] board);
+	public boolean gravity(TileState[][] board) {
+		return move(Direction.DOWN, board);
+	}
 
 	public abstract boolean[][] getTileMapE();
 	public abstract boolean[][] getTileMapR();

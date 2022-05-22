@@ -55,6 +55,23 @@ public class LocalSettings {
 		return propertyString;
 	}
 
+	public static void saveSettings() {
+		Wini p = getProperties();
+
+		File destination = new File(PATH);
+
+		try {
+			if(!destination.exists()) {
+				if(!destination.createNewFile()) {
+					return;
+				}
+			}
+			p.store(destination);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void setDefaultProperties() {
 		properties = new Wini();
 		properties.put(SECTION_HANDLING, OPTION_SDF, DEFAULT_SDF);
@@ -103,22 +120,5 @@ public class LocalSettings {
 	public static void setDAS(double das) {
 		Wini p = getProperties();
 		p.put(SECTION_HANDLING, OPTION_DAS, das);
-	}
-
-	public static void saveSettings() {
-		Wini p = getProperties();
-
-		File destination = new File(PATH);
-
-		try {
-			if(!destination.exists()) {
-				if(!destination.createNewFile()) {
-					return;
-				}
-			}
-			p.store(destination);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 }

@@ -1,5 +1,7 @@
 package scenes;
 
+import menu.component.Component;
+import menu.component.TopFrame;
 import menu.widgets.*;
 import org.joml.Math;
 import org.joml.Matrix4f;
@@ -40,8 +42,8 @@ public class MenuScene extends Scene{
 	Camera camera = new Camera();
 	Matrix4f transform = new Matrix4f().identity();
 
-	List<Widget> widgetsMain = new ArrayList<>();
-	List<Widget> widgetsSettings = new ArrayList<>();
+	TopFrame widgetsMain = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
+	TopFrame widgetsSettings = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, false);
 
 	double sdf = LocalSettings.getSDF();
 	double arr = LocalSettings.getARR();
@@ -54,65 +56,57 @@ public class MenuScene extends Scene{
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 
 		//TODO: make this WAY less dense. Group widgets?
-		widgetsMain.add(
+		widgetsMain.addComponent(
 			new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4, true,
 				BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, START_GAME,
 				widgetTexture, 0, 1,
-				(long window, int button, int action, int mods) -> {
+				(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					shouldChangeScene = true;
 				}
 			}));
-		widgetsMain.add(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - (BUTTON_HEIGHT + 50.0), true,
+		widgetsMain.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - (BUTTON_HEIGHT + 50.0), true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, SETTINGS,
 			widgetTexture, 0, 1,
-			(long window, int button, int action, int mods) -> {
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
-					for (Widget widget : widgetsMain) {
-						widget.setInteractable(false);
-					}
-					for (Widget widget : widgetsSettings) {
-						widget.setInteractable(true);
-					}
+					widgetsMain.setActive(false);
+					widgetsSettings.setActive(true);
 				}
 			}));
 
-		widgetsSettings.add(new Button(100.0, 100.0, false,
+		widgetsSettings.addComponent(new Button(100.0, 100.0, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, BACK,
 			widgetTexture, 0, 1,
-			(long window, int button, int action, int mods) -> {
-				for (Widget widget : widgetsMain) {
-					widget.setInteractable(true);
-				}
-				for (Widget widget : widgetsSettings) {
-					widget.setInteractable(false);
-				}
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+				widgetsMain.setActive(true);
+				widgetsSettings.setActive(false);
 			}));
-		widgetsSettings.add(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y,false, SDF,
+		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y,true, SDF,
 			Utils.inverseLerp(Constants.MIN_SDF, Constants.MAX_SDF, sdf),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
 			widgetTexture, 0, 0, 1, 0,
-			(long window, double percentage) -> {
+			(double percentage) -> {
 				sdf = Math.lerp(Constants.MIN_SDF, Constants.MAX_SDF, percentage);
 			}));
-		widgetsSettings.add(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING,false, ARR,
+		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING,true, ARR,
 			Utils.inverseLerp(Constants.MIN_ARR, Constants.MAX_ARR, arr),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
 			widgetTexture, 0, 0, 1, 0,
-			(long window, double percentage) -> {
+			(double percentage) -> {
 				arr = Math.lerp(Constants.MIN_ARR, Constants.MAX_ARR, percentage);
 			}));
-		widgetsSettings.add(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 2.0, false, DAS,
+		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 2.0, true, DAS,
 			Utils.inverseLerp(Constants.MIN_DAS, Constants.MAX_DAS, das),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
 			widgetTexture, 0, 0, 1, 0,
-			(long window, double percentage) -> {
+			(double percentage) -> {
 				das = Math.lerp(Constants.MIN_DAS, Constants.MAX_DAS, percentage);
 			}));
-		widgetsSettings.add(new Button(Constants.VIEWPORT_W - BUTTON_WIDTH - 100.0, 100.0, false,
+		widgetsSettings.addComponent(new Button(Constants.VIEWPORT_W - BUTTON_WIDTH - 100.0, 100.0, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, SAVE,
 			widgetTexture, 0, 1,
-			(long window, int button, int action, int mods) -> {
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				LocalSettings.setARR(arr);
 				LocalSettings.setDAS(das);
 				LocalSettings.setSDF(sdf);
@@ -163,78 +157,63 @@ public class MenuScene extends Scene{
 
 		float[] buffer = new float[16];
 		menuShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-		menuShader.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
-		menuShader.uploadUniformMatrix4fv("uTransform", false, transform.get(buffer));
 
-		for (Widget widget : widgetsMain) {
-			if (widget.isInteractable()) {
-				widgetBatch.addWidget(widget);
-			}
+		if (widgetsMain.isActive()) {
+			widgetBatch.addComponent(widgetsMain);
 		}
-		for (Widget widget : widgetsSettings) {
-			if (widget.isInteractable()) {
-				widgetBatch.addWidget(widget);
-			}
+		if (widgetsSettings.isActive()) {
+			widgetBatch.addComponent(widgetsSettings);
 		}
 
 		widgetBatch.flush();
 
 		textRenderer.bind();
 
-		for (Widget widget : widgetsSettings) {
-			if (!widget.isInteractable()) {
-				continue;
-			}
-			if (widget instanceof Slider) {
-				Slider slider = (Slider) widget;
-				float fontSize = (float) slider.getClickerSize() * 0.75f;
+		if (widgetsSettings.isActive()) {
+			for (Component component : widgetsSettings.getComponents()) {
+				if (!component.isActive()) {
+					continue;
+				}
+				if (component instanceof Slider) {
+					Slider slider = (Slider) component;
+					float fontSize = (float) slider.getClickerSize() * 0.75f;
 
-				String sliderName = slider.getDisplayText();
-				float startX = (float) slider.getXPos() - fontSize * (slider.getDisplayText().length() + 1);
-				float startY = (float) slider.getYPos();
-				textRenderer.addText(sliderName, fontSize, startX, startY, 0.0f, 0.0f, 0.0f);
+					String sliderName = slider.getDisplayText();
+					float startX = (float) slider.getXPos() - fontSize * (slider.getDisplayText().length() + 1);
+					float startY = (float) slider.getYPos();
+					textRenderer.addText(sliderName, fontSize, startX, startY, 0.0f, 0.0f, 0.0f);
 
-				startX = (float) (slider.getXPos() + slider.getClickerSize() + (slider.isHorizontal() ? slider.getLength() : 0));
-				startY = (float) (slider.getYPos() + (!slider.isHorizontal() ? slider.getLength() : 0));
-				String text;
-				if (sliderName.equals(SDF)) {
-					text = String.valueOf(Math.lerp(Constants.MIN_SDF, Constants.MAX_SDF, slider.getPercentage()));
+					startX = (float) (slider.getXPos() + slider.getClickerSize() + (slider.isHorizontal() ? slider.getLength() : 0));
+					startY = (float) (slider.getYPos() + (!slider.isHorizontal() ? slider.getLength() : 0));
+					String text = "";
+					if (sliderName.equals(SDF)) {
+						text = String.valueOf(Math.lerp(Constants.MIN_SDF, Constants.MAX_SDF, slider.getPercentage()));
+					}
+					else if (sliderName.equals(ARR)) {
+						text = String.valueOf(Math.lerp(Constants.MIN_ARR, Constants.MAX_ARR, slider.getPercentage()));
+					}
+					else if (sliderName.equals(DAS)) {
+						text = String.valueOf(Math.lerp(Constants.MIN_DAS, Constants.MAX_DAS, slider.getPercentage()));
+					}
+					textRenderer.addText(text, fontSize, startX, startY, 0.0f, 0.0f, 0.0f);
 				}
-				else if (sliderName.equals(ARR)) {
-					text = String.valueOf(Math.lerp(Constants.MIN_ARR, Constants.MAX_ARR, slider.getPercentage()));
+				if (component instanceof Button) {
+					Button button = (Button) component;
+					textRenderer.addText(button, 1.0f, 1.0f, 1.0f);
 				}
-				else if (sliderName.equals(DAS)) {
-					text = String.valueOf(Math.lerp(Constants.MIN_DAS, Constants.MAX_DAS, slider.getPercentage()));
-				}
-				else {
-					text = "WTF??? How is this even possible?????";
-				}
-				textRenderer.addText(text, fontSize, startX, startY, 0.0f, 0.0f, 0.0f);
-			}
-			if (widget instanceof Button) {
-				Button button = (Button) widget;
-				float centerX = ((float) (2.0 * button.getXPos() + button.width)) * 0.5f;
-				float centerY = ((float) (2.0f * button.getYPos() + button.height)) * 0.5f;
-				float fontSize = (float) button.height * 0.5f;
-				float startX = centerX - fontSize * button.getDisplayText().length() * 0.5f;
-				float startY = centerY - (float) button.height * 0.25f;
-				textRenderer.addText(button.getDisplayText(), fontSize, startX, startY, 1.0f, 1.0f, 1.0f);
 			}
 		}
-		for (Widget widget : widgetsMain) {
-			if (!widget.isInteractable()) {
-				continue;
-			}
-			if (widget instanceof Button) {
-				Button button = (Button) widget;
-				float centerX = ((float) (2.0 * button.getXPos() + button.width)) * 0.5f;
-				float centerY = ((float) (2.0f * button.getYPos() + button.height)) * 0.5f;
-				float fontSize = (float) button.height * 0.5f;
-				float startX = centerX - fontSize * button.getDisplayText().length() * 0.5f;
-				float startY = centerY - (float) button.height * 0.25f;
-				textRenderer.addText(button.getDisplayText(), fontSize, startX, startY, 1.0f, 1.0f, 1.0f);
-			}
+		if (widgetsMain.isActive()) {
+			for (Component component : widgetsMain.getComponents()) {
+				if (!component.isActive()) {
+					continue;
+				}
+				if (component instanceof Button) {
+					Button button = (Button) component;
+					textRenderer.addText(button, 1.0f, 1.0f, 1.0f);
+				}
 
+			}
 		}
 		textRenderer.draw();
 	}
@@ -246,14 +225,13 @@ public class MenuScene extends Scene{
 
 	@Override
 	public Scene nextScene() {
-		return new GameScene(windowID);
+		return new GameSetupScene(windowID);
 	}
 
 	@Override
 	public void destroy() {
-		for (Widget widget : widgetsMain) {
-			widget.destroy();
-		}
+		widgetsMain.destroy();
+		widgetsSettings.destroy();
 		widgetBatch.destroy();
 	}
 }

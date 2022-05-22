@@ -4,6 +4,7 @@ import game.callbacks.*;
 import org.joml.Random;
 import game.pieces.*;
 import game.pieces.util.*;
+import scenes.GameScene;
 import util.*;
 
 import java.util.*;
@@ -16,11 +17,6 @@ import static org.lwjgl.glfw.GLFW.*;
 public class GLTris {
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
-
-	public static final int BOARD_HEIGHT = 40;
-	public static final int BOARD_WIDTH = 10;
-
-	public static final int NUM_PREVIEWS = 6;
 
 	private Set<Runnable> nextPieceCallback;
 	private Set<MoveCallback> pieceMoveCallback;
@@ -42,30 +38,55 @@ public class GLTris {
 	private double das;
 	private double sdf;
 
-	private double accumulatorSD;
-	private double accumulatorARR;
-	private double accumulatorDAS;
+	private int boardHeight;
+	private int boardWidth;
+	private int numPreviews;
 
-	private int linesCleared;
-	private SpinType currentSpinType;
+	private double initGravity; //measured in G, where 1G = 1 tile per tick
+	private double gravityIncrease;
+	private double gravityIncreaseInterval;
+	private double lockDelay; //measured in seconds
+
+	private double accumulatorSD = 0.0;
+	private double accumulatorARR = 0.0;
+	private double accumulatorDAS = 0.0;
+
+	private double accumulatorGravityIncrease = 0.0;
+	private double accumulatorGravity = 0.0;
+	private double accumulatorLock = 0.0;
+	private double currentGravity;
+
+	private boolean isGameOver = false;
+
+	private int linesCleared = 0;
+	private SpinType currentSpinType = NONE;
 
 	public GLTris() {
+		boardWidth = Constants.BOARD_WIDTH;
+		boardHeight = Constants.BOARD_HEIGHT;
+		numPreviews = GameSettings.getNumPreviews();
+
+		initGravity = GameSettings.getInitGravity();
+		gravityIncrease = GameSettings.getGravityIncrease();
+		gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
+		lockDelay = GameSettings.getLockDelay();
+
+		currentGravity = initGravity;
+
+		sdf = LocalSettings.getSDF();
+		arr = LocalSettings.getARR();
+		das = LocalSettings.getDAS();
+
 		pieceQueue = new ConcurrentLinkedQueue<>();
-		board = new TileState[BOARD_HEIGHT][BOARD_WIDTH];
-		accumulatorSD = 0.0;
-		accumulatorARR = 0.0;
-		accumulatorDAS = 0.0;
+		board = new TileState[boardHeight][boardWidth];
 		rng = new Random();
 		nextPieceCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceMoveCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
 		lineClearCallback = Collections.synchronizedSet(new HashSet<>());
 
-		sdf = LocalSettings.getSDF();
-		arr = LocalSettings.getARR();
-		das = LocalSettings.getDAS();
-
 		LocalSettings.saveSettings();
+		GameSettings.saveSettings();
 	}
 
 	public void init() {
@@ -119,22 +140,54 @@ public class GLTris {
 	}
 
 	public void update(double dt) {
-		listenKeys(dt);
+		if (!isGameOver) {
+			listenKeys(dt);
 
-		clearLines();
-		//add garbage(???)
+			applyGravity(dt);
+			clearLines();
 
-		if (currentPiece.isPlaced()) {
-			setNextPiece();
-			//check for collision of the new piece, and end the game if it collides
+			if (currentPiece.isPlaced()) {
+				setNextPiece();
+				if (currentPiece.testCollision(board, 0, 0)) {
+					isGameOver = true;
+				}
+			}
+
+
+
+			if (pieceQueue.size() <= 2 * numPreviews) {
+				enqueueBag();
+			}
 		}
+	}
 
-		if (pieceQueue.size() <= 7) {
-			enqueueBag();
+	private void applyGravity(double dt) {
+		accumulatorGravity += dt;
+		accumulatorGravityIncrease += dt;
+		if (accumulatorGravity >= SPF / currentGravity) {
+			boolean onFloor = !currentPiece.gravity(board);
+			if (onFloor) {
+				accumulatorLock += dt;
+				if (accumulatorLock >= SPF * lockDelay) {
+					currentPiece.place(board);
+					accumulatorLock = 0.0;
+					accumulatorGravity = 0.0;
+				}
+			}
+			else {
+				accumulatorGravity = 0.0;
+				accumulatorLock = 0.0;
+			}
+		}
+		if (accumulatorGravityIncrease >= gravityIncreaseInterval * SPF) {
+			currentGravity += gravityIncrease;
+			accumulatorGravityIncrease = 0.0;
 		}
 	}
 
 	private void hold() {
+		accumulatorLock = 0.0;
+
 		if (heldPiece == null) {
 			heldPiece = currentPiece.getName();
 			setNextPiece();
@@ -222,6 +275,7 @@ public class GLTris {
 	}
 
 	private void movePiece(Direction dir) {
+		accumulatorLock = 0.0;
 		boolean hasMoved = currentPiece.move(dir, board);
 		if (hasMoved) {
 			for (MoveCallback callback : pieceMoveCallback) {
@@ -231,6 +285,7 @@ public class GLTris {
 	}
 
 	private void rotatePiece(Rotation rot) {
+		accumulatorLock = 0.0;
 		int kickIndex = currentPiece.rotate(rot, board);
 		//detect spin, if any
 		//can have support for different spin detection methods
@@ -461,6 +516,10 @@ public class GLTris {
 		PieceName[] ret = {};
 		ret = pieceQueue.toArray(ret);
 		return ret;
+	}
+
+	public int getNumPreviews() {
+		return numPreviews;
 	}
 
 	public int getLinesCleared() {

@@ -1,5 +1,6 @@
 package render;
 
+import menu.component.Component;
 import menu.widgets.*;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
@@ -72,6 +73,11 @@ public class WidgetBatch extends Batch{
 
 		glBufferSubData(GL_ARRAY_BUFFER, usedVertices * VERTEX_SIZE, vertexData);
 		usedVertices += numVertices;
+	}
+
+	public void addComponent(Component component) {
+		float[] vertices = component.generateVertices();
+		addVertices(vertices);
 	}
 
 	public void addWidget(Widget widget) {

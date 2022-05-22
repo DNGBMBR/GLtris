@@ -6,7 +6,7 @@ import util.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Slider extends Widget implements MouseMoveCallback, MouseClickCallback{
+public class Slider extends Widget{
 	protected double percentage;
 
 	protected double length;
@@ -23,7 +23,7 @@ public class Slider extends Widget implements MouseMoveCallback, MouseClickCallb
 				  double percentage, double length, double clickerSize, double barWidth, boolean isHorizontal,
 				  TextureAtlas texture, int pxClicker, int pyClicker, int pxBar, int pyBar,
 				  OnSliderMove onDrag) {
-		super(xPos, yPos, isInteractable, displayText);
+		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), isInteractable, displayText);
 		this.percentage = percentage;
 		this.length = length;
 		this.clickerSize = clickerSize;
@@ -36,8 +36,6 @@ public class Slider extends Widget implements MouseMoveCallback, MouseClickCallb
 		this.pyBar = pyBar;
 		this.isClicked = false;
 		this.onDrag = onDrag;
-		MouseListener.registerMouseMoveCallback(this);
-		MouseListener.registerMouseClickCallback(this);
 	}
 
 	public double getPercentage() {
@@ -65,47 +63,34 @@ public class Slider extends Widget implements MouseMoveCallback, MouseClickCallb
 	}
 
 	@Override
-	public void onMove(long window, double xPos, double yPos) {
-		if (!isInteractable) {
+	public void onHover(double mouseX, double mouseY) {
+		if (!isActive) {
 			return;
 		}
 		if (!isClicked()) {
 			return;
 		}
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(window, windowWidth, windowHeight);
-		double transformedMouseX = (float) xPos * ((float) Constants.VIEWPORT_W / windowWidth[0]);
-		double transformedMouseY = (1.0f - (float) yPos / windowHeight[0]) * Constants.VIEWPORT_H;
-		double percentagePosition = isHorizontal ? (1.0 / length) * transformedMouseX - this.xPos / length : (1.0 / length) * transformedMouseY - this.yPos / length;
+		double percentagePosition = isHorizontal ? (1.0 / length) * mouseX - this.xPos / length : (1.0 / length) * mouseY - this.yPos / length;
 
 		percentage = Math.clamp(0.0, 1.0, percentagePosition);
-		this.onDrag.onMove(window, percentage);
+		this.onDrag.onMove(percentage);
 	}
 
 	@Override
-	public void onClick(long window, int button, int action, int mods) {
-		if (!isInteractable) {
+	public void onClick(double mouseX, double mouseY, int button, int action, int mods) {
+		if (!isActive) {
 			return;
 		}
 		if (action == GLFW_RELEASE) {
 			isClicked = false;
 			return;
 		}
-		double[] cursorX = new double[1];
-		double[] cursorY = new double[1];
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetCursorPos(window, cursorX, cursorY);
-		glfwGetWindowSize(window, windowWidth, windowHeight);
-		double transformedX = (float) cursorX[0] * ((float) Constants.VIEWPORT_W / windowWidth[0]);
-		double transformedY = (1.0f - (float) cursorY[0] / windowHeight[0]) * Constants.VIEWPORT_H;
 
 		double clickerX = getClickablePositionX();
 		double clickerY = getClickablePositionY();
 		if (action == GLFW_PRESS &&
-			transformedX >= clickerX && transformedX <= clickerX + clickerSize &&
-			transformedY >= clickerY && transformedY <= clickerY + clickerSize) {
+			mouseX >= clickerX && mouseX <= clickerX + clickerSize &&
+			mouseY >= clickerY && mouseY <= clickerY + clickerSize) {
 			isClicked = true;
 		}
 		else {
@@ -170,7 +155,6 @@ public class Slider extends Widget implements MouseMoveCallback, MouseClickCallb
 
 	@Override
 	public void destroy() {
-		MouseListener.unregisterMouseMoveCallback(this);
-		MouseListener.unregisterMouseClickCallback(this);
+
 	}
 }

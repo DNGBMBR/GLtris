@@ -1,38 +1,17 @@
 package menu.widgets;
 
-public abstract class Widget {
-	protected double xPos, yPos;
+import menu.component.Component;
+
+public abstract class Widget extends Component implements OnComponentClick, OnComponentHover{
 	protected String displayText;
 
-	protected boolean isInteractable = true;
-
-	public Widget(double xPos, double yPos, boolean isInteractable, String displayText) {
-		this.xPos = xPos;
-		this.yPos = yPos;
-		this.isInteractable = isInteractable;
+	public Widget(double xPos, double yPos, double width, double height, boolean isActive, String displayText) {
+		super(xPos, yPos, width, height, isActive);
+		this.isActive = isActive;
 		this.displayText = displayText;
-	}
-
-	public double getXPos() {
-		return xPos;
-	}
-
-	public double getYPos() {
-		return yPos;
-	}
-
-	public boolean isInteractable() {
-		return isInteractable;
-	}
-
-	public void setInteractable(boolean interactable) {
-		isInteractable = interactable;
 	}
 
 	public String getDisplayText() {
 		return displayText;
 	}
-
-	public abstract float[] generateVertices();
-	public abstract void destroy();
 }

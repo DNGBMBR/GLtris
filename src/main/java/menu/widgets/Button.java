@@ -5,13 +5,12 @@ import util.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Button extends Widget implements MouseClickCallback, MouseMoveCallback {
+public class Button extends Widget {
 	//always assumes we're working on a 1920x1080 canvas
-	public double width, height;
 	public double borderWidth;
 	TextureNineSlice texture;
 	private int px, py;
-	MouseClickCallback onClickCallback;
+	OnComponentClick onClickCallback;
 
 	public boolean isPressed;
 	public boolean isHovered;
@@ -19,8 +18,8 @@ public class Button extends Widget implements MouseClickCallback, MouseMoveCallb
 	public Button(double xPos, double yPos, boolean isInteractable, double width, double height,
 				  double borderWidth, String displayText,
 				  TextureNineSlice texture, int px, int py,
-				  MouseClickCallback onClickCallback) {
-		super(xPos, yPos, isInteractable, displayText);
+				  OnComponentClick onClickCallback) {
+		super(xPos, yPos, width, height, isInteractable, displayText);
 		this.width = width;
 		this.height = height;
 		this.borderWidth = borderWidth;
@@ -29,10 +28,9 @@ public class Button extends Widget implements MouseClickCallback, MouseMoveCallb
 		this.py = py;
 		this.onClickCallback = onClickCallback;
 		this.isPressed = false;
-		MouseListener.registerMouseClickCallback(this);
-		MouseListener.registerMouseMoveCallback(this);
 	}
 
+	//generates vertices in local coordinates
 	@Override
 	public float[] generateVertices() {
 		int textureOffset = 0;
@@ -142,18 +140,10 @@ public class Button extends Widget implements MouseClickCallback, MouseMoveCallb
 	}
 
 	@Override
-	public void onClick(long window, int button, int action, int mods) {
-		double[] cursorX = new double[1];
-		double[] cursorY = new double[1];
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetCursorPos(window, cursorX, cursorY);
-		glfwGetWindowSize(window, windowWidth, windowHeight);
-		double transformedX = (float) cursorX[0] * ((float) Constants.VIEWPORT_W / windowWidth[0]);
-		double transformedY = (1.0f - (float) cursorY[0] / windowHeight[0]) * Constants.VIEWPORT_H;
+	public void onClick(double mouseX, double mouseY, int button, int action, int mods) {
 		boolean isInRegion =
-			transformedX >= xPos && transformedX <= xPos + width &&
-			transformedY >= yPos && transformedY <= yPos + height;
+			mouseX >= xPos && mouseX <= xPos + width &&
+			mouseY >= yPos && mouseY <= yPos + height;
 		if (!isInRegion) {
 			isPressed = false;
 			return;
@@ -163,25 +153,19 @@ public class Button extends Widget implements MouseClickCallback, MouseMoveCallb
 		}
 		if (action == GLFW_RELEASE) {
 			isPressed = false;
-			onClickCallback.onClick(window, button, action, mods);
+			onClickCallback.onClick(mouseX, mouseY, button, action, mods);
 		}
 	}
 
 	@Override
-	public void onMove(long window, double xPos, double yPos) {
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(window, windowWidth, windowHeight);
-		double transformedX = (float) xPos * ((float) Constants.VIEWPORT_W / windowWidth[0]);
-		double transformedY = (1.0f - (float) yPos / windowHeight[0]) * Constants.VIEWPORT_H;
+	public void onHover(double mouseX, double mouseY) {
 		isHovered =
-			transformedX >= this.xPos && transformedX <= this.xPos + width &&
-			transformedY >= this.yPos && transformedY <= this.yPos + height;
+			mouseX >= this.xPos && mouseX <= this.xPos + width &&
+			mouseY >= this.yPos && mouseY <= this.yPos + height;
 	}
 
 	@Override
 	public void destroy() {
-		MouseListener.unregisterMouseClickCallback(this);
-		MouseListener.unregisterMouseMoveCallback(this);
+
 	}
 }

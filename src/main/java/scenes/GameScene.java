@@ -6,15 +6,16 @@ import game.pieces.util.*;
 import org.joml.Matrix4f;
 import render.*;
 import render.manager.ResourceManager;
+import util.Constants;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameScene extends Scene{
 
 	//TODO: make board and text left align, right align, etc to the window so resizing doesn't break it
-	private static final float TILE_SIZE = 1.0f;
-	private static final float PROJECTION_WIDTH = 60.0f * TILE_SIZE;
-	private static final float PROJECTION_HEIGHT = PROJECTION_WIDTH * 9.0f / 16.0f;
+	private static final float TILE_SIZE = 32.0f;
+	private static final float PROJECTION_WIDTH = Constants.VIEWPORT_W;
+	private static final float PROJECTION_HEIGHT = Constants.VIEWPORT_H;
 
 	private static final float X_OFFSET_HELD = 4.0f * TILE_SIZE;
 	private static final float Y_OFFSET_HELD = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
@@ -114,10 +115,10 @@ public class GameScene extends Scene{
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
 				if (board[i][j] != TileState.EMPTY) {
-					bottomLeft[0] = j + X_OFFSET_BOARD; bottomLeft[1] = i + Y_OFFSET_BOARD;
-					bottomRight[0] = j + X_OFFSET_BOARD + 1.0f; bottomRight[1] = i + Y_OFFSET_BOARD;
-					topRight[0] = j + X_OFFSET_BOARD + 1.0f; topRight[1] = i + Y_OFFSET_BOARD + 1.0f;
-					topLeft[0] = j + X_OFFSET_BOARD; topLeft[1] = i + Y_OFFSET_BOARD + 1.0f;
+					bottomLeft[0] = j * TILE_SIZE + X_OFFSET_BOARD; bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_BOARD;
+					bottomRight[0] = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE; bottomRight[1] = i * TILE_SIZE + Y_OFFSET_BOARD;
+					topRight[0] = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE; topRight[1] = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					topLeft[0] = j * TILE_SIZE + X_OFFSET_BOARD; topLeft[1] = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
 
 					switch(board[i][j]) {
 						case GARBAGE -> {
@@ -169,10 +170,10 @@ public class GameScene extends Scene{
 		for (int i = 0; i < tileMap.length; i++) {
 			for (int j = 0; j < tileMap[i].length; j++) {
 				if (tileMap[i][j]) {
-					bottomLeft[0] = currentPiece.getTopLeftX() + j + X_OFFSET_BOARD;         bottomLeft[1] = currentPiece.getTopLeftY() + i + Y_OFFSET_BOARD;
-					bottomRight[0] = currentPiece.getTopLeftX() + j + X_OFFSET_BOARD + 1.0f;  bottomRight[1] = currentPiece.getTopLeftY() + i + Y_OFFSET_BOARD;
-					topRight[0] = currentPiece.getTopLeftX() + j + X_OFFSET_BOARD + 1.0f;  topRight[1] = currentPiece.getTopLeftY() + i + Y_OFFSET_BOARD + 1.0f;
-					topLeft[0] = currentPiece.getTopLeftX() + j + X_OFFSET_BOARD;        topLeft[1] = currentPiece.getTopLeftY() + i + Y_OFFSET_BOARD + 1.0f;
+					bottomLeft[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;         bottomLeft[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
+					bottomRight[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;  bottomRight[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
+					topRight[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;  topRight[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					topLeft[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;        topLeft[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
 
 					switch(currentPiece.getName()) {
 						case I -> {
@@ -260,10 +261,10 @@ public class GameScene extends Scene{
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						bottomLeft[0] = j + X_OFFSET_HELD;         bottomLeft[1] = i + Y_OFFSET_HELD;
-						bottomRight[0] = j + X_OFFSET_HELD + 1.0f;  bottomRight[1] = i + Y_OFFSET_HELD;
-						topRight[0] = j + X_OFFSET_HELD + 1.0f;  topRight[1] = i + Y_OFFSET_HELD + 1.0f;
-						topLeft[0] = j + X_OFFSET_HELD;        topLeft[1] = i + Y_OFFSET_HELD + 1.0f;
+						bottomLeft[0] = j * TILE_SIZE + X_OFFSET_HELD;         bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_HELD;
+						bottomRight[0] = j * TILE_SIZE + X_OFFSET_HELD + TILE_SIZE;  bottomRight[1] = i * TILE_SIZE + Y_OFFSET_HELD;
+						topRight[0] = j * TILE_SIZE+ X_OFFSET_HELD + TILE_SIZE;  topRight[1] = i  * TILE_SIZE+ Y_OFFSET_HELD + TILE_SIZE;
+						topLeft[0] = j * TILE_SIZE + X_OFFSET_HELD;        topLeft[1] = i * TILE_SIZE + Y_OFFSET_HELD + TILE_SIZE;
 
 						batch.addVertices(bottomLeft);
 						batch.addVertices(bottomRight);
@@ -277,7 +278,7 @@ public class GameScene extends Scene{
 		}
 
 		//draw the piece queue
-		for (int index = 0; index < GLTris.NUM_PREVIEWS; index++) {
+		for (int index = 0; index < game.getNumPreviews(); index++) {
 			PieceName pieceName = currentQueue[index];
 			switch (pieceName) {
 				case I -> {
@@ -320,10 +321,10 @@ public class GameScene extends Scene{
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						bottomLeft[0] = j + X_OFFSET_QUEUE;         bottomLeft[1] = i + Y_OFFSET_QUEUE - index * 5.0f;
-						bottomRight[0] = j + X_OFFSET_QUEUE + 1.0f;  bottomRight[1] = i + Y_OFFSET_QUEUE - index * 5.0f;
-						topRight[0] = j + X_OFFSET_QUEUE + 1.0f;  topRight[1] = i + Y_OFFSET_QUEUE - index * 5.0f + 1.0f;
-						topLeft[0] = j + X_OFFSET_QUEUE;        topLeft[1] = i + Y_OFFSET_QUEUE - index * 5.0f + 1.0f;
+						bottomLeft[0] = j * TILE_SIZE + X_OFFSET_QUEUE;         bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
+						bottomRight[0] = j * TILE_SIZE + X_OFFSET_QUEUE + TILE_SIZE;  bottomRight[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
+						topRight[0] = j * TILE_SIZE + X_OFFSET_QUEUE + TILE_SIZE;  topRight[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
+						topLeft[0] = j * TILE_SIZE + X_OFFSET_QUEUE;        topLeft[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
 
 						batch.addVertices(bottomLeft);
 						batch.addVertices(bottomRight);
