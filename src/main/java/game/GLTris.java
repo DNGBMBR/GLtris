@@ -1,13 +1,17 @@
 package game;
 
-import game.callbacks.*;
-import org.joml.Random;
+import game.callbacks.LineClearCallback;
+import game.callbacks.MoveCallback;
+import game.callbacks.RotateCallback;
 import game.pieces.*;
 import game.pieces.util.*;
-import scenes.GameScene;
+import org.joml.Random;
 import util.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static game.SpinType.*;

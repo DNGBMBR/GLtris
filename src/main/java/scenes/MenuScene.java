@@ -59,7 +59,7 @@ public class MenuScene extends Scene{
 		widgetsMain.addComponent(
 			new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4, true,
 				BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, START_GAME,
-				widgetTexture, 0, 1,
+				widgetTexture, 0, 2,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					shouldChangeScene = true;
@@ -67,7 +67,7 @@ public class MenuScene extends Scene{
 			}));
 		widgetsMain.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - (BUTTON_HEIGHT + 50.0), true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, SETTINGS,
-			widgetTexture, 0, 1,
+			widgetTexture, 0, 2,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					widgetsMain.setActive(false);
@@ -77,7 +77,7 @@ public class MenuScene extends Scene{
 
 		widgetsSettings.addComponent(new Button(100.0, 100.0, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, BACK,
-			widgetTexture, 0, 1,
+			widgetTexture, 0, 2,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				widgetsMain.setActive(true);
 				widgetsSettings.setActive(false);
@@ -85,27 +85,27 @@ public class MenuScene extends Scene{
 		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y,true, SDF,
 			Utils.inverseLerp(Constants.MIN_SDF, Constants.MAX_SDF, sdf),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
-			widgetTexture, 0, 0, 1, 0,
+			widgetTexture, 0, 1, 1, 1,
 			(double percentage) -> {
 				sdf = Math.lerp(Constants.MIN_SDF, Constants.MAX_SDF, percentage);
 			}));
 		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING,true, ARR,
 			Utils.inverseLerp(Constants.MIN_ARR, Constants.MAX_ARR, arr),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
-			widgetTexture, 0, 0, 1, 0,
+			widgetTexture, 0, 1, 1, 1,
 			(double percentage) -> {
 				arr = Math.lerp(Constants.MIN_ARR, Constants.MAX_ARR, percentage);
 			}));
 		widgetsSettings.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 2.0, true, DAS,
 			Utils.inverseLerp(Constants.MIN_DAS, Constants.MAX_DAS, das),
 			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
-			widgetTexture, 0, 0, 1, 0,
+			widgetTexture, 0, 1, 1, 1,
 			(double percentage) -> {
 				das = Math.lerp(Constants.MIN_DAS, Constants.MAX_DAS, percentage);
 			}));
 		widgetsSettings.addComponent(new Button(Constants.VIEWPORT_W - BUTTON_WIDTH - 100.0, 100.0, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, SAVE,
-			widgetTexture, 0, 1,
+			widgetTexture, 0, 2,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				LocalSettings.setARR(arr);
 				LocalSettings.setDAS(das);

@@ -5,6 +5,7 @@ import menu.widgets.OnComponentHover;
 
 import java.util.List;
 
+//TODO: Add switches (boolean on/off) and text field (user can type in text/numbers)
 public abstract class Component implements OnComponentHover, OnComponentClick {
 	protected double xPos, yPos;
 	protected double width, height;
