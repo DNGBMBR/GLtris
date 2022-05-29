@@ -1,17 +1,18 @@
 package menu.widgets;
 
+import menu.component.Component;
 import org.joml.Math;
 import render.TextureAtlas;
 
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class Switch extends Widget{
+public class Switch extends Component implements OnComponentClick, OnComponentHover {
 	private double switchSize;
 	private double backgroundWidth;
 
 	private TextureAtlas texture;
-	private int px, py, backgroundPx, backgroundPy;
+	private int px, py;
 
 	protected boolean isOn;
 	private boolean isPressed = false;
@@ -23,7 +24,7 @@ public class Switch extends Widget{
 				  TextureAtlas texture, int px, int py,
 				  String displayText,
 				  OnSwitchClick onClickCallback) {
-		super(xPos, yPos, 2 * switchSize, Math.max(switchSize, backgroundWidth), isActive, displayText);
+		super(xPos, yPos, 2 * switchSize, Math.max(switchSize, backgroundWidth), displayText, isActive);
 		this.switchSize = switchSize;
 		this.backgroundWidth = backgroundWidth;
 		this.isOn = isOn;
@@ -91,7 +92,12 @@ public class Switch extends Widget{
 	}
 
 	@Override
-	public void onHover(double mouseX, double mouseY) {
+	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
+
+	}
+
+	@Override
+	public void onHover(double mouseX, double mouseY, boolean isInFrame) {
 
 	}
 }

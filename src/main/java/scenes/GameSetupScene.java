@@ -1,8 +1,7 @@
 package scenes;
 
 import menu.component.*;
-import menu.widgets.Button;
-import menu.widgets.Switch;
+import menu.widgets.*;
 import org.joml.Matrix4f;
 import render.*;
 import render.manager.ResourceManager;
@@ -11,10 +10,12 @@ import util.Constants;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameSetupScene extends Scene{
-	private static final double FRAME_SETTINGS_WIDTH = 1280;
+	private static final double FRAME_SETTINGS_WIDTH = 1000;
 	private static final double FRAME_SETTINGS_HEIGHT = 720;
 	private static final double FRAME_SETTINGS_X_POS = (Constants.VIEWPORT_W - FRAME_SETTINGS_WIDTH) * 0.5;
 	private static final double FRAME_SETTINGS_Y_POS = (Constants.VIEWPORT_H - FRAME_SETTINGS_HEIGHT) * 0.5;
+
+	private static final double OPTIONS_SPACING = 50.0;
 
 	private Matrix4f projection;
 	private Scene nextScene;
@@ -33,20 +34,41 @@ public class GameSetupScene extends Scene{
 		topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 		settingsFrame = new Frame(FRAME_SETTINGS_X_POS, FRAME_SETTINGS_Y_POS,
 				FRAME_SETTINGS_WIDTH, FRAME_SETTINGS_HEIGHT,
-				true, true, 0.0);
+				true, true, 1000);
+		settingsFrame.addComponent(new Slider(0, 0, true,
+			"poggers", 0.0, 600, 0.0, 1.0, 30, 10, true,
+			widgetTexture, 0, 1,
+			(double percentage) -> {
+
+			}));
+		settingsFrame.addComponent(new Button(0, 100, true,
+			600, 100, 25, "aaaaadddddd",
+			widgetTexture, 0, 2,
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+
+			}));
+		settingsFrame.addComponent(new Slider(0, -100, true,
+			"poggers", 0.0, 600, 0.0, 1.0, 30, 10, true,
+			widgetTexture, 0, 1,
+			(double percentage) -> {
+
+			}));
+		settingsFrame.addComponent(new Button(0, -400, true,
+			600, 100, 25, "jdopfsjioj",
+			widgetTexture, 0, 2,
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+
+			}));
+		settingsFrame.addComponent(new TextField(50, 500, 600, 48, true, "", 24.0f, 0.0f, 0.0f, 0.0f));
+		topFrame.addComponent(settingsFrame);
 
 		topFrame.addComponent(
-			new Button(200, 100, true,
+			new Button(50, 50, true,
 			600, 100, 25, "Start Game",
 				widgetTexture, 0, 2,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 					nextScene = new GameScene(windowID);
 					shouldChangeScene = true;
-				}));
-		topFrame.addComponent(new Switch(100, 100, 30, 10,
-				true, true, widgetTexture, 0, 0, "",
-				(boolean isOn) -> {
-					System.out.println(isOn);
 				}));
 	}
 
@@ -89,17 +111,12 @@ public class GameSetupScene extends Scene{
 
 		widgetShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
 
-		batch.addVertices(topFrame.generateVertices());
+		batch.addComponent(topFrame);
 		batch.flush();
 
 		textRenderer.bind();
 
-		for (Component component : topFrame.getComponents()) {
-			if (component instanceof Button) {
-				Button button = (Button) component;
-				textRenderer.addText(button, 1.0f, 1.0f, 1.0f);
-			}
-		}
+		textRenderer.addText(topFrame);
 
 		textRenderer.draw();
 	}
@@ -117,5 +134,6 @@ public class GameSetupScene extends Scene{
 	@Override
 	public void destroy() {
 		topFrame.destroy();
+		batch.destroy();
 	}
 }

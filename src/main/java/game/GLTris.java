@@ -6,6 +6,7 @@ import game.callbacks.RotateCallback;
 import game.pieces.*;
 import game.pieces.util.*;
 import org.joml.Random;
+import org.lwjgl.glfw.GLFWKeyCallbackI;
 import util.*;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class GLTris {
 	private PieceName[] bagRandomizer = {PieceName.I, PieceName.O, PieceName.L, PieceName.J, PieceName.S, PieceName.Z, PieceName.T};
 	private Random rng;
 
-	private KeyCallback keyCallback;
+	private GLFWKeyCallbackI keyCallback;
 
 	private ConcurrentLinkedQueue<PieceName> pieceQueue;
 	private TileState[][] board;
@@ -136,7 +137,7 @@ public class GLTris {
 				}
 			}
 		};
-		KeyListener.registerCallback(keyCallback);
+		KeyListener.registerKeyCallback(keyCallback);
 
 		registerOnLineClearListener((int rowsCleared, SpinType spinType) -> {
 			System.out.println("rows cleared: " + rowsCleared + " spin type: " + spinType);
@@ -543,6 +544,6 @@ public class GLTris {
 	}
 
 	public void destroy() {
-		KeyListener.unregisterCallback(keyCallback);
+		KeyListener.unregisterKeyCallback(keyCallback);
 	}
 }

@@ -1,6 +1,6 @@
 package util;
 
-import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.*;
 
 import java.util.*;
 
@@ -8,7 +8,8 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public class KeyListener {
 	private static boolean[] keyPressed = new boolean[350];
-	private static Set<KeyCallback> callbacks = Collections.synchronizedSet(new HashSet<>());
+	private static Set<GLFWKeyCallbackI> keyCallbacks = Collections.synchronizedSet(new HashSet<>());
+	private static Set<GLFWCharCallbackI> textCallbacks = Collections.synchronizedSet(new HashSet<>());
 
 	private KeyListener() {}
 
@@ -19,8 +20,14 @@ public class KeyListener {
 		else if (action == GLFW_RELEASE) {
 			keyPressed[key] = false;
 		}
-		for (KeyCallback callback : callbacks) {
-			callback.callback(window, key, scancode, action, mods);
+		for (GLFWKeyCallbackI callback : keyCallbacks) {
+			callback.invoke(window, key, scancode, action, mods);
+		}
+	}
+
+	public static void textCallback(long window, int codepoint) {
+		for (GLFWCharCallbackI callback : textCallbacks) {
+			callback.invoke(window, codepoint);
 		}
 	}
 
@@ -28,11 +35,19 @@ public class KeyListener {
 		return keyPressed[key];
 	}
 
-	public static void registerCallback(KeyCallback callback) {
-		callbacks.add(callback);
+	public static void registerKeyCallback(GLFWKeyCallbackI callback) {
+		keyCallbacks.add(callback);
 	}
 
-	public static void unregisterCallback(KeyCallback callback) {
-		callbacks.remove(callback);
+	public static void unregisterKeyCallback(GLFWKeyCallbackI callback) {
+		keyCallbacks.remove(callback);
+	}
+
+	public static void registerCharCallback(GLFWCharCallbackI callback) {
+		textCallbacks.add(callback);
+	}
+
+	public static void unregisterCharCallback(GLFWCharCallbackI callback) {
+		textCallbacks.remove(callback);
 	}
 }

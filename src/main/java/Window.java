@@ -1,3 +1,4 @@
+import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import render.manager.ResourceManager;
@@ -67,6 +68,7 @@ public class Window {
 		glViewport(0, 0, width, height);
 
 		glfwSetKeyCallback(windowID, KeyListener::keyCallback);
+		glfwSetCharCallback(windowID, KeyListener::textCallback);
 		glfwSetCursorPosCallback(windowID, MouseListener::mousePosCallback);
 		glfwSetMouseButtonCallback(windowID, MouseListener::mouseButtonCallback);
 		glfwSetScrollCallback(windowID, MouseListener::mouseScrollCallback);

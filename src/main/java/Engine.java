@@ -39,7 +39,7 @@ public class Engine {
 			TextRenderer renderer = TextRenderer.getInstance();
 			renderer.updateProjection(windowID);
 		});
-		KeyListener.registerCallback((long window, int key, int scancode, int action, int mods) -> {
+		KeyListener.registerKeyCallback((long window, int key, int scancode, int action, int mods) -> {
 			//debug for switching scenes
 			if (action == GLFW_PRESS) {
 				if (key == GLFW_KEY_M) {

@@ -80,11 +80,6 @@ public class WidgetBatch extends Batch{
 		addVertices(vertices);
 	}
 
-	public void addWidget(Widget widget) {
-		float[] vertices = widget.generateVertices();
-		addVertices(vertices);
-	}
-
 	public void addButton(Button button) {
 		float[] buttonVertices = button.generateVertices();
 		addVertices(buttonVertices);

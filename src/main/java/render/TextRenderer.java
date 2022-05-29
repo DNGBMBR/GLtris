@@ -1,11 +1,14 @@
 package render;
 
+import menu.component.*;
 import menu.widgets.Button;
+import org.joml.Math;
 import org.joml.Matrix4f;
 import render.manager.ResourceManager;
+import util.Constants;
+import util.Utils;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -31,7 +34,7 @@ public class TextRenderer{
 		fontTexture = atlas;
 		textShader = ResourceManager.getShaderByName("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
 
-		batch = new TextBatch(capacity * 6);
+		batch = new TextBatch(capacity * Constants.WIDGET_ELEMENTS_PER_QUAD);
 	}
 
 	public static TextRenderer getInstance() {
@@ -76,7 +79,32 @@ public class TextRenderer{
 			xPos, yPos + scale, r, g, b, uvData[0], uvData[3],
 			xPos, yPos, r, g, b, uvData[0], uvData[1]
 		};
+		batch.addVertices(vertexData);
+	}
 
+	private void addCharacter(char c, float scale, float xPos, float yPos,
+							  float left, float right, float bottom, float top,
+							  float r, float g, float b) {
+		float[] uvData = fontTexture.getElementUVs(c, 0, 1, 1);
+
+		float p0x = Math.max(xPos, left);
+		float p0y = Math.max(yPos, bottom);
+		float p0u = xPos < left ? Math.lerp(uvData[0], uvData[2], (float) Utils.inverseLerp(xPos, xPos + scale, left)) : uvData[0];
+		float p0v = yPos < bottom ? Math.lerp(uvData[1], uvData[3], (float) Utils.inverseLerp(yPos, yPos + scale, bottom)) : uvData[1];
+
+		float p1x = Math.min(xPos + scale, right);
+		float p1y = Math.min(yPos + scale, top);
+		float p1u = xPos + scale > right ? Math.lerp(uvData[0], uvData[2], (float) Utils.inverseLerp(xPos, xPos + scale, right)) : uvData[2];
+		float p1v = yPos + scale > top ? Math.lerp(uvData[1], uvData[3], (float) Utils.inverseLerp(yPos, yPos + scale, top)) : uvData[3];
+
+		float[] vertexData = {
+			p0x, p0y, r, g, b, p0u, p0v,
+			p1x, p0y, r, g, b, p1u, p0v,
+			p1x, p1y, r, g, b, p1u, p1v,
+			p1x, p1y, r, g, b, p1u, p1v,
+			p0x, p1y, r, g, b, p0u, p1v,
+			p0x, p0y, r, g, b, p0u, p0v,
+		};
 		batch.addVertices(vertexData);
 	}
 
@@ -90,13 +118,43 @@ public class TextRenderer{
 		}
 	}
 
-	public void addText(Button button, float r, float g, float b) {
-		float centerX = ((float) (2.0 * button.getXPos() + button.getWidth())) * 0.5f;
-		float centerY = ((float) (2.0f * button.getYPos() + button.getHeight())) * 0.5f;
-		float fontSize = (float) button.getHeight() * 0.5f;
-		float startX = centerX - fontSize * button.getDisplayText().length() * 0.5f;
-		float startY = centerY - (float) button.getHeight() * 0.25f;
-		addText(button.getDisplayText(), fontSize, startX, startY, r, g, b);
+	private void addText(String text, float scale, float xPos, float yPos,
+						float left, float right, float bottom, float top,
+						float r, float g, float b) {
+		if (xPos >= right || xPos + text.length() * scale <= left ||
+			yPos >= top || yPos + scale <= bottom) {
+			return;
+		}
+
+		float horizontalOffset = xPos;
+
+		for (int i = 0; i < text.length(); i++) {
+			if (horizontalOffset >= right) {
+				break;
+			}
+			char c = text.charAt(i);
+			addCharacter(c, scale, horizontalOffset, yPos, left, right, bottom, top, r, g, b);
+			horizontalOffset += scale;
+		}
+	}
+
+	public void addText(Frame frame) {
+		float left = (float) frame.getXPos();
+		float right = (float) (frame.getXPos() + frame.getWidth());
+		float bottom = (float) frame.getYPos();
+		float top = (float) (frame.getYPos() + frame.getHeight());
+		for (Component component : frame.getComponents()) {
+			if (component instanceof Frame subFrame) {
+				addText(subFrame);
+			}
+			else {
+				List<TextInfo> textInfo = component.getTextInfo();
+				for (TextInfo info : textInfo) {
+					addText(info.text, info.fontSize, left + info.startX, bottom + (float) frame.getCurrentScrollHeight() + info.startY,
+						left, right, bottom, top, info.r, info.g, info.b);
+				}
+			}
+		}
 	}
 
 	public void draw(){

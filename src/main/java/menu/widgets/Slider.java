@@ -1,13 +1,20 @@
 package menu.widgets;
 
+import menu.component.Component;
+import menu.component.TextInfo;
 import org.joml.Math;
 import render.TextureAtlas;
 import util.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.lwjgl.glfw.GLFW.*;
 
-public class Slider extends Widget{
+public class Slider extends Component implements OnComponentClick, OnComponentHover {
 	protected double percentage;
+
+	protected double minValue, maxValue;
 
 	protected double length;
 	protected double barWidth;
@@ -15,25 +22,24 @@ public class Slider extends Widget{
 	protected boolean isHorizontal;
 	protected boolean isClicked;
 	private TextureAtlas texture;
-	private int pxClicker, pyClicker;
-	private int pxBar, pyBar;
+	private int px, py;
 	OnSliderMove onDrag;
 
 	public Slider(double xPos, double yPos, boolean isInteractable, String displayText,
-				  double percentage, double length, double clickerSize, double barWidth, boolean isHorizontal,
-				  TextureAtlas texture, int pxClicker, int pyClicker, int pxBar, int pyBar,
+				  double percentage, double length, double minValue, double maxValue, double clickerSize, double barWidth, boolean isHorizontal,
+				  TextureAtlas texture, int px, int py,
 				  OnSliderMove onDrag) {
-		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), isInteractable, displayText);
+		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), displayText, isInteractable);
 		this.percentage = percentage;
+		this.minValue = minValue;
+		this.maxValue = maxValue;
 		this.length = length;
 		this.clickerSize = clickerSize;
 		this.barWidth = barWidth;
 		this.isHorizontal = isHorizontal;
 		this.texture = texture;
-		this.pxClicker = pxClicker;
-		this.pyClicker = pyClicker;
-		this.pxBar = pxBar;
-		this.pyBar = pyBar;
+		this.px = px;
+		this.py = py;
 		this.isClicked = false;
 		this.onDrag = onDrag;
 	}
@@ -63,14 +69,12 @@ public class Slider extends Widget{
 	}
 
 	@Override
-	public void onHover(double mouseX, double mouseY) {
-		if (!isActive) {
+	public void onHover(double mouseX, double mouseY, boolean isInFrame) {
+		if (!isActive || !isInFrame || !isClicked()) {
+			isClicked = false;
 			return;
 		}
-		if (!isClicked()) {
-			return;
-		}
-		double percentagePosition = isHorizontal ? (1.0 / length) * mouseX - this.xPos / length : (1.0 / length) * mouseY - this.yPos / length;
+		double percentagePosition = (isHorizontal ? mouseX - this.xPos - 0.5 * clickerSize : mouseY - this.yPos - 0.5 * clickerSize) / length;
 
 		percentage = Math.clamp(0.0, 1.0, percentagePosition);
 		this.onDrag.onMove(percentage);
@@ -88,14 +92,9 @@ public class Slider extends Widget{
 
 		double clickerX = getClickablePositionX();
 		double clickerY = getClickablePositionY();
-		if (action == GLFW_PRESS &&
+		isClicked = action == GLFW_PRESS &&
 			mouseX >= clickerX && mouseX <= clickerX + clickerSize &&
-			mouseY >= clickerY && mouseY <= clickerY + clickerSize) {
-			isClicked = true;
-		}
-		else {
-			isClicked = false;
-		}
+			mouseY >= clickerY && mouseY <= clickerY + clickerSize;
 	}
 
 	public double getClickablePositionX() {
@@ -108,8 +107,8 @@ public class Slider extends Widget{
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvsClicker = texture.getElementUVs(pxClicker, pyClicker, 1, 1);
-		float[] uvsBar = texture.getElementUVs(pxBar, pyBar, 1, 1);
+		float[] uvsClicker = texture.getElementUVs(px, py, 1, 1);
+		float[] uvsBar = texture.getElementUVs(px + 1, py, 1, 1);
 
 		float p0xBar = (float) (xPos + (clickerSize - barWidth) * 0.5);
 		float p0yBar = (float) (yPos + (clickerSize - barWidth) * 0.5);
@@ -151,6 +150,29 @@ public class Slider extends Widget{
 		Utils.addVertices(orderedVertices, clickerVertices[3], 40);
 		Utils.addVertices(orderedVertices, clickerVertices[0], 44);
 		return orderedVertices;
+	}
+
+	@Override
+	public List<TextInfo> getTextInfo() {
+		float fontSize = (float) clickerSize * 0.75f;
+
+		float startXName = (float) xPos - fontSize * (displayText.length() + 1);
+		float startYName = (float) yPos;
+		TextInfo infoName = new TextInfo(displayText, fontSize, startXName, startYName, 0.0f, 0.0f, 0.0f);
+
+		float startXValue = (float) (xPos + clickerSize + (isHorizontal ? length : 0));
+		float startYValue = (float) (yPos + (!isHorizontal ? length : 0));
+		TextInfo infoValue = new TextInfo(String.valueOf(Math.lerp(minValue, maxValue, percentage)), fontSize, startXValue, startYValue, 0.0f, 0.0f, 0.0f);
+
+		List<TextInfo> ret = new ArrayList<>();
+		ret.add(infoName);
+		ret.add(infoValue);
+		return ret;
+	}
+
+	@Override
+	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
+
 	}
 
 	@Override

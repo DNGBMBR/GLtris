@@ -1,21 +1,23 @@
 package menu.component;
 
-import menu.widgets.OnComponentClick;
-import menu.widgets.OnComponentHover;
+import menu.widgets.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 //TODO: Add switches (boolean on/off) and text field (user can type in text/numbers)
-public abstract class Component implements OnComponentHover, OnComponentClick {
+public abstract class Component implements OnComponentHover, OnComponentClick, OnFrameScroll {
 	protected double xPos, yPos;
 	protected double width, height;
+	protected String displayText;
 	protected boolean isActive;
 
-	public Component(double xPos, double yPos, double width, double height, boolean isActive) {
+	public Component(double xPos, double yPos, double width, double height, String displayText, boolean isActive) {
 		this.xPos = xPos;
 		this.yPos = yPos;
 		this.width = width;
 		this.height = height;
+		this.displayText = displayText;
 		this.isActive = isActive;
 	}
 
@@ -35,8 +37,21 @@ public abstract class Component implements OnComponentHover, OnComponentClick {
 		return height;
 	}
 
+	public String getDisplayText() {
+		return displayText;
+	}
+
+	public void setDisplayText(String displayText) {
+		this.displayText = displayText;
+	}
+
 	public boolean isActive() {
 		return isActive;
+	}
+
+	public boolean isCursorHovered(double mouseX, double mouseY) {
+		return mouseX >= xPos && mouseX <= xPos + width &&
+			mouseY >= yPos && mouseY <= yPos + height;
 	}
 
 	public void setActive(boolean active) {
@@ -44,6 +59,10 @@ public abstract class Component implements OnComponentHover, OnComponentClick {
 	}
 
 	public abstract float[] generateVertices();
+
+	public List<TextInfo> getTextInfo() {
+		return new ArrayList<>();
+	}
 
 	public abstract void destroy();
 }
