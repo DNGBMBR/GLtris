@@ -1,4 +1,6 @@
-package render;
+package render.batch;
+
+import render.batch.Batch;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;

@@ -1,4 +1,4 @@
-package render;
+package render.texture;
 
 import java.io.IOException;
 

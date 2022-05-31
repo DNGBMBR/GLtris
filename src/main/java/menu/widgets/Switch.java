@@ -2,7 +2,7 @@ package menu.widgets;
 
 import menu.component.Component;
 import org.joml.Math;
-import render.TextureAtlas;
+import render.texture.TextureAtlas;
 
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;

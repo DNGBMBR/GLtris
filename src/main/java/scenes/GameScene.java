@@ -5,8 +5,12 @@ import game.pieces.*;
 import game.pieces.util.*;
 import org.joml.Matrix4f;
 import render.*;
+import render.batch.TileBatch;
 import render.manager.ResourceManager;
+import render.manager.TextRenderer;
+import render.texture.TextureAtlas;
 import util.Constants;
+import util.Utils;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -25,11 +29,10 @@ public class GameScene extends Scene{
 
 	private static final float X_OFFSET_QUEUE = 20.0f * TILE_SIZE;
 	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
+	private static final float QUEUE_PIECE_BOUND_SIZE = TILE_SIZE * 6.0f;
 
 	private Shader shaderBlocks;
-	private Camera camera;
 	private Matrix4f projection;
-	private Matrix4f transform;
 
 	private TileBatch batch;
 	private TextureAtlas pieceTexture;
@@ -45,10 +48,8 @@ public class GameScene extends Scene{
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 
-		transform = new Matrix4f();
-		camera = new Camera();
 		game = new GLTris();
-		batch = new TileBatch(40);
+		batch = new TileBatch(500);
 
 		textRenderer = TextRenderer.getInstance();
 
@@ -97,32 +98,46 @@ public class GameScene extends Scene{
 		float[] buffer = new float[16];
 
 		shaderBlocks.bind();
-		pieceTexture.bind(shaderBlocks, "uTexture");
 
 		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-		shaderBlocks.uploadUniformMatrix4fv("uView", false, camera.getView().get(buffer));
-		shaderBlocks.uploadUniformMatrix4fv("uTransform", false, transform.get(buffer));
 
-		float[] bottomLeft = new float[4];
-		float[] bottomRight = new float[4];
-		float[] topRight = new float[4];
-		float[] topLeft = new float[4];
+		//draw all elements related to the pieces
+		pieceTexture.bind(shaderBlocks, "uTexture");
 
 		TileState[][] board = game.getBoard();
+		Piece currentPiece = game.getCurrentPiece();
+		PieceName heldPiece = game.getHeldPiece();
 
-		int px = 0, py = 0;
-		//draw the board
+		batchBoard(board);
+		batchCurrentPiece(currentPiece);
+		batchGhostPiece(currentPiece, board);
+		batchHeldPiece(heldPiece);
+		batchPieceQueue();
+
+		batch.flush();
+
+		textRenderer.bind();
+
+		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 24.0f, 1200, 720, 0, 0, 0);
+
+		textRenderer.draw();
+	}
+
+	private void batchBoard(TileState[][] board) {
+		float[] vertices = new float[board.length * board[0].length * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+
+		int px, py;
 		for (int i = 0; i < board.length; i++) {
 			for (int j = 0; j < board[i].length; j++) {
 				if (board[i][j] != TileState.EMPTY) {
-					bottomLeft[0] = j * TILE_SIZE + X_OFFSET_BOARD; bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_BOARD;
-					bottomRight[0] = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE; bottomRight[1] = i * TILE_SIZE + Y_OFFSET_BOARD;
-					topRight[0] = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE; topRight[1] = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
-					topLeft[0] = j * TILE_SIZE + X_OFFSET_BOARD; topLeft[1] = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					float p0x = j * TILE_SIZE + X_OFFSET_BOARD;
+					float p0y = i * TILE_SIZE + Y_OFFSET_BOARD;
+					float p1x = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
+					float p1y = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
 
 					switch(board[i][j]) {
 						case GARBAGE -> {
-							px = 0; py = 2;
+							px = 0; py = 0;
 						}
 						case I -> {
 							px = 1; py = 0;
@@ -145,35 +160,40 @@ public class GameScene extends Scene{
 						case T -> {
 							px = 3; py = 1;
 						}
+						default -> {
+							px = 0; py = 0;
+						}
 					}
 
 					float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
+					float p0u = uvs[0];
+					float p0v = uvs[1];
+					float p1u = uvs[2];
+					float p1v = uvs[3];
 
-					bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
-					bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
-					topRight[2] = uvs[2]; topRight[3] = uvs[3];
-					topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
-
-					batch.addVertices(bottomLeft);
-					batch.addVertices(bottomRight);
-					batch.addVertices(topRight);
-					batch.addVertices(topRight);
-					batch.addVertices(topLeft);
-					batch.addVertices(bottomLeft);
+					Utils.addBlockVertices(vertices,
+						i * board[j].length * Constants.BLOCK_ELEMENTS_PER_QUAD * Constants.BLOCK_ATTRIBUTES_PER_VERTEX +
+						j * Constants.BLOCK_ELEMENTS_PER_QUAD * Constants.BLOCK_ATTRIBUTES_PER_VERTEX,
+						p0x, p0y, p0u, p0v,
+						p1x, p1y, p1u, p1v);
 				}
 			}
 		}
+		batch.addVertices(vertices);
+	}
 
-		//draw the current piece the player is placing
-		Piece currentPiece = game.getCurrentPiece();
+	private void batchCurrentPiece(Piece currentPiece) {
+		float[] vertices = new float[Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+
 		boolean[][] tileMap = currentPiece.getTileMap();
+		int px, py;
 		for (int i = 0; i < tileMap.length; i++) {
 			for (int j = 0; j < tileMap[i].length; j++) {
 				if (tileMap[i][j]) {
-					bottomLeft[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;         bottomLeft[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
-					bottomRight[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;  bottomRight[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
-					topRight[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;  topRight[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
-					topLeft[0] = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;        topLeft[1] = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					float p0x = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;
+					float p0y = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
+					float p1x = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
+					float p1y = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
 
 					switch(currentPiece.getName()) {
 						case I -> {
@@ -197,27 +217,83 @@ public class GameScene extends Scene{
 						case T -> {
 							px = 3; py = 1;
 						}
+						default -> {
+							px = 0; py = 0;
+						}
 					}
 
 					float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-					bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
-					bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
-					topRight[2] = uvs[2]; topRight[3] = uvs[3];
-					topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
+					Utils.addBlockVertices(vertices, 0,
+						p0x, p0y, uvs[0], uvs[1],
+						p1x, p1y, uvs[2], uvs[3]);
 
-					batch.addVertices(bottomLeft);
-					batch.addVertices(bottomRight);
-					batch.addVertices(topRight);
-					batch.addVertices(topRight);
-					batch.addVertices(topLeft);
-					batch.addVertices(bottomLeft);
+					batch.addVertices(vertices);
 				}
 			}
 		}
+	}
 
-		//draw the held piece
-		PieceName heldPiece = game.getHeldPiece();
+	private void batchGhostPiece(Piece piece, TileState[][] board) {
+		Piece ghostPiece = piece.copy();
+		while (ghostPiece.move(Direction.DOWN, board)) {}
+
+		boolean[][] tileMap = ghostPiece.getTileMap();
+
+		float[] vertices = new float[Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+		int px, py;
+		switch(ghostPiece.getName()) {
+			case I -> {
+				px = 1; py = 2;
+			}
+			case O -> {
+				px = 2; py = 2;
+			}
+			case L -> {
+				px = 3; py = 2;
+			}
+			case J -> {
+				px = 0; py = 3;
+			}
+			case S -> {
+				px = 1; py = 3;
+			}
+			case Z -> {
+				px = 2; py = 3;
+			}
+			case T -> {
+				px = 3; py = 3;
+			}
+			default -> {
+				px = 0; py = 2;
+			}
+		}
+
+		float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
+
+		for (int i = 0; i < tileMap.length; i++) {
+			for (int j = 0; j < tileMap[i].length; j++) {
+				if (tileMap[i][j]) {
+					float p0x = (ghostPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;
+					float p0y = (ghostPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
+					float p1x = (ghostPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
+					float p1y = (ghostPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+
+					Utils.addBlockVertices(vertices, 0,
+						p0x, p0y, uvs[0], uvs[1],
+						p1x, p1y, uvs[2], uvs[3]);
+
+					batch.addVertices(vertices);
+				}
+			}
+		}
+	}
+
+	private void batchHeldPiece(PieceName heldPiece) {
+		float[] vertices = new float[Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+
+		boolean[][] tileMap = {};
+		int px, py;
 
 		if (heldPiece != null) {
 			switch(heldPiece) {
@@ -249,33 +325,38 @@ public class GameScene extends Scene{
 					px = 3; py = 1;
 					tileMap = TPiece.getTileMapSpawn();
 				}
+				default -> {
+					px = 0; py = 0;
+				}
 			}
 
 			float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-			bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
-			bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
-			topRight[2] = uvs[2]; topRight[3] = uvs[3];
-			topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
-
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						bottomLeft[0] = j * TILE_SIZE + X_OFFSET_HELD;         bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_HELD;
-						bottomRight[0] = j * TILE_SIZE + X_OFFSET_HELD + TILE_SIZE;  bottomRight[1] = i * TILE_SIZE + Y_OFFSET_HELD;
-						topRight[0] = j * TILE_SIZE+ X_OFFSET_HELD + TILE_SIZE;  topRight[1] = i  * TILE_SIZE+ Y_OFFSET_HELD + TILE_SIZE;
-						topLeft[0] = j * TILE_SIZE + X_OFFSET_HELD;        topLeft[1] = i * TILE_SIZE + Y_OFFSET_HELD + TILE_SIZE;
+						float p0x = j * TILE_SIZE + X_OFFSET_HELD;
+						float p0y = i * TILE_SIZE + Y_OFFSET_HELD;
+						float p1x = j * TILE_SIZE+ X_OFFSET_HELD + TILE_SIZE;
+						float p1y = i  * TILE_SIZE+ Y_OFFSET_HELD + TILE_SIZE;
 
-						batch.addVertices(bottomLeft);
-						batch.addVertices(bottomRight);
-						batch.addVertices(topRight);
-						batch.addVertices(topRight);
-						batch.addVertices(topLeft);
-						batch.addVertices(bottomLeft);
+						Utils.addBlockVertices(vertices, 0,
+							p0x, p0y, uvs[0], uvs[1],
+							p1x, p1y, uvs[2], uvs[3]);
+
+						batch.addVertices(vertices);
 					}
 				}
 			}
 		}
+	}
+
+	private void batchPieceQueue() {
+		//TODO: make all pieces in queue centered in their respective boxes
+		float[] vertices = new float[Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+
+		boolean[][] tileMap = {};
+		int px = 0, py = 0;
 
 		//draw the piece queue
 		for (int index = 0; index < game.getNumPreviews(); index++) {
@@ -313,37 +394,23 @@ public class GameScene extends Scene{
 
 			float[] uvs = pieceTexture.getElementUVs(px, py, 1, 1);
 
-			bottomLeft[2] = uvs[0]; bottomLeft[3] = uvs[1];
-			bottomRight[2] = uvs[2]; bottomRight[3] = uvs[1];
-			topRight[2] = uvs[2]; topRight[3] = uvs[3];
-			topLeft[2] = uvs[0]; topLeft[3] = uvs[3];
-
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						bottomLeft[0] = j * TILE_SIZE + X_OFFSET_QUEUE;         bottomLeft[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
-						bottomRight[0] = j * TILE_SIZE + X_OFFSET_QUEUE + TILE_SIZE;  bottomRight[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
-						topRight[0] = j * TILE_SIZE + X_OFFSET_QUEUE + TILE_SIZE;  topRight[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
-						topLeft[0] = j * TILE_SIZE + X_OFFSET_QUEUE;        topLeft[1] = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
+						float p0x = j * TILE_SIZE + (X_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE) - tileMap.length * 0.5f * TILE_SIZE;
+						float p0y = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
+						float p1x = j * TILE_SIZE + (X_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE) - tileMap.length * 0.5f * TILE_SIZE + TILE_SIZE;
+						float p1y = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
 
-						batch.addVertices(bottomLeft);
-						batch.addVertices(bottomRight);
-						batch.addVertices(topRight);
-						batch.addVertices(topRight);
-						batch.addVertices(topLeft);
-						batch.addVertices(bottomLeft);
+						Utils.addBlockVertices(vertices, 0,
+							p0x, p0y, uvs[0], uvs[1],
+							p1x, p1y, uvs[2], uvs[3]);
+
+						batch.addVertices(vertices);
 					}
 				}
 			}
 		}
-
-		batch.flush();
-
-		textRenderer.bind();
-
-		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 24.0f, 1200, 720, 0, 0, 0);
-
-		textRenderer.draw();
 	}
 
 	@Override

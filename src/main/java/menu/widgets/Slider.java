@@ -3,7 +3,7 @@ package menu.widgets;
 import menu.component.Component;
 import menu.component.TextInfo;
 import org.joml.Math;
-import render.TextureAtlas;
+import render.texture.TextureAtlas;
 import util.*;
 
 import java.util.ArrayList;
@@ -120,36 +120,17 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 		float p1xClicker = p0xClicker + (float) clickerSize;
 		float p1yClicker = p0yClicker + (float) clickerSize;
 
-		float[][] barVertices = {
-			{p0xBar, p0yBar, uvsBar[0], uvsBar[1]},
-			{p1xBar, p0yBar, uvsBar[2], uvsBar[1]},
-			{p1xBar, p1yBar, uvsBar[2], uvsBar[3]},
-			{p0xBar, p1yBar, uvsBar[0], uvsBar[3]},
-		};
+		float[] vertices = new float[2 * Constants.WIDGET_ATTRIBUTES_PER_VERTEX * Constants.WIDGET_ELEMENTS_PER_QUAD];
 
-		float[][] clickerVertices = {
-			{p0xClicker, p0yClicker, uvsClicker[0], uvsClicker[1]},
-			{p1xClicker, p0yClicker, uvsClicker[2], uvsClicker[1]},
-			{p1xClicker, p1yClicker, uvsClicker[2], uvsClicker[3]},
-			{p0xClicker, p1yClicker, uvsClicker[0], uvsClicker[3]},
-		};
+		Utils.addBlockVertices(vertices, 0,
+			p0xBar, p0yBar, uvsBar[0], uvsBar[1],
+			p1xBar, p1yBar, uvsBar[2], uvsBar[3]);
 
-		float[] orderedVertices = new float[6 * 2 * 4];
+		Utils.addBlockVertices(vertices, Constants.WIDGET_ATTRIBUTES_PER_VERTEX * Constants.WIDGET_ELEMENTS_PER_QUAD,
+			p0xClicker, p0yClicker, uvsClicker[0], uvsClicker[1],
+			p1xClicker, p1yClicker, uvsClicker[2], uvsClicker[3]);
 
-		Utils.addVertices(orderedVertices, barVertices[0], 0);
-		Utils.addVertices(orderedVertices, barVertices[1], 4);
-		Utils.addVertices(orderedVertices, barVertices[2], 8);
-		Utils.addVertices(orderedVertices, barVertices[2], 12);
-		Utils.addVertices(orderedVertices, barVertices[3], 16);
-		Utils.addVertices(orderedVertices, barVertices[0], 20);
-
-		Utils.addVertices(orderedVertices, clickerVertices[0], 24);
-		Utils.addVertices(orderedVertices, clickerVertices[1], 28);
-		Utils.addVertices(orderedVertices, clickerVertices[2], 32);
-		Utils.addVertices(orderedVertices, clickerVertices[2], 36);
-		Utils.addVertices(orderedVertices, clickerVertices[3], 40);
-		Utils.addVertices(orderedVertices, clickerVertices[0], 44);
-		return orderedVertices;
+		return vertices;
 	}
 
 	@Override

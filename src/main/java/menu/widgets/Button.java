@@ -2,7 +2,8 @@ package menu.widgets;
 
 import menu.component.Component;
 import menu.component.TextInfo;
-import render.TextureNineSlice;
+import render.texture.TextureNineSlice;
+import util.Constants;
 import util.Utils;
 
 import java.util.ArrayList;
@@ -57,91 +58,45 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 		float p3x = (float) (xPos + this.width);
 		float p3y = (float) (yPos + this.height);
 
-		float[][] buttonVertices = {
-			{p0x, p0y, uvs[0], uvs[1]},
-			{p1x, p0y, uvs[2], uvs[1]},
-			{p2x, p0y, uvs[4], uvs[1]},
-			{p3x, p0y, uvs[6], uvs[1]},
-			{p0x, p1y, uvs[0], uvs[3]},
-			{p1x, p1y, uvs[2], uvs[3]},
-			{p2x, p1y, uvs[4], uvs[3]},
-			{p3x, p1y, uvs[6], uvs[3]},
-			{p0x, p2y, uvs[0], uvs[5]},
-			{p1x, p2y, uvs[2], uvs[5]},
-			{p2x, p2y, uvs[4], uvs[5]},
-			{p3x, p2y, uvs[6], uvs[5]},
-			{p0x, p3y, uvs[0], uvs[7]},
-			{p1x, p3y, uvs[2], uvs[7]},
-			{p2x, p3y, uvs[4], uvs[7]},
-			{p3x, p3y, uvs[6], uvs[7]},
-		};
-
 		float[] vertices = new float[6 * 9 * 4];
 
+		Utils.addBlockVertices(vertices, 0 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p0x, p0y, uvs[0], uvs[1],
+			p1x, p1y, uvs[2], uvs[3]);
+
+		Utils.addBlockVertices(vertices, 1 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p1x, p0y, uvs[2], uvs[1],
+			p2x, p1y, uvs[4], uvs[3]);
+
+		Utils.addBlockVertices(vertices, 2 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p2x, p0y, uvs[4], uvs[1],
+			p3x, p1y, uvs[6], uvs[3]);
+
+		Utils.addBlockVertices(vertices, 3 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p0x, p1y, uvs[0], uvs[3],
+			p1x, p2y, uvs[2], uvs[5]);
+
+		Utils.addBlockVertices(vertices, 4 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p1x, p1y, uvs[2], uvs[3],
+			p2x, p2y, uvs[4], uvs[5]);
+
+		Utils.addBlockVertices(vertices, 5 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p3x, p2y, uvs[6], uvs[5],
+			p2x, p1y, uvs[4], uvs[3]);
+
+		Utils.addBlockVertices(vertices, 6 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p0x, p2y, uvs[0], uvs[5],
+			p1x, p3y, uvs[2], uvs[7]);
+
+		Utils.addBlockVertices(vertices, 7 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p1x, p2y, uvs[2], uvs[5],
+			p2x, p3y, uvs[4], uvs[7]);
+
+		Utils.addBlockVertices(vertices, 8 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
+			p2x, p2y, uvs[4], uvs[5],
+			p3x, p3y, uvs[6], uvs[7]);
+
 		//TODO: PLEASE let me use an element array buffer for batchers
-		Utils.addVertices(vertices, buttonVertices[0], 0);
-		Utils.addVertices(vertices, buttonVertices[1], 4);
-		Utils.addVertices(vertices, buttonVertices[5], 8);
-		Utils.addVertices(vertices, buttonVertices[5], 12);
-		Utils.addVertices(vertices, buttonVertices[4], 16);
-		Utils.addVertices(vertices, buttonVertices[0], 20);
-
-		Utils.addVertices(vertices, buttonVertices[1], 24);
-		Utils.addVertices(vertices, buttonVertices[2], 28);
-		Utils.addVertices(vertices, buttonVertices[6], 32);
-		Utils.addVertices(vertices, buttonVertices[6], 36);
-		Utils.addVertices(vertices, buttonVertices[5], 40);
-		Utils.addVertices(vertices, buttonVertices[1], 44);
-
-		Utils.addVertices(vertices, buttonVertices[2], 48);
-		Utils.addVertices(vertices, buttonVertices[3], 52);
-		Utils.addVertices(vertices, buttonVertices[7], 56);
-		Utils.addVertices(vertices, buttonVertices[7], 60);
-		Utils.addVertices(vertices, buttonVertices[6], 64);
-		Utils.addVertices(vertices, buttonVertices[2], 68);
-
-		Utils.addVertices(vertices, buttonVertices[4], 72);
-		Utils.addVertices(vertices, buttonVertices[5], 76);
-		Utils.addVertices(vertices, buttonVertices[9], 80);
-		Utils.addVertices(vertices, buttonVertices[9], 84);
-		Utils.addVertices(vertices, buttonVertices[8], 88);
-		Utils.addVertices(vertices, buttonVertices[4], 92);
-
-		Utils.addVertices(vertices, buttonVertices[5], 96);
-		Utils.addVertices(vertices, buttonVertices[6], 100);
-		Utils.addVertices(vertices, buttonVertices[10], 104);
-		Utils.addVertices(vertices, buttonVertices[10], 108);
-		Utils.addVertices(vertices, buttonVertices[9], 112);
-		Utils.addVertices(vertices, buttonVertices[5], 116);
-
-		Utils.addVertices(vertices, buttonVertices[6], 120);
-		Utils.addVertices(vertices, buttonVertices[7], 124);
-		Utils.addVertices(vertices, buttonVertices[11], 128);
-		Utils.addVertices(vertices, buttonVertices[11], 132);
-		Utils.addVertices(vertices, buttonVertices[10], 136);
-		Utils.addVertices(vertices, buttonVertices[6], 140);
-
-		Utils.addVertices(vertices, buttonVertices[8], 144);
-		Utils.addVertices(vertices, buttonVertices[9], 148);
-		Utils.addVertices(vertices, buttonVertices[13], 152);
-		Utils.addVertices(vertices, buttonVertices[13], 156);
-		Utils.addVertices(vertices, buttonVertices[12], 160);
-		Utils.addVertices(vertices, buttonVertices[8], 164);
-
-		Utils.addVertices(vertices, buttonVertices[9], 168);
-		Utils.addVertices(vertices, buttonVertices[10], 172);
-		Utils.addVertices(vertices, buttonVertices[14], 176);
-		Utils.addVertices(vertices, buttonVertices[14], 180);
-		Utils.addVertices(vertices, buttonVertices[13], 184);
-		Utils.addVertices(vertices, buttonVertices[9], 188);
-
-		Utils.addVertices(vertices, buttonVertices[10], 192);
-		Utils.addVertices(vertices, buttonVertices[11], 196);
-		Utils.addVertices(vertices, buttonVertices[15], 200);
-		Utils.addVertices(vertices, buttonVertices[15], 204);
-		Utils.addVertices(vertices, buttonVertices[14], 208);
-		Utils.addVertices(vertices, buttonVertices[10], 212);
-
 		return vertices;
 	}
 

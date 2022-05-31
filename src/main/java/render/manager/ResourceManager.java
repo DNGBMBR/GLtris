@@ -1,6 +1,7 @@
 package render.manager;
 
 import render.*;
+import render.texture.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

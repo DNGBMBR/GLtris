@@ -4,8 +4,12 @@ import menu.component.*;
 import menu.widgets.*;
 import org.joml.Matrix4f;
 import render.*;
+import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
+import render.manager.TextRenderer;
+import render.texture.TextureNineSlice;
 import util.Constants;
+import util.GameSettings;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -15,7 +19,14 @@ public class GameSetupScene extends Scene{
 	private static final double FRAME_SETTINGS_X_POS = (Constants.VIEWPORT_W - FRAME_SETTINGS_WIDTH) * 0.5;
 	private static final double FRAME_SETTINGS_Y_POS = (Constants.VIEWPORT_H - FRAME_SETTINGS_HEIGHT) * 0.5;
 
-	private static final double OPTIONS_SPACING = 50.0;
+	public static final String PREVIEWS = "Previews";
+	public static final String INITIAL_GRAVITY = "Initial Gravity";
+	public static final String GRAVITY_INCREASE = "Gravity Increase";
+	public static final String GRAVITY_INCREASE_INTERVAL = "Gravity Increase Interval";
+	public static final String LOCK_DELAY = "Lock Delay";
+
+	public static final int FONT_SIZE = 24;
+	public static final int X_POS_TEXT_FIELD = 20;
 
 	private Matrix4f projection;
 	private Scene nextScene;
@@ -29,45 +40,81 @@ public class GameSetupScene extends Scene{
 	private TopFrame topFrame;
 	private Frame settingsFrame;
 
+	TextField textFieldNumPreviews;
+	TextField textFieldGravityInit;
+	TextField textFieldGravityIncrease;
+	TextField textFieldGravityIncreaseInterval;
+	TextField textFieldLockDelay;
+
 	GameSetupScene(long windowID) {
 		super(windowID);
 		topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 		settingsFrame = new Frame(FRAME_SETTINGS_X_POS, FRAME_SETTINGS_Y_POS,
 				FRAME_SETTINGS_WIDTH, FRAME_SETTINGS_HEIGHT,
 				true, true, 1000);
-		settingsFrame.addComponent(new Slider(0, 0, true,
-			"poggers", 0.0, 600, 0.0, 1.0, 30, 10, true,
-			widgetTexture, 0, 1,
-			(double percentage) -> {
 
-			}));
-		settingsFrame.addComponent(new Button(0, 100, true,
-			600, 100, 25, "aaaaadddddd",
-			widgetTexture, 0, 2,
-			(double mouseX, double mouseY, int button, int action, int mods) -> {
+		int numPreviews = GameSettings.getNumPreviews();
+		double gravityInit = GameSettings.getInitGravity();
+		double gravityIncrease = GameSettings.getGravityIncrease();
+		int gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
+		double lockDelay = GameSettings.getLockDelay();
 
-			}));
-		settingsFrame.addComponent(new Slider(0, -100, true,
-			"poggers", 0.0, 600, 0.0, 1.0, 30, 10, true,
-			widgetTexture, 0, 1,
-			(double percentage) -> {
+		textFieldNumPreviews = new TextField(X_POS_TEXT_FIELD + PREVIEWS.length() * FONT_SIZE, 600, 200, 50, true,
+			PREVIEWS, String.valueOf(numPreviews), FONT_SIZE, 0.0f, 0.0f, 0.0f);
+		textFieldGravityInit = new TextField(X_POS_TEXT_FIELD + INITIAL_GRAVITY.length() * FONT_SIZE, 500, 200, 50, true,
+			INITIAL_GRAVITY, String.valueOf(gravityInit), FONT_SIZE, 0.0f, 0.0f, 0.0f);
+		textFieldGravityIncrease = new TextField(X_POS_TEXT_FIELD + GRAVITY_INCREASE.length() * FONT_SIZE, 425, 200, 50, true,
+			GRAVITY_INCREASE, String.valueOf(gravityIncrease), FONT_SIZE, 0.0f, 0.0f, 0.0f);
+		textFieldGravityIncreaseInterval = new TextField(X_POS_TEXT_FIELD + GRAVITY_INCREASE_INTERVAL.length() * FONT_SIZE, 350, 200, 50, true,
+			GRAVITY_INCREASE_INTERVAL, String.valueOf(gravityIncreaseInterval), FONT_SIZE, 0.0f, 0.0f, 0.0f);
+		textFieldLockDelay = new TextField(X_POS_TEXT_FIELD + LOCK_DELAY.length() * FONT_SIZE, 275, 200, 50, true,
+			LOCK_DELAY, String.valueOf(lockDelay), FONT_SIZE, 0.0f, 0.0f, 0.0f);
 
-			}));
-		settingsFrame.addComponent(new Button(0, -400, true,
-			600, 100, 25, "jdopfsjioj",
-			widgetTexture, 0, 2,
-			(double mouseX, double mouseY, int button, int action, int mods) -> {
+		settingsFrame.addComponent(textFieldNumPreviews);
+		settingsFrame.addComponent(textFieldGravityInit);
+		settingsFrame.addComponent(textFieldGravityIncrease);
+		settingsFrame.addComponent(textFieldGravityIncreaseInterval);
+		settingsFrame.addComponent(textFieldLockDelay);
 
-			}));
-		settingsFrame.addComponent(new TextField(50, 500, 600, 48, true, "", 24.0f, 0.0f, 0.0f, 0.0f));
 		topFrame.addComponent(settingsFrame);
 
+		topFrame.addComponent(new Button((Constants.VIEWPORT_W - 300) * 0.5, FRAME_SETTINGS_Y_POS - 100, true, 300, 100, 25,
+			"Save", widgetTexture, 0, 2,
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+				try {
+					int numPreviewsNew = Integer.parseInt(textFieldNumPreviews.getText());
+					double gravityInitNew = Double.parseDouble(textFieldGravityInit.getText());
+					double gravityIncreaseNew = Double.parseDouble(textFieldGravityIncrease.getText());
+					int gravityIncreaseIntervalNew = Integer.parseInt(textFieldGravityIncreaseInterval.getText());
+					double lockDelayNew = Double.parseDouble(textFieldLockDelay.getText());
+
+					GameSettings.setNumPreviews(numPreviewsNew);
+					GameSettings.setInitGravity(gravityInitNew);
+					GameSettings.setGravityIncrease(gravityIncreaseNew);
+					GameSettings.setGravityIncreaseInterval(gravityIncreaseIntervalNew);
+					GameSettings.setLockDelay(lockDelayNew);
+
+					GameSettings.saveSettings();
+				} catch (NumberFormatException e) {
+					//replace with in game error message
+					e.printStackTrace();
+				}
+			}));
+
 		topFrame.addComponent(
-			new Button(50, 50, true,
+			new Button(Constants.VIEWPORT_W - 650, 50, true,
 			600, 100, 25, "Start Game",
 				widgetTexture, 0, 2,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 					nextScene = new GameScene(windowID);
+					shouldChangeScene = true;
+				}));
+		topFrame.addComponent(
+			new Button(50, 50, true,
+				600, 100, 25, "Back",
+				widgetTexture, 0, 2,
+				(double mouseX, double mouseY, int button, int action, int mods) -> {
+					nextScene = new MenuScene(windowID);
 					shouldChangeScene = true;
 				}));
 	}

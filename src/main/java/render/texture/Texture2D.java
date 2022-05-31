@@ -1,6 +1,7 @@
-package render;
+package render.texture;
 
 import org.lwjgl.BufferUtils;
+import render.Shader;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

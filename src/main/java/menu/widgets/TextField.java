@@ -6,10 +6,9 @@ import org.joml.Math;
 import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.system.libffi.FFICIF;
-import render.TextureAtlas;
+import render.texture.TextureAtlas;
 import render.manager.ResourceManager;
-import util.GapBuffer;
-import util.KeyListener;
+import util.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,17 +25,22 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 	boolean isFocused = false;
 
 	public TextField(double xPos, double yPos, double width, double height, boolean isActive,
-					 String displayText, float fontSize, float r, float g, float b) {
+					 String displayText, String initialText, float fontSize, float r, float g, float b) {
 		super(xPos, yPos, width, height, displayText, isActive);
 		this.fontSize = fontSize;
 		this.r = r;
 		this.g = g;
 		this.b = b;
 
-		textBuffer = new GapBuffer((int) (width / fontSize), 20);
+		int cap = (int) ((width - fontSize) / fontSize);
+		textBuffer = new GapBuffer(initialText, cap, 20);
 
 		KeyListener.registerKeyCallback(this);
 		KeyListener.registerCharCallback(this);
+	}
+
+	public String getText() {
+		return textBuffer.getText();
 	}
 
 	@Override
@@ -52,21 +56,22 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 		float p1u = uvs[2];
 		float p1v = uvs[3];
 
-		return new float[]{
+		float[] vertices = new float[Constants.WIDGET_ATTRIBUTES_PER_VERTEX * Constants.WIDGET_ELEMENTS_PER_QUAD];
+
+		Utils.addBlockVertices(vertices, 0,
 			p0x, p0y, p0u, p0v,
-			p1x, p0y, p1u, p0v,
-			p1x, p1y, p1u, p1v,
-			p1x, p1y, p1u, p1v,
-			p0x, p1y, p0u, p1v,
-			p0x, p0y, p0u, p0v
-		};
+			p1x, p1y, p1u, p1v);
+
+		return vertices;
 	}
 
 	@Override
 	public List<TextInfo> getTextInfo() {
-		TextInfo info = new TextInfo(textBuffer.getText(), fontSize, (float) xPos, (float) yPos, r, g, b);
+		TextInfo title = new TextInfo(displayText, fontSize, (float) (xPos - displayText.length() * fontSize - 0.5 * (height - fontSize)), (float) (yPos + 0.5 * (height - fontSize)), r, g, b);
+		TextInfo contents = new TextInfo(textBuffer.getText(), fontSize, (float) (xPos + 0.5 * (height - fontSize)), (float) (yPos + 0.5 * (height - fontSize)), r, g, b);
 		List<TextInfo> ret = new ArrayList<>();
-		ret.add(info);
+		ret.add(title);
+		ret.add(contents);
 		return ret;
 	}
 

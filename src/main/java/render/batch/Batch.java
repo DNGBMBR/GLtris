@@ -1,4 +1,4 @@
-package render;
+package render.batch;
 
 public abstract class Batch {
 	public abstract boolean isEmpty();

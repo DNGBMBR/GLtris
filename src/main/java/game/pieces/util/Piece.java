@@ -13,6 +13,15 @@ public abstract class Piece {
 	protected Orientation orientation;
 	protected PieceName name;
 
+	public Piece(int topLeftX, int topLeftY, boolean[][] tileMap, Orientation orientation, PieceName name) {
+		this.topLeftX = topLeftX;
+		this.topLeftY = topLeftY;
+		this.placed = false;
+		this.tileMap = tileMap;
+		this.orientation = orientation;
+		this.name = name;
+	}
+
 	//returns index of kick used
 	public int rotate(Rotation rot, TileState[][] board) {
 		boolean[][] potentialRotation;
@@ -227,6 +236,8 @@ public abstract class Piece {
 	public abstract int[][][] getKickTableCW();
 	public abstract int[][][] getKickTableCCW();
 	public abstract int[][][] getKickTableHALF();
+
+	public abstract Piece copy();
 
 	protected boolean isCollision(TileState[][] board, boolean[][] potentialMap, int potentialX, int potentialY) {
 		for (int i = 0; i < potentialMap.length; i++) {

@@ -12,4 +12,39 @@ public class Utils {
 	public static double inverseLerp(double a, double b, double c) {
 		return (c - a) / (b - a);
 	}
+
+	//assumes data conforms to the format {p0x, p0y, p0u, p0v}
+	public static void addBlockVertices(float[] vertexData, int startIndex,
+										float p0x, float p0y, float p0u, float p0v,
+										float p1x, float p1y, float p1u, float p1v) {
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 0 + 0] = p0x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 0 + 1] = p0y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 0 + 2] = p0u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 0 + 3] = p0v;
+
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 1 + 0] = p1x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 1 + 1] = p0y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 1 + 2] = p1u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 1 + 3] = p0v;
+
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 2 + 0] = p1x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 2 + 1] = p1y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 2 + 2] = p1u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 2 + 3] = p1v;
+
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 3 + 0] = p1x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 3 + 1] = p1y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 3 + 2] = p1u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 3 + 3] = p1v;
+
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 4 + 0] = p0x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 4 + 1] = p1y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 4 + 2] = p0u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 4 + 3] = p1v;
+
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 0] = p0x;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 1] = p0y;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 2] = p0u;
+		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 3] = p0v;
+	}
 }

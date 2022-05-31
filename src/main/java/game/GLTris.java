@@ -100,7 +100,9 @@ public class GLTris {
 				board[i][j] = TileState.EMPTY;
 			}
 		}
-		enqueueBag();
+		while (pieceQueue.size() < numPreviews + 1) {
+			enqueueBag();
+		}
 		setNextPiece();
 		heldPiece = null;
 
@@ -203,25 +205,25 @@ public class GLTris {
 		heldPiece = currentPiece.getName();
 		switch(temp) {
 			case I -> {
-				currentPiece = new IPiece();
+				currentPiece = new IPiece(3, 22);
 			}
 			case O -> {
-				currentPiece = new OPiece();
+				currentPiece = new OPiece(4, 22);
 			}
 			case L -> {
-				currentPiece = new LPiece();
+				currentPiece = new LPiece(3, 22);
 			}
 			case J -> {
-				currentPiece = new JPiece();
+				currentPiece = new JPiece(3, 22);
 			}
 			case S -> {
-				currentPiece = new SPiece();
+				currentPiece = new SPiece(3, 22);
 			}
 			case Z -> {
-				currentPiece = new ZPiece();
+				currentPiece = new ZPiece(3, 22);
 			}
 			case T -> {
-				currentPiece = new TPiece();
+				currentPiece = new TPiece(3, 22);
 			}
 		}
 
@@ -461,25 +463,25 @@ public class GLTris {
 		Piece nextPiece;
 		switch (nextPieceName) {
 			case I -> {
-				nextPiece = new IPiece();
+				nextPiece = new IPiece(3, 22);
 			}
 			case O -> {
-				nextPiece = new OPiece();
+				nextPiece = new OPiece(4, 22);
 			}
 			case L -> {
-				nextPiece = new LPiece();
+				nextPiece = new LPiece(3, 22);
 			}
 			case J -> {
-				nextPiece = new JPiece();
+				nextPiece = new JPiece(3, 22);
 			}
 			case S -> {
-				nextPiece = new SPiece();
+				nextPiece = new SPiece(3, 22);
 			}
 			case Z -> {
-				nextPiece = new ZPiece();
+				nextPiece = new ZPiece(3, 22);
 			}
 			case T -> {
-				nextPiece = new TPiece();
+				nextPiece = new TPiece(3, 22);
 			}
 			default -> {
 				throw new IllegalStateException("Bag has piece that is not one of the standard game pieces.");

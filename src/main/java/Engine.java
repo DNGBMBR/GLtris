@@ -1,4 +1,4 @@
-import render.TextRenderer;
+import render.manager.TextRenderer;
 import scenes.*;
 import util.KeyListener;
 

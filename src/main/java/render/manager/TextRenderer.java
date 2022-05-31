@@ -1,10 +1,12 @@
-package render;
+package render.manager;
 
 import menu.component.*;
-import menu.widgets.Button;
 import org.joml.Math;
 import org.joml.Matrix4f;
-import render.manager.ResourceManager;
+import render.Camera;
+import render.Shader;
+import render.batch.TextBatch;
+import render.texture.TextureAtlas;
 import util.Constants;
 import util.Utils;
 
@@ -132,8 +134,10 @@ public class TextRenderer{
 			if (horizontalOffset >= right) {
 				break;
 			}
-			char c = text.charAt(i);
-			addCharacter(c, scale, horizontalOffset, yPos, left, right, bottom, top, r, g, b);
+			if (horizontalOffset + scale >= left) {
+				char c = text.charAt(i);
+				addCharacter(c, scale, horizontalOffset, yPos, left, right, bottom, top, r, g, b);
+			}
 			horizontalOffset += scale;
 		}
 	}

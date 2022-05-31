@@ -1,4 +1,6 @@
-package render;
+package render.batch;
+
+import render.batch.Batch;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
@@ -8,7 +10,7 @@ import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 
-public class TextBatch extends Batch{
+public class TextBatch extends Batch {
 	private static final int FLOATS_PER_VERTEX = 7;
 	private static final int VERTEX_SIZE = FLOATS_PER_VERTEX * Float.BYTES;
 

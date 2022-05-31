@@ -1,7 +1,7 @@
 package menu.component;
 
 import org.joml.Math;
-import render.TextureAtlas;
+import render.texture.TextureAtlas;
 import render.manager.ResourceManager;
 import util.Constants;
 import util.Utils;

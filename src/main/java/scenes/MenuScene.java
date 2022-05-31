@@ -5,7 +5,10 @@ import menu.widgets.*;
 import org.joml.Math;
 import org.joml.Matrix4f;
 import render.*;
+import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
+import render.manager.TextRenderer;
+import render.texture.TextureNineSlice;
 import util.*;
 
 import static org.lwjgl.glfw.GLFW.*;

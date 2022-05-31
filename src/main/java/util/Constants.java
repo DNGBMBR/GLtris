@@ -7,6 +7,9 @@ public class Constants {
 	public static final int WIDGET_ATTRIBUTES_PER_VERTEX = 4;
 	public static final int WIDGET_ELEMENTS_PER_QUAD = 6;
 
+	public static final int BLOCK_ATTRIBUTES_PER_VERTEX = 4;
+	public static final int BLOCK_ELEMENTS_PER_QUAD = 6;
+
 	public static final double UNITS_PER_SCROLL = 30.0;
 
 	public static final double FRAME_BORDER_WIDTH = 10.0;

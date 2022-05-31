@@ -48,12 +48,12 @@ public class LPiece extends Piece {
 		{true, true, false}
 	};
 
-	public LPiece() {
-		topLeftX = 3; //magic numbers yay
-		topLeftY = 22;
-		tileMap = TILE_MAP_E;
-		orientation = Orientation.E;
-		name = PieceName.L;
+	public LPiece(int topLeftX, int topLeftY) {
+		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.L);
+	}
+
+	private LPiece(LPiece piece) {
+		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.L);
 	}
 
 	@Override
@@ -89,6 +89,11 @@ public class LPiece extends Piece {
 	@Override
 	public int[][][] getKickTableHALF() {
 		return KICK_HALF;
+	}
+
+	@Override
+	public Piece copy() {
+		return new LPiece(this);
 	}
 
 	public static boolean[][] getTileMapSpawn() {

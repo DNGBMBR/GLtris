@@ -30,12 +30,12 @@ public class OPiece extends Piece {
 		{true, true}
 	};
 
-	public OPiece() {
-		topLeftX = 4; //magic numbers yay
-		topLeftY = 22;
-		tileMap = TILE_MAP_E;
-		orientation = Orientation.E;
-		name = PieceName.O;
+	public OPiece(int topLeftX, int topLeftY) {
+		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.O);
+	}
+
+	private OPiece(OPiece piece) {
+		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.O);
 	}
 
 	private static final boolean[][] TILE_MAP_R = TILE_MAP_E;
@@ -75,6 +75,11 @@ public class OPiece extends Piece {
 	@Override
 	public int[][][] getKickTableHALF() {
 		return KICK_HALF;
+	}
+
+	@Override
+	public Piece copy() {
+		return new OPiece(this);
 	}
 
 	public static boolean[][] getTileMapSpawn() {

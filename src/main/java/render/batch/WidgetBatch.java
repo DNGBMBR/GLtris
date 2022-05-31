@@ -1,7 +1,8 @@
-package render;
+package render.batch;
 
 import menu.component.Component;
 import menu.widgets.*;
+import render.texture.TextureAtlas;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -12,7 +13,7 @@ import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 
-public class WidgetBatch extends Batch{
+public class WidgetBatch extends Batch {
 	//They're all quads?
 	//Always has been.
 	private static final int FLOATS_PER_VERTEX = 4;

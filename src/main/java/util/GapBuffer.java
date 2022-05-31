@@ -8,7 +8,7 @@ public class GapBuffer {
 	int gapStart;
 	int gapEnd;
 
-	int numChars = 0;
+	int numChars;
 
 	int maxCapacity;
 	int bufferGrowCapacity;
@@ -19,14 +19,46 @@ public class GapBuffer {
 		this.gapEnd = DEFAULT_BUFFER_GROW_CAPACITY;
 		this.maxCapacity = -1;
 		this.bufferGrowCapacity = DEFAULT_BUFFER_GROW_CAPACITY;
+
+		this.numChars = 0;
+	}
+
+	public GapBuffer(String defaultText) {
+		this.buffer = new char[defaultText.length() + DEFAULT_BUFFER_GROW_CAPACITY];
+		this.gapStart = defaultText.length();
+		this.gapEnd = defaultText.length() + DEFAULT_BUFFER_GROW_CAPACITY;
+		this.maxCapacity = -1;
+		this.bufferGrowCapacity = DEFAULT_BUFFER_GROW_CAPACITY;
+
+		this.numChars = 0;
+
+		for (int i = 0; i < defaultText.length(); i++) {
+			this.buffer[i] = defaultText.charAt(i);
+		}
 	}
 
 	public GapBuffer(int maxCapacity, int bufferGrowCapacity) {
-		buffer = new char[bufferGrowCapacity];
-		gapStart = 0;
-		gapEnd = bufferGrowCapacity;
+		this.buffer = new char[bufferGrowCapacity];
+		this.gapStart = 0;
+		this.gapEnd = bufferGrowCapacity;
 		this.maxCapacity = maxCapacity;
 		this.bufferGrowCapacity = bufferGrowCapacity;
+
+		numChars = 0;
+	}
+
+	public GapBuffer(String defaultText, int maxCapacity, int bufferGrowCapacity) {
+		this.buffer = new char[defaultText.length() + bufferGrowCapacity];
+		this.gapStart = defaultText.length();
+		this.gapEnd = defaultText.length() + bufferGrowCapacity;
+		this.maxCapacity = maxCapacity;
+		this.bufferGrowCapacity = bufferGrowCapacity;
+
+		this.numChars = defaultText.length();
+
+		for (int i = 0; i < defaultText.length(); i++) {
+			this.buffer[i] = defaultText.charAt(i);
+		}
 	}
 
 	public void left() {

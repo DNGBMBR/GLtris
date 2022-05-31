@@ -48,12 +48,12 @@ public class ZPiece extends Piece {
 		{false, true, false}
 	};
 
-	public ZPiece() {
-		topLeftX = 3; //magic numbers yay
-		topLeftY = 22;
-		tileMap = TILE_MAP_E;
-		orientation = Orientation.E;
-		name = PieceName.Z;
+	public ZPiece(int topLeftX, int topLeftY) {
+		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.Z);
+	}
+
+	private ZPiece(ZPiece piece) {
+		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.Z);
 	}
 
 	@Override
@@ -89,6 +89,11 @@ public class ZPiece extends Piece {
 	@Override
 	public int[][][] getKickTableHALF() {
 		return KICK_HALF;
+	}
+
+	@Override
+	public Piece copy() {
+		return new ZPiece(this);
 	}
 
 	public static boolean[][] getTileMapSpawn() {
