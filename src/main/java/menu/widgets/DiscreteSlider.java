@@ -2,20 +2,21 @@ package menu.widgets;
 
 import menu.component.Component;
 import menu.component.TextInfo;
-import menu.widgets.callbacks.*;
+import menu.widgets.callbacks.OnDiscreteSliderMove;
+import menu.widgets.callbacks.OnSliderMove;
 import org.joml.Math;
 import render.texture.TextureAtlas;
-import util.*;
+import util.Constants;
+import util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
-public class Slider extends Component implements OnComponentClick, OnComponentHover {
-	protected double percentage;
-
-	protected double minValue, maxValue;
+public class DiscreteSlider extends Component {
+	int currentValue, minValue, maxValue, interval;
 
 	protected double length;
 	protected double barWidth;
@@ -24,16 +25,13 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 	protected boolean isClicked;
 	private TextureAtlas texture;
 	private int px, py;
-	OnSliderMove onDrag;
+	private OnDiscreteSliderMove onDrag;
 
-	public Slider(double xPos, double yPos, boolean isInteractable, String displayText,
-				  double percentage, double length, double minValue, double maxValue, double clickerSize, double barWidth, boolean isHorizontal,
-				  TextureAtlas texture, int px, int py,
-				  OnSliderMove onDrag) {
+	public DiscreteSlider(double xPos, double yPos, boolean isInteractable, String displayText,
+						  int currentValue, int minValue, int maxValue, int interval,
+						  double length, double clickerSize, double barWidth, boolean isHorizontal,
+						  TextureAtlas texture, int px, int py, OnDiscreteSliderMove onDrag) {
 		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), displayText, isInteractable);
-		this.percentage = percentage;
-		this.minValue = minValue;
-		this.maxValue = maxValue;
 		this.length = length;
 		this.clickerSize = clickerSize;
 		this.barWidth = barWidth;
@@ -43,67 +41,17 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 		this.py = py;
 		this.isClicked = false;
 		this.onDrag = onDrag;
-	}
 
-	public double getPercentage() {
-		return percentage;
-	}
-
-	public double getLength() {
-		return length;
-	}
-
-	public double getBarWidth() {
-		return barWidth;
-	}
-
-	public double getClickerSize() {
-		return clickerSize;
-	}
-
-	public boolean isHorizontal() {
-		return isHorizontal;
-	}
-
-	@Override
-	public void onHover(double mouseX, double mouseY, boolean isInFrame) {
-		if (!isActive || !isInFrame || !isClicked) {
-			isClicked = false;
-			return;
-		}
-		double percentagePosition = (isHorizontal ? mouseX - this.xPos - 0.5 * clickerSize : mouseY - this.yPos - 0.5 * clickerSize) / length;
-
-		percentage = Math.clamp(0.0, 1.0, percentagePosition);
-		this.onDrag.onMove(percentage);
-	}
-
-	@Override
-	public void onClick(double mouseX, double mouseY, int button, int action, int mods) {
-		if (!isActive) {
-			return;
-		}
-		if (action == GLFW_RELEASE) {
-			isClicked = false;
-			return;
-		}
-
-		double clickerX = getClickablePositionX();
-		double clickerY = getClickablePositionY();
-		isClicked = action == GLFW_PRESS &&
-			mouseX >= clickerX && mouseX <= clickerX + clickerSize &&
-			mouseY >= clickerY && mouseY <= clickerY + clickerSize;
-	}
-
-	public double getClickablePositionX() {
-		return isHorizontal ? xPos + length * percentage : xPos;
-	}
-
-	public double getClickablePositionY() {
-		return !isHorizontal ? yPos + length * percentage : yPos;
+		this.currentValue = currentValue;
+		this.minValue = minValue;
+		this.maxValue = maxValue;
+		this.interval = interval;
 	}
 
 	@Override
 	public float[] generateVertices() {
+		float percentage = (float) (currentValue - minValue) / (maxValue - minValue);
+
 		float[] uvsClicker = texture.getElementUVs(px, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
 		float[] uvsBar = texture.getElementUVs(px + 1, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
 
@@ -140,7 +88,7 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 
 		float startXValue = (float) (xPos + clickerSize + (isHorizontal ? length : 0) + 0.5 * clickerSize);
 		float startYValue = (float) (yPos + (!isHorizontal ? length : 0));
-		TextInfo infoValue = new TextInfo(String.format("%.1f", Math.lerp(minValue, maxValue, percentage)), fontSize, startXValue, startYValue, 0.0f, 0.0f, 0.0f);
+		TextInfo infoValue = new TextInfo(String.valueOf(currentValue), fontSize, startXValue, startYValue, 0.0f, 0.0f, 0.0f);
 
 		List<TextInfo> ret = new ArrayList<>();
 		ret.add(infoName);
@@ -149,12 +97,52 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 	}
 
 	@Override
-	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
+	public void destroy() {
 
 	}
 
 	@Override
-	public void destroy() {
+	public void onClick(double mouseX, double mouseY, int button, int action, int mods) {
+		if (!isActive) {
+			return;
+		}
+		if (action == GLFW_RELEASE) {
+			isClicked = false;
+			return;
+		}
+
+		double clickerX = getClickablePositionX();
+		double clickerY = getClickablePositionY();
+		isClicked = action == GLFW_PRESS &&
+			mouseX >= clickerX && mouseX <= clickerX + clickerSize &&
+			mouseY >= clickerY && mouseY <= clickerY + clickerSize;
+	}
+
+	public double getClickablePositionX() {
+		double percentage = (double) (currentValue - minValue) / (maxValue - minValue);
+		return isHorizontal ? xPos + length * percentage : xPos;
+	}
+
+	public double getClickablePositionY() {
+		double percentage = (double) currentValue / (maxValue - minValue);
+		return !isHorizontal ? yPos + length * percentage : yPos;
+	}
+
+	@Override
+	public void onHover(double mouseX, double mouseY, boolean isInFrame) {
+		if (!isActive || !isInFrame || !isClicked) {
+			isClicked = false;
+			return;
+		}
+		double percentagePosition = (isHorizontal ? mouseX - this.xPos - 0.5 * clickerSize : mouseY - this.yPos - 0.5 * clickerSize) / length;
+		percentagePosition = Math.clamp(0.0, 1.0, percentagePosition);
+		currentValue = (int) Math.round(percentagePosition * maxValue + (1.0 - percentagePosition) * minValue);
+		currentValue = Math.clamp(minValue, maxValue, currentValue);
+		this.onDrag.onMove(currentValue);
+	}
+
+	@Override
+	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
 
 	}
 }

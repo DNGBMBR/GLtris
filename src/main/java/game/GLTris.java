@@ -42,7 +42,10 @@ public class GLTris {
 	//TODO: make SDF like tetr.io's scaling
 	private double arr = LocalSettings.getARR();
 	private double das = LocalSettings.getDAS();
-	private double sdf = LocalSettings.getSDF();
+	private double sdf = LocalSettings.getSDF(); //sdf units in tiles/frame, 1sdf is 1 tile/frame, 40sdf is 40 tiles/frame
+	private boolean isDASCancel = LocalSettings.getDASCancel();
+
+	private Direction lastMovedDirection;
 
 	private int[] leftKeys = KeybindingSettings.getMoveLeftKeys();
 	private int[] rightKeys = KeybindingSettings.getMoveRightKeys();
@@ -56,11 +59,13 @@ public class GLTris {
 	private boolean[] isLeftPressed;
 	private boolean[] isRightPressed;
 	private boolean[] isSoftDropPressed;
+	/*
 	private boolean[] isRotateCWPressed;
 	private boolean[] isRotateCCWPressed;
 	private boolean[] isRotate180Pressed;
 	private boolean[] isHoldPressed;
 	private boolean[] isHardDropPressed;
+	 */
 
 	private int boardHeight = Constants.BOARD_HEIGHT;
 	private int boardWidth = Constants.BOARD_WIDTH;
@@ -125,14 +130,22 @@ public class GLTris {
 				for (int i = 0; i < leftKeys.length; i++) {
 					if (scancode == leftKeys[i]) {
 						isLeftPressed[i] = true;
+						lastMovedDirection = Direction.LEFT;
 						movePiece(Direction.LEFT);
+						if (isDASCancel) {
+							accumulatorDAS = 0.0;
+						}
 						return;
 					}
 				}
 				for (int i = 0; i < rightKeys.length; i++) {
 					if (scancode == rightKeys[i]) {
 						isRightPressed[i] = true;
+						lastMovedDirection = Direction.RIGHT;
 						movePiece(Direction.RIGHT);
+						if (isDASCancel) {
+							accumulatorDAS = 0.0;
+						}
 						return;
 					}
 				}
@@ -225,7 +238,59 @@ public class GLTris {
 	private void listenKeys(double dt) {
 		boolean isLeft = false;
 		boolean isRight = false;
+		boolean isDropping = false;
 
+		for (boolean isPressed : isLeftPressed) {
+			if (isPressed) {
+				isLeft = true;
+				break;
+			}
+		}
+		for (boolean isPressed : isRightPressed) {
+			if (isPressed) {
+				isRight = true;
+				break;
+			}
+		}
+
+		if (isLeft) {
+			if (!isRight || lastMovedDirection == Direction.LEFT) {
+				moveKeyLeft(dt);
+			}
+		}
+		if (isRight) {
+			if (!isLeft || lastMovedDirection == Direction.RIGHT) {
+				moveKeyRight(dt);
+			}
+		}
+
+
+		for (boolean isPressed : isSoftDropPressed) {
+			if (isPressed) {
+				if (sdf > Constants.MAX_SDF) {
+					while (currentPiece.move(Direction.DOWN, board));
+					break;
+				}
+				accumulatorSD += dt;
+				if (accumulatorSD >= 0.13 / sdf) {
+					currentPiece.move(Direction.DOWN, board);
+					accumulatorSD = 0.0;
+				}
+				isDropping = true;
+				break;
+			}
+		}
+
+		if (!isLeft && !isRight) {
+			accumulatorDAS = 0.0;
+			accumulatorARR = 0.0;
+		}
+		if (!isDropping) {
+			accumulatorSD = 0.0;
+		}
+	}
+
+	private void moveKeyLeft(double dt) {
 		for (boolean isPressed : isLeftPressed) {
 			if (isPressed) {
 				accumulatorDAS += dt;
@@ -237,21 +302,26 @@ public class GLTris {
 					}
 					else {
 						accumulatorARR += dt;
-						while (accumulatorARR >= arr * SPF) {
-							currentPiece.move(Direction.LEFT, board);
-							accumulatorARR -= SPF;
+						if (accumulatorARR >= arr * SPF) {
+							while (accumulatorARR >= 0.0) {
+								currentPiece.move(Direction.LEFT, board);
+								accumulatorARR -= SPF;
+							}
+							accumulatorARR = 0.0;
 						}
 					}
 				}
-				isLeft = true;
 				break;
 			}
 		}
+	}
+
+	private void moveKeyRight(double dt) {
 		for (boolean isPressed : isRightPressed) {
 			if (isPressed) {
 				accumulatorDAS += dt;
 				if (accumulatorDAS >= das * SPF) {
-					if (arr == 0.0f) {
+					if (arr <= 0.0f) {
 						while (currentPiece.move(Direction.RIGHT, board)) {
 							//repeat until wall is hit
 						}
@@ -259,32 +329,16 @@ public class GLTris {
 					else {
 						accumulatorARR += dt;
 						if (accumulatorARR >= arr * SPF) {
-							currentPiece.move(Direction.RIGHT, board);
+							while (accumulatorARR >= 0.0) {
+								currentPiece.move(Direction.RIGHT, board);
+								accumulatorARR -= SPF;
+							}
 							accumulatorARR = 0.0;
 						}
 					}
 				}
-				isRight = true;
 				break;
 			}
-		}
-
-		for (boolean isPressed : isSoftDropPressed) {
-			if (isPressed) {
-				accumulatorSD += dt;
-				while (accumulatorSD >= sdf * SPF) {
-					currentPiece.move(Direction.DOWN, board);
-					accumulatorSD -= SPF;
-				}
-			}
-			else {
-				accumulatorSD = 0;
-			}
-		}
-
-		if (!isLeft && !isRight) {
-			accumulatorDAS = 0.0;
-			accumulatorARR = 0.0;
 		}
 	}
 

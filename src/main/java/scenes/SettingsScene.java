@@ -4,6 +4,7 @@ import menu.component.Frame;
 import menu.component.TopFrame;
 import menu.widgets.*;
 import menu.widgets.Button;
+import menu.widgets.callbacks.OnSwitchClick;
 import org.joml.Math;
 import org.joml.Matrix4f;
 import render.Shader;
@@ -57,9 +58,10 @@ public class SettingsScene extends Scene{
 	Frame controlsFrame = new Frame(CONTROLS_X_POS, CONTROLS_Y_POS, CONTROLS_WIDTH, CONTROLS_HEIGHT,
 		true, false, 0);
 
-	double sdf = LocalSettings.getSDF();
+	int sdf = LocalSettings.getSDF();
 	double arr = LocalSettings.getARR();
 	double das = LocalSettings.getDAS();
+	boolean isDASCancel = LocalSettings.getDASCancel();
 
 	boolean shouldChangeScene = false;
 	Scene nextScene;
@@ -77,12 +79,13 @@ public class SettingsScene extends Scene{
 				shouldChangeScene = true;
 				nextScene = new MenuScene(windowID);
 			}));
-		settingsFrame.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y,true, SDF,
-			Utils.inverseLerp(Constants.MIN_SDF, Constants.MAX_SDF, sdf),
-			SLIDER_LENGTH, Constants.MIN_SDF, Constants.MAX_SDF, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
+		settingsFrame.addComponent(new DiscreteSlider(SLIDER_POSITION_X, SLIDER_POSITION_Y,true, SDF,
+			sdf,
+			Constants.MIN_SDF, Constants.MAX_SDF, 1,
+			SLIDER_LENGTH, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
 			widgetTexture, Constants.SLIDER_PX, Constants.SLIDER_PY,
-			(double percentage) -> {
-				sdf = Math.lerp(Constants.MIN_SDF, Constants.MAX_SDF, percentage);
+			(int value) -> {
+				sdf = value;
 			}));
 		settingsFrame.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING,true, ARR,
 			Utils.inverseLerp(Constants.MIN_ARR, Constants.MAX_ARR, arr),
@@ -91,7 +94,7 @@ public class SettingsScene extends Scene{
 			(double percentage) -> {
 				arr = Math.lerp(Constants.MIN_ARR, Constants.MAX_ARR, percentage);
 			}));
-		settingsFrame.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 2.0, true, DAS,
+		settingsFrame.addComponent(new Slider(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 2, true, DAS,
 			Utils.inverseLerp(Constants.MIN_DAS, Constants.MAX_DAS, das),
 			SLIDER_LENGTH, Constants.MIN_DAS, Constants.MAX_DAS, SLIDER_CLICKER_SIZE, SLIDER_WIDTH, true,
 			widgetTexture, Constants.SLIDER_PX, Constants.SLIDER_PY,
@@ -108,6 +111,12 @@ public class SettingsScene extends Scene{
 				LocalSettings.saveSettings();
 
 				KeybindingSettings.saveSettings();
+			}));
+		settingsFrame.addComponent(new Switch(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 3,
+			30.0, 10.0, isDASCancel, true,
+			widgetTexture, Constants.SWITCH_PX, Constants.SWITCH_PY, "pog",
+			(boolean isOn) -> {
+				LocalSettings.setDASCancel(isOn);
 			}));
 
 		int[] moveLeftKeys = KeybindingSettings.getMoveLeftKeys();

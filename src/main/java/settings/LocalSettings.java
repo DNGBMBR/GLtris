@@ -1,40 +1,35 @@
 package settings;
 
+import dev.dewy.nbt.Nbt;
+import dev.dewy.nbt.io.CompressionType;
+import dev.dewy.nbt.tags.collection.CompoundTag;
+import dev.dewy.nbt.tags.primitive.*;
 import org.ini4j.Wini;
 
 import java.io.*;
 
 public class LocalSettings {
-	//units are in seconds
+	//units are in frames
 	private static final double DEFAULT_ARR = 0.0;
 	private static final double DEFAULT_DAS = 8.0;
-	private static final double DEFAULT_SDF = 1.0;
+	private static final int DEFAULT_SDF = 6;
 
-	private static final String PATH = "./settings.ini";
+	private static final String PATH = "./settings.nbt";
 
-	private static final String SECTION_HANDLING = "handling";
 	private static final String OPTION_SDF = "sdf";
 	private static final String OPTION_ARR = "arr";
 	private static final String OPTION_DAS = "das";
-
-	//this is gonna have to go into a different config setting, or is labelled in the .ini as "do no touch".
-	private static final String SECTION_KEY_BINDINGS = "key_bindings";
-	private static final String OPTION_LEFT = "left";
-	private static final String OPTION_RIGHT = "right";
-	private static final String OPTION_SOFT_DROP = "soft_drop";
-	private static final String OPTION_HARD_DROP = "hard_drop";
-	private static final String OPTION_CW = "rotate_cw";
-	private static final String OPTION_CCW = "rotate_ccw";
-	private static final String OPTION_180 = "rotate_180";
+	private static final String OPTION_DAS_CANCEL = "das_cancel";
 
 	private LocalSettings() {}
 
-	private static Wini properties;
+	private static CompoundTag properties;
 
-	private static Wini getProperties() {
+	private static CompoundTag getProperties() {
 		if (properties == null) {
 			try {
-				properties = new Wini(new File(PATH));
+				Nbt nbt = new Nbt();
+				properties = nbt.fromFile(new File(PATH));
 			} catch (IOException e) {
 				setDefaultProperties();
 			}
@@ -42,21 +37,8 @@ public class LocalSettings {
 		return properties;
 	}
 
-	private static Object getProperty(String section, String name) {
-		//thanks, https://stackoverflow.com/questions/8775303/read-properties-file-outside-jar-file
-		Wini p = getProperties();
-
-		String propertyString = p.get(section, name);
-		if (propertyString == null) {
-			setDefaultProperties();
-			return null;
-		}
-
-		return propertyString;
-	}
-
 	public static void saveSettings() {
-		Wini p = getProperties();
+		CompoundTag p = getProperties();
 
 		File destination = new File(PATH);
 
@@ -66,59 +48,78 @@ public class LocalSettings {
 					return;
 				}
 			}
-			p.store(destination);
+			Nbt nbt = new Nbt();
+			nbt.toFile(p, destination, CompressionType.GZIP);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void setDefaultProperties() {
-		properties = new Wini();
-		properties.put(SECTION_HANDLING, OPTION_SDF, DEFAULT_SDF);
-		properties.put(SECTION_HANDLING, OPTION_ARR, DEFAULT_ARR);
-		properties.put(SECTION_HANDLING, OPTION_DAS, DEFAULT_DAS);
+		properties = new CompoundTag();
+		properties.put(new IntTag(OPTION_SDF, DEFAULT_SDF));
+		properties.put(new DoubleTag(OPTION_ARR, DEFAULT_ARR));
+		properties.put(new DoubleTag(OPTION_DAS, DEFAULT_DAS));
+		properties.put(new ByteTag(OPTION_DAS_CANCEL, 0));
 	}
 
-	public static double getSDF() {
-		Object propertyObject = getProperty(SECTION_HANDLING, OPTION_SDF);
-		if (!(propertyObject instanceof String)) {
-			setDefaultProperties();
-			return DEFAULT_SDF;
+	public static int getSDF() {
+		properties = getProperties();
+		IntTag tag = properties.getInt(OPTION_SDF);
+		if (tag == null) {
+			setDAS(DEFAULT_SDF);
+			tag = properties.getInt(OPTION_SDF);
 		}
-		return Double.parseDouble((String) propertyObject);
+		return tag.getValue();
 	}
 
-	public static void setSDF(double sdf) {
-		Wini p = getProperties();
-		p.put(SECTION_HANDLING, OPTION_SDF, sdf);
+	public static void setSDF(int sdf) {
+		CompoundTag p = getProperties();
+		p.put(new IntTag(OPTION_SDF, sdf));
 	}
 
 	public static double getARR() {
-		Object propertyObject = getProperty(SECTION_HANDLING, OPTION_ARR);
-		if (!(propertyObject instanceof String)) {
-			System.out.println("did not store it correctly");
-			properties.put(SECTION_HANDLING, OPTION_ARR, DEFAULT_ARR);
-			return DEFAULT_ARR;
+		properties = getProperties();
+		DoubleTag tag = properties.getDouble(OPTION_ARR);
+		if (tag == null) {
+			setDAS(DEFAULT_ARR);
+			tag = properties.getDouble(OPTION_ARR);
 		}
-		return Double.parseDouble((String) propertyObject);
+		return tag.getValue();
 	}
 
 	public static void setARR(double arr) {
-		Wini p = getProperties();
-		p.put(SECTION_HANDLING, OPTION_ARR, arr);
+		CompoundTag p = getProperties();
+		p.put(new DoubleTag(OPTION_ARR, arr));
 	}
 
 	public static double getDAS() {
-		Object propertyObject = getProperty(SECTION_HANDLING, OPTION_DAS);
-		if (!(propertyObject instanceof String)) {
-			properties.put(SECTION_HANDLING, OPTION_DAS, DEFAULT_DAS);
-			return DEFAULT_DAS;
+		properties = getProperties();
+		DoubleTag tag = properties.getDouble(OPTION_DAS);
+		if (tag == null) {
+			setDAS(DEFAULT_DAS);
+			tag = properties.getDouble(OPTION_DAS);
 		}
-		return Double.parseDouble((String) propertyObject);
+		return tag.getValue();
 	}
 
 	public static void setDAS(double das) {
-		Wini p = getProperties();
-		p.put(SECTION_HANDLING, OPTION_DAS, das);
+		CompoundTag p = getProperties();
+		p.put(new DoubleTag(OPTION_DAS, das));
+	}
+
+	public static boolean getDASCancel() {
+		properties = getProperties();
+		ByteTag tag = properties.getByte(OPTION_DAS_CANCEL);
+		if (tag == null) {
+			setDASCancel(false);
+			tag = properties.getByte(OPTION_DAS_CANCEL);
+		}
+		return tag.getValue() != 0;
+	}
+
+	public static void setDASCancel(boolean isDASCancel) {
+		CompoundTag p = getProperties();
+		p.put(new ByteTag(OPTION_DAS_CANCEL, isDASCancel ? 1 : 0));
 	}
 }

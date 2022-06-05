@@ -33,8 +33,8 @@ public class Constants {
 	public static final double MAX_ARR = 5.0;
 	public static final double MIN_DAS = 0.0;
 	public static final double MAX_DAS = 20.0;
-	public static final double MIN_SDF = 0.0;
-	public static final double MAX_SDF = 6.0;
+	public static final int MIN_SDF = 1;
+	public static final int MAX_SDF = 60;
 
 	public static final int BOARD_WIDTH = 10;
 	public static final int BOARD_HEIGHT = 40;
