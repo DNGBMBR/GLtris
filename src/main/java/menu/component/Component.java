@@ -1,6 +1,6 @@
 package menu.component;
 
-import menu.widgets.*;
+import menu.widgets.callbacks.*;
 
 import java.util.ArrayList;
 import java.util.List;

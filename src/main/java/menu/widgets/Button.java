@@ -2,6 +2,8 @@ package menu.widgets;
 
 import menu.component.Component;
 import menu.component.TextInfo;
+import menu.widgets.callbacks.OnComponentClick;
+import menu.widgets.callbacks.OnComponentHover;
 import render.texture.TextureNineSlice;
 import util.Constants;
 import util.Utils;
@@ -47,54 +49,16 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 		else if (isHovered) {
 			textureOffset = 1;
 		}
-		float[] uvs = texture.getElementUVsNineSlice(px + textureOffset, py, 1, 1);
+		float[] uvs = texture.getElementUVsNineSlice(px + textureOffset, py, Constants.BUTTON_TEX_WIDTH, Constants.BUTTON_TEX_HEIGHT);
 
 		float p0x = (float) xPos;
 		float p0y = (float) yPos;
-		float p1x = (float) (xPos + borderWidth);
-		float p1y = (float) (yPos + borderWidth);
-		float p2x = (float) (xPos + this.width - borderWidth);
-		float p2y = (float) (yPos + this.height - borderWidth);
 		float p3x = (float) (xPos + this.width);
 		float p3y = (float) (yPos + this.height);
 
 		float[] vertices = new float[6 * 9 * 4];
 
-		Utils.addBlockVertices(vertices, 0 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p0x, p0y, uvs[0], uvs[1],
-			p1x, p1y, uvs[2], uvs[3]);
-
-		Utils.addBlockVertices(vertices, 1 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p1x, p0y, uvs[2], uvs[1],
-			p2x, p1y, uvs[4], uvs[3]);
-
-		Utils.addBlockVertices(vertices, 2 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p2x, p0y, uvs[4], uvs[1],
-			p3x, p1y, uvs[6], uvs[3]);
-
-		Utils.addBlockVertices(vertices, 3 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p0x, p1y, uvs[0], uvs[3],
-			p1x, p2y, uvs[2], uvs[5]);
-
-		Utils.addBlockVertices(vertices, 4 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p1x, p1y, uvs[2], uvs[3],
-			p2x, p2y, uvs[4], uvs[5]);
-
-		Utils.addBlockVertices(vertices, 5 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p3x, p2y, uvs[6], uvs[5],
-			p2x, p1y, uvs[4], uvs[3]);
-
-		Utils.addBlockVertices(vertices, 6 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p0x, p2y, uvs[0], uvs[5],
-			p1x, p3y, uvs[2], uvs[7]);
-
-		Utils.addBlockVertices(vertices, 7 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p1x, p2y, uvs[2], uvs[5],
-			p2x, p3y, uvs[4], uvs[7]);
-
-		Utils.addBlockVertices(vertices, 8 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX,
-			p2x, p2y, uvs[4], uvs[5],
-			p3x, p3y, uvs[6], uvs[7]);
+		Utils.addBlockVerticesNineSlice(vertices, 0, p0x, p0y, p3x, p3y, (float) borderWidth, uvs);
 
 		//TODO: PLEASE let me use an element array buffer for batchers
 		return vertices;

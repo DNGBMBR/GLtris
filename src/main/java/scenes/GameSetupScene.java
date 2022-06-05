@@ -9,7 +9,7 @@ import render.manager.ResourceManager;
 import render.manager.TextRenderer;
 import render.texture.TextureNineSlice;
 import util.Constants;
-import util.GameSettings;
+import settings.GameSettings;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -79,7 +79,7 @@ public class GameSetupScene extends Scene{
 		topFrame.addComponent(settingsFrame);
 
 		topFrame.addComponent(new Button((Constants.VIEWPORT_W - 300) * 0.5, FRAME_SETTINGS_Y_POS - 100, true, 300, 100, 25,
-			"Save", widgetTexture, 0, 2,
+			"Save", widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				try {
 					int numPreviewsNew = Integer.parseInt(textFieldNumPreviews.getText());
@@ -104,7 +104,7 @@ public class GameSetupScene extends Scene{
 		topFrame.addComponent(
 			new Button(Constants.VIEWPORT_W - 650, 50, true,
 			600, 100, 25, "Start Game",
-				widgetTexture, 0, 2,
+				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 					nextScene = new GameScene(windowID);
 					shouldChangeScene = true;
@@ -112,7 +112,7 @@ public class GameSetupScene extends Scene{
 		topFrame.addComponent(
 			new Button(50, 50, true,
 				600, 100, 25, "Back",
-				widgetTexture, 0, 2,
+				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 					nextScene = new MenuScene(windowID);
 					shouldChangeScene = true;

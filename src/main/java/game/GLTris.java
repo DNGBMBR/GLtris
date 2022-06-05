@@ -7,6 +7,7 @@ import game.pieces.*;
 import game.pieces.util.*;
 import org.joml.Random;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
+import settings.*;
 import util.*;
 
 import java.util.ArrayList;
@@ -39,18 +40,36 @@ public class GLTris {
 	private PieceName heldPiece;
 
 	//TODO: make SDF like tetr.io's scaling
-	private double arr;
-	private double das;
-	private double sdf;
+	private double arr = LocalSettings.getARR();
+	private double das = LocalSettings.getDAS();
+	private double sdf = LocalSettings.getSDF();
 
-	private int boardHeight;
-	private int boardWidth;
-	private int numPreviews;
+	private int[] leftKeys = KeybindingSettings.getMoveLeftKeys();
+	private int[] rightKeys = KeybindingSettings.getMoveRightKeys();
+	private int[] softDropKeys = KeybindingSettings.getSoftDropKeys();
+	private int[] rotateCWKeys = KeybindingSettings.getRotateCWKeys();
+	private int[] rotateCCWKeys = KeybindingSettings.getRotateCCWKeys();
+	private int[] rotate180Keys = KeybindingSettings.getRotate180Keys();
+	private int[] holdKeys = KeybindingSettings.getHoldKeys();
+	private int[] hardDropKeys = KeybindingSettings.getHardDropKeys();
 
-	private double initGravity; //measured in G, where 1G = 1 tile per tick
-	private double gravityIncrease;
-	private double gravityIncreaseInterval;
-	private double lockDelay; //measured in seconds
+	private boolean[] isLeftPressed;
+	private boolean[] isRightPressed;
+	private boolean[] isSoftDropPressed;
+	private boolean[] isRotateCWPressed;
+	private boolean[] isRotateCCWPressed;
+	private boolean[] isRotate180Pressed;
+	private boolean[] isHoldPressed;
+	private boolean[] isHardDropPressed;
+
+	private int boardHeight = Constants.BOARD_HEIGHT;
+	private int boardWidth = Constants.BOARD_WIDTH;
+	private int numPreviews = GameSettings.getNumPreviews();
+
+	private double initGravity = GameSettings.getInitGravity(); //measured in G, where 1G = 1 tile per tick
+	private double gravityIncrease = GameSettings.getGravityIncrease();
+	private double gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
+	private double lockDelay = GameSettings.getLockDelay(); //measured in seconds
 
 	private double accumulatorSD = 0.0;
 	private double accumulatorARR = 0.0;
@@ -67,20 +86,7 @@ public class GLTris {
 	private SpinType currentSpinType = NONE;
 
 	public GLTris() {
-		boardWidth = Constants.BOARD_WIDTH;
-		boardHeight = Constants.BOARD_HEIGHT;
-		numPreviews = GameSettings.getNumPreviews();
-
-		initGravity = GameSettings.getInitGravity();
-		gravityIncrease = GameSettings.getGravityIncrease();
-		gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
-		lockDelay = GameSettings.getLockDelay();
-
 		currentGravity = initGravity;
-
-		sdf = LocalSettings.getSDF();
-		arr = LocalSettings.getARR();
-		das = LocalSettings.getDAS();
 
 		pieceQueue = new ConcurrentLinkedQueue<>();
 		board = new TileState[boardHeight][boardWidth];
@@ -90,8 +96,16 @@ public class GLTris {
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
 		lineClearCallback = Collections.synchronizedSet(new HashSet<>());
 
-		LocalSettings.saveSettings();
-		GameSettings.saveSettings();
+		isLeftPressed = new boolean[leftKeys.length];
+		isRightPressed = new boolean[rightKeys.length];
+		isSoftDropPressed = new boolean[softDropKeys.length];
+		/*
+		isRotateCWPressed = new boolean[rotateCWKeys.length];
+		isRotateCCWPressed = new boolean[rotateCCWKeys.length];
+		isRotate180Pressed = new boolean[rotate180Keys.length];
+		isHoldPressed = new boolean[holdKeys.length];
+		isHardDropPressed = new boolean[hardDropKeys.length];
+		 */
 	}
 
 	public void init() {
@@ -108,33 +122,75 @@ public class GLTris {
 
 		keyCallback = (long window, int key, int scancode, int action, int mods) -> {
 			if (action == GLFW_PRESS) {
-				switch(key) {
-					case GLFW_KEY_S -> {
-						movePiece(Direction.DOWN);
-					}
-					case GLFW_KEY_A -> {
+				for (int i = 0; i < leftKeys.length; i++) {
+					if (scancode == leftKeys[i]) {
+						isLeftPressed[i] = true;
 						movePiece(Direction.LEFT);
+						return;
 					}
-					case GLFW_KEY_D -> {
+				}
+				for (int i = 0; i < rightKeys.length; i++) {
+					if (scancode == rightKeys[i]) {
+						isRightPressed[i] = true;
 						movePiece(Direction.RIGHT);
+						return;
 					}
-					case GLFW_KEY_PERIOD -> {
-						rotatePiece(Rotation.CCW);
+				}
+				for (int i = 0; i < softDropKeys.length; i++) {
+					if (scancode == softDropKeys[i]) {
+						isSoftDropPressed[i] = true;
+						movePiece(Direction.DOWN);
+						return;
 					}
-					case GLFW_KEY_SLASH -> {
+				}
+				for (int code : rotateCWKeys) {
+					if (scancode == code) {
 						rotatePiece(Rotation.CW);
+						return;
 					}
-					case GLFW_KEY_COMMA -> {
+				}
+				for (int code : rotateCCWKeys) {
+					if (scancode == code) {
+						rotatePiece(Rotation.CCW);
+						return;
+					}
+				}
+				for (int code : rotate180Keys) {
+					if (scancode == code) {
 						rotatePiece(Rotation.HALF);
+						return;
 					}
-					case GLFW_KEY_SPACE -> {
-						currentPiece.hardDrop(board);
-					}
-					case GLFW_KEY_F -> {
+				}
+				for (int code : holdKeys) {
+					if (scancode == code) {
 						hold();
+						return;
 					}
-					case GLFW_KEY_G -> {
-						LocalSettings.saveSettings();
+				}
+				for (int code : hardDropKeys) {
+					if (scancode == code) {
+						currentPiece.hardDrop(board);
+						return;
+					}
+				}
+			}
+			else if (action == GLFW_RELEASE) {
+				for (int i = 0; i < leftKeys.length; i++) {
+					if (scancode == leftKeys[i]) {
+						isLeftPressed[i] = false;
+						return;
+					}
+				}
+				for (int i = 0; i < rightKeys.length; i++) {
+					if (scancode == rightKeys[i]) {
+						isRightPressed[i] = false;
+						return;
+					}
+				}
+				for (int i = 0; i < softDropKeys.length; i++) {
+					if (scancode == softDropKeys[i]) {
+						isSoftDropPressed[i] = false;
+						return;
 					}
 				}
 			}
@@ -160,11 +216,75 @@ public class GLTris {
 				}
 			}
 
-
-
 			if (pieceQueue.size() <= 2 * numPreviews) {
 				enqueueBag();
 			}
+		}
+	}
+
+	private void listenKeys(double dt) {
+		boolean isLeft = false;
+		boolean isRight = false;
+
+		for (boolean isPressed : isLeftPressed) {
+			if (isPressed) {
+				accumulatorDAS += dt;
+				if (accumulatorDAS >= das * SPF) {
+					if (arr <= 0.0f) {
+						while (currentPiece.move(Direction.LEFT, board)) {
+							//repeat until wall is hit
+						}
+					}
+					else {
+						accumulatorARR += dt;
+						while (accumulatorARR >= arr * SPF) {
+							currentPiece.move(Direction.LEFT, board);
+							accumulatorARR -= SPF;
+						}
+					}
+				}
+				isLeft = true;
+				break;
+			}
+		}
+		for (boolean isPressed : isRightPressed) {
+			if (isPressed) {
+				accumulatorDAS += dt;
+				if (accumulatorDAS >= das * SPF) {
+					if (arr == 0.0f) {
+						while (currentPiece.move(Direction.RIGHT, board)) {
+							//repeat until wall is hit
+						}
+					}
+					else {
+						accumulatorARR += dt;
+						if (accumulatorARR >= arr * SPF) {
+							currentPiece.move(Direction.RIGHT, board);
+							accumulatorARR = 0.0;
+						}
+					}
+				}
+				isRight = true;
+				break;
+			}
+		}
+
+		for (boolean isPressed : isSoftDropPressed) {
+			if (isPressed) {
+				accumulatorSD += dt;
+				while (accumulatorSD >= sdf * SPF) {
+					currentPiece.move(Direction.DOWN, board);
+					accumulatorSD -= SPF;
+				}
+			}
+			else {
+				accumulatorSD = 0;
+			}
+		}
+
+		if (!isLeft && !isRight) {
+			accumulatorDAS = 0.0;
+			accumulatorARR = 0.0;
 		}
 	}
 
@@ -228,57 +348,6 @@ public class GLTris {
 		}
 
 		currentSpinType = SpinType.NONE;
-	}
-
-	private void listenKeys(double dt) {
-		if (KeyListener.isKeyPressed(GLFW_KEY_S)) {
-			accumulatorSD += dt;
-			if (accumulatorSD >= sdf * SPF) {
-				currentPiece.move(Direction.DOWN, board);
-				accumulatorSD = 0.0;
-			}
-		}
-		else {
-			accumulatorSD = 0;
-		}
-		if (KeyListener.isKeyPressed(GLFW_KEY_A)) {
-			accumulatorDAS += dt;
-			if (accumulatorDAS >= das * SPF) {
-				if (arr == 0.0f) {
-					while (currentPiece.move(Direction.LEFT, board)) {
-						//repeat until wall is hit
-					}
-				}
-				else {
-					accumulatorARR += dt;
-					if (accumulatorARR >= arr * SPF) {
-						currentPiece.move(Direction.LEFT, board);
-						accumulatorARR = 0.0;
-					}
-				}
-			}
-		}
-		if (KeyListener.isKeyPressed(GLFW_KEY_D)) {
-			accumulatorDAS += dt;
-			if (accumulatorDAS >= das * SPF) {
-				if (arr == 0.0f) {
-					while (currentPiece.move(Direction.RIGHT, board)) {
-						//repeat until wall is hit
-					}
-				}
-				else {
-					accumulatorARR += dt;
-					if (accumulatorARR >= arr * SPF) {
-						currentPiece.move(Direction.RIGHT, board);
-						accumulatorARR = 0.0;
-					}
-				}
-			}
-		}
-		if (!KeyListener.isKeyPressed(GLFW_KEY_A) && !KeyListener.isKeyPressed(GLFW_KEY_D)) {
-			accumulatorDAS = 0.0;
-			accumulatorARR = 0.0;
-		}
 	}
 
 	private void movePiece(Direction dir) {

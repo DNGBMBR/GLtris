@@ -1,4 +1,4 @@
-package util;
+package settings;
 
 import org.ini4j.Wini;
 

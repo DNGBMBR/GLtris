@@ -2,6 +2,7 @@ package menu.widgets;
 
 import menu.component.Component;
 import menu.component.TextInfo;
+import menu.widgets.callbacks.*;
 import org.joml.Math;
 import render.texture.TextureAtlas;
 import util.*;
@@ -107,8 +108,8 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvsClicker = texture.getElementUVs(px, py, 1, 1);
-		float[] uvsBar = texture.getElementUVs(px + 1, py, 1, 1);
+		float[] uvsClicker = texture.getElementUVs(px, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
+		float[] uvsBar = texture.getElementUVs(px + 1, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
 
 		float p0xBar = (float) (xPos + (clickerSize - barWidth) * 0.5);
 		float p0yBar = (float) (yPos + (clickerSize - barWidth) * 0.5);
@@ -143,7 +144,7 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 
 		float startXValue = (float) (xPos + clickerSize + (isHorizontal ? length : 0));
 		float startYValue = (float) (yPos + (!isHorizontal ? length : 0));
-		TextInfo infoValue = new TextInfo(String.valueOf(Math.lerp(minValue, maxValue, percentage)), fontSize, startXValue, startYValue, 0.0f, 0.0f, 0.0f);
+		TextInfo infoValue = new TextInfo(String.format("%.1f", Math.lerp(minValue, maxValue, percentage)), fontSize, startXValue, startYValue, 0.0f, 0.0f, 0.0f);
 
 		List<TextInfo> ret = new ArrayList<>();
 		ret.add(infoName);

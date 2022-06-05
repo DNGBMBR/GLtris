@@ -2,6 +2,8 @@ package menu.widgets;
 
 import menu.component.Component;
 import menu.component.TextInfo;
+import menu.widgets.callbacks.OnComponentClick;
+import menu.widgets.callbacks.OnComponentHover;
 import org.joml.Math;
 import org.lwjgl.glfw.GLFWCharCallbackI;
 import org.lwjgl.glfw.GLFWKeyCallbackI;

@@ -1,6 +1,7 @@
 package menu.widgets;
 
 import menu.component.Component;
+import menu.widgets.callbacks.*;
 import org.joml.Math;
 import render.texture.TextureAtlas;
 

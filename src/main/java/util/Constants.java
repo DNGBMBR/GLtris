@@ -14,6 +14,21 @@ public class Constants {
 
 	public static final double FRAME_BORDER_WIDTH = 10.0;
 
+	public static final int BUTTON_PX = 0;
+	public static final int BUTTON_PY = 0;
+	public static final int BUTTON_TEX_WIDTH = 1;
+	public static final int BUTTON_TEX_HEIGHT = 1;
+
+	public static final int SLIDER_PX = 0;
+	public static final int SLIDER_PY = 1;
+	public static final int SLIDER_TEX_WIDTH = 1;
+	public static final int SLIDER_TEX_HEIGHT = 1;
+
+	public static final int SWITCH_PX = 0;
+	public static final int SWITCH_PY = 2;
+	public static final int SWITCH_TEX_WIDTH = 1;
+	public static final int SWITCH_TEX_HEIGHT = 1;
+
 	public static final double MIN_ARR = 0.0;
 	public static final double MAX_ARR = 5.0;
 	public static final double MIN_DAS = 0.0;

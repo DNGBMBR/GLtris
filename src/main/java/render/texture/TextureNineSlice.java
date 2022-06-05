@@ -8,8 +8,8 @@ public class TextureNineSlice extends TextureAtlas{
 	protected int borderWidth;
 	protected int borderHeight;
 
-	public TextureNineSlice(String fileName, int textureSlot, int elementWidth, int elementHeight, int borderWidth, int borderHeight) throws IOException {
-		super(fileName, textureSlot, elementWidth, elementHeight);
+	public TextureNineSlice(String fileName, int textureSlot, Texture2DSettings settings, int elementWidth, int elementHeight, int borderWidth, int borderHeight) throws IOException {
+		super(fileName, textureSlot, settings, elementWidth, elementHeight);
 		this.borderWidth = borderWidth;
 		this.borderHeight = borderHeight;
 	}
@@ -36,15 +36,17 @@ public class TextureNineSlice extends TextureAtlas{
 	}
 
 	public float[] getElementUVsNineSlice(int px, int py, int width, int height) {
+		int numElements = textureHeight / elementHeight;
+
 		float p0x = (px * elementWidth + 0.5f) / textureWidth;
-		float p0y = (py * elementHeight + 0.5f) / textureHeight;
+		float p0y = ((numElements - 1 - py) * elementHeight + 0.5f) / textureHeight;
 		//coordinates for p1 and p2 are probably off by 1
 		float p1x = (px * elementWidth + borderWidth + 0.5f) / textureWidth;
-		float p1y = (py * elementHeight + borderHeight + 0.5f) / textureHeight;
+		float p1y = ((numElements - 1 - py) * elementHeight + borderHeight + 0.5f) / textureHeight;
 		float p2x = ((px + width) * elementWidth - borderWidth - 0.5f) / textureWidth;
-		float p2y = ((py + height) * elementHeight - borderHeight - 0.5f) / textureHeight;
+		float p2y = ((numElements - 1 - py + height) * elementHeight - borderHeight - 0.5f) / textureHeight;
 		float p3x = ((px + width) * elementWidth - 0.5f) / textureWidth;
-		float p3y = ((py + height) * elementHeight - 0.5f) / textureHeight;
+		float p3y = ((numElements - 1 - py + height) * elementHeight - 0.5f) / textureHeight;
 
 		float[] out = {
 			p0x, p0y,

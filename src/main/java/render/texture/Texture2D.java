@@ -20,7 +20,7 @@ public class Texture2D {
 	private int textureSlot;
 
 	//textureSlot is 0, 1, etc.
-	public Texture2D(String fileName, int textureSlot) throws IOException {
+	public Texture2D(String fileName, int textureSlot, Texture2DSettings settings) throws IOException {
 		InputStream is = getClass().getClassLoader().getResourceAsStream(fileName);
 		if (is == null) {
 			throw new IOException("Texture file " + fileName + "has not been found.");
@@ -51,10 +51,10 @@ public class Texture2D {
 		glBindTexture(GL_TEXTURE_2D, textureID);
 
 		//TODO: add ability to configure these parameters in the constructor
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, settings.wrapS);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, settings.wrapT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, settings.magFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, settings.minFilter);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	}

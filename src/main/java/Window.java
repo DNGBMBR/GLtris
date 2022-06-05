@@ -67,6 +67,8 @@ public class Window {
 
 		glViewport(0, 0, width, height);
 
+		KeyListener.setWindowID(windowID);
+
 		glfwSetKeyCallback(windowID, KeyListener::keyCallback);
 		glfwSetCharCallback(windowID, KeyListener::textCallback);
 		glfwSetCursorPosCallback(windowID, MouseListener::mousePosCallback);

@@ -7,19 +7,18 @@ import java.util.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class KeyListener {
-	private static boolean[] keyPressed = new boolean[350];
 	private static Set<GLFWKeyCallbackI> keyCallbacks = Collections.synchronizedSet(new HashSet<>());
 	private static Set<GLFWCharCallbackI> textCallbacks = Collections.synchronizedSet(new HashSet<>());
 
+	private static long windowID;
+
 	private KeyListener() {}
 
+	public static void setWindowID(long windowID) {
+		KeyListener.windowID = windowID;
+	}
+
 	public static void keyCallback(long window, int key, int scancode, int action, int mods) {
-		if (action == GLFW_PRESS) {
-			keyPressed[key] = true;
-		}
-		else if (action == GLFW_RELEASE) {
-			keyPressed[key] = false;
-		}
 		for (GLFWKeyCallbackI callback : keyCallbacks) {
 			callback.invoke(window, key, scancode, action, mods);
 		}
@@ -31,8 +30,8 @@ public class KeyListener {
 		}
 	}
 
-	public static boolean isKeyPressed(int key) {
-		return keyPressed[key];
+	public static int isKeyPressed(int key) {
+		return glfwGetKey(windowID, key);
 	}
 
 	public static void registerKeyCallback(GLFWKeyCallbackI callback) {

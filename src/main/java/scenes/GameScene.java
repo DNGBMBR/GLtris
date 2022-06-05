@@ -9,6 +9,7 @@ import render.batch.TileBatch;
 import render.manager.ResourceManager;
 import render.manager.TextRenderer;
 import render.texture.TextureAtlas;
+import render.texture.TextureNineSlice;
 import util.Constants;
 import util.Utils;
 
@@ -17,25 +18,27 @@ import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 public class GameScene extends Scene{
 
 	//TODO: make board and text left align, right align, etc to the window so resizing doesn't break it
-	private static final float TILE_SIZE = 32.0f;
+	private static final float TILE_SIZE = 30.0f;
 	private static final float PROJECTION_WIDTH = Constants.VIEWPORT_W;
 	private static final float PROJECTION_HEIGHT = Constants.VIEWPORT_H;
 
-	private static final float X_OFFSET_HELD = 4.0f * TILE_SIZE;
+	private static final float X_OFFSET_HELD = 2.0f * TILE_SIZE;
 	private static final float Y_OFFSET_HELD = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
+	private static final float HELD_PIECE_BOUND_SIZE = TILE_SIZE * 5.0f;
 
-	private static final float X_OFFSET_BOARD = 8.0f * TILE_SIZE;
+	private static final float X_OFFSET_BOARD = 9.0f * TILE_SIZE;
 	private static final float Y_OFFSET_BOARD = 1.0f * TILE_SIZE;
 
-	private static final float X_OFFSET_QUEUE = 20.0f * TILE_SIZE;
+	private static final float X_OFFSET_QUEUE = 22.0f * TILE_SIZE;
 	private static final float Y_OFFSET_QUEUE = PROJECTION_HEIGHT - 6.0f * TILE_SIZE;
-	private static final float QUEUE_PIECE_BOUND_SIZE = TILE_SIZE * 6.0f;
+	private static final float QUEUE_PIECE_BOUND_SIZE = TILE_SIZE * 5.0f;
 
 	private Shader shaderBlocks;
 	private Matrix4f projection;
 
 	private TileBatch batch;
 	private TextureAtlas pieceTexture;
+	private TextureNineSlice backgroundTexture;
 
 	private TextRenderer textRenderer;
 
@@ -54,6 +57,7 @@ public class GameScene extends Scene{
 		textRenderer = TextRenderer.getInstance();
 
 		pieceTexture = ResourceManager.getAtlasByName("images/default_skin.png");
+		backgroundTexture = ResourceManager.getTextureNineSliceByName("images/game_background.png");
 	}
 
 	@Override
@@ -95,18 +99,24 @@ public class GameScene extends Scene{
 
 	@Override
 	public void draw() {
-		float[] buffer = new float[16];
-
-		shaderBlocks.bind();
-
-		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
-
-		//draw all elements related to the pieces
-		pieceTexture.bind(shaderBlocks, "uTexture");
-
 		TileState[][] board = game.getBoard();
 		Piece currentPiece = game.getCurrentPiece();
 		PieceName heldPiece = game.getHeldPiece();
+
+		float[] buffer = new float[16];
+
+		shaderBlocks.bind();
+		shaderBlocks.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
+
+		backgroundTexture.bind(shaderBlocks, "uTexture");
+
+		//draw board, background for piece queue, and hold
+		batchBackground(board);
+
+		batch.flush();
+
+		//draw all elements related to the pieces
+		pieceTexture.bind(shaderBlocks, "uTexture");
 
 		batchBoard(board);
 		batchCurrentPiece(currentPiece);
@@ -123,6 +133,43 @@ public class GameScene extends Scene{
 		textRenderer.draw();
 	}
 
+	private void batchBackground(TileState[][] board) {
+		float[] boardVertices = new float[board.length * board[0].length * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+		float[] uvsBoard = backgroundTexture.getElementUVs(0, 3, 1, 1);
+
+		//board
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++){
+				float p0x = X_OFFSET_BOARD + j * TILE_SIZE;
+				float p0y = Y_OFFSET_BOARD + i * TILE_SIZE;
+				float p1x = p0x + TILE_SIZE;
+				float p1y = p0y + TILE_SIZE;
+
+				Utils.addBlockVertices(boardVertices, Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD * (i * board[i].length + j),
+					p0x, p0y, uvsBoard[0], uvsBoard[1],
+					p1x, p1y, uvsBoard[2], uvsBoard[3]);
+			}
+		}
+		batch.addVertices(boardVertices);
+
+		//queue
+		float[] queueVertices = new float[9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+
+		float[] uvsQueue = backgroundTexture.getElementUVsNineSlice(1, 3, 2, 2);
+
+		Utils.addBlockVerticesNineSlice(queueVertices, 0,
+			X_OFFSET_QUEUE, Y_OFFSET_QUEUE - (game.getNumPreviews() - 1) * QUEUE_PIECE_BOUND_SIZE,
+			X_OFFSET_QUEUE + QUEUE_PIECE_BOUND_SIZE, Y_OFFSET_QUEUE + QUEUE_PIECE_BOUND_SIZE,
+			30.0f, uvsQueue);
+		batch.addVertices(queueVertices);
+
+		Utils.addBlockVerticesNineSlice(queueVertices, 0,
+			X_OFFSET_HELD, Y_OFFSET_HELD,
+			X_OFFSET_HELD + HELD_PIECE_BOUND_SIZE, Y_OFFSET_HELD + HELD_PIECE_BOUND_SIZE,
+			30.0f, uvsQueue);
+		batch.addVertices(queueVertices);
+	}
+
 	private void batchBoard(TileState[][] board) {
 		float[] vertices = new float[board.length * board[0].length * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
 
@@ -132,8 +179,8 @@ public class GameScene extends Scene{
 				if (board[i][j] != TileState.EMPTY) {
 					float p0x = j * TILE_SIZE + X_OFFSET_BOARD;
 					float p0y = i * TILE_SIZE + Y_OFFSET_BOARD;
-					float p1x = j * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
-					float p1y = i * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					float p1x = p0x + TILE_SIZE;
+					float p1y = p0y + TILE_SIZE;
 
 					switch(board[i][j]) {
 						case GARBAGE -> {
@@ -192,8 +239,8 @@ public class GameScene extends Scene{
 				if (tileMap[i][j]) {
 					float p0x = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;
 					float p0y = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
-					float p1x = (currentPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
-					float p1y = (currentPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					float p1x = p0x + TILE_SIZE;
+					float p1y = p0y + TILE_SIZE;
 
 					switch(currentPiece.getName()) {
 						case I -> {
@@ -276,8 +323,8 @@ public class GameScene extends Scene{
 				if (tileMap[i][j]) {
 					float p0x = (ghostPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD;
 					float p0y = (ghostPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD;
-					float p1x = (ghostPiece.getTopLeftX() + j) * TILE_SIZE + X_OFFSET_BOARD + TILE_SIZE;
-					float p1y = (ghostPiece.getTopLeftY() + i) * TILE_SIZE + Y_OFFSET_BOARD + TILE_SIZE;
+					float p1x = p0x + TILE_SIZE;
+					float p1y = p0y + TILE_SIZE;
 
 					Utils.addBlockVertices(vertices, 0,
 						p0x, p0y, uvs[0], uvs[1],
@@ -335,10 +382,10 @@ public class GameScene extends Scene{
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						float p0x = j * TILE_SIZE + X_OFFSET_HELD;
-						float p0y = i * TILE_SIZE + Y_OFFSET_HELD;
-						float p1x = j * TILE_SIZE+ X_OFFSET_HELD + TILE_SIZE;
-						float p1y = i  * TILE_SIZE+ Y_OFFSET_HELD + TILE_SIZE;
+						float p0x = j * TILE_SIZE + (X_OFFSET_HELD + 0.5f * HELD_PIECE_BOUND_SIZE - tileMap[0].length * 0.5f * TILE_SIZE);
+						float p0y = i * TILE_SIZE + (Y_OFFSET_HELD + 0.5f * HELD_PIECE_BOUND_SIZE - tileMap.length * 0.5f * TILE_SIZE);
+						float p1x = p0x + TILE_SIZE;
+						float p1y = p0y + TILE_SIZE;
 
 						Utils.addBlockVertices(vertices, 0,
 							p0x, p0y, uvs[0], uvs[1],
@@ -358,7 +405,6 @@ public class GameScene extends Scene{
 		boolean[][] tileMap = {};
 		int px = 0, py = 0;
 
-		//draw the piece queue
 		for (int index = 0; index < game.getNumPreviews(); index++) {
 			PieceName pieceName = currentQueue[index];
 			switch (pieceName) {
@@ -397,10 +443,10 @@ public class GameScene extends Scene{
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						float p0x = j * TILE_SIZE + (X_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE) - tileMap.length * 0.5f * TILE_SIZE;
-						float p0y = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE;
-						float p1x = j * TILE_SIZE + (X_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE) - tileMap.length * 0.5f * TILE_SIZE + TILE_SIZE;
-						float p1y = i * TILE_SIZE + Y_OFFSET_QUEUE - index * 5.0f * TILE_SIZE + TILE_SIZE;
+						float p0x = j * TILE_SIZE + (X_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE) - tileMap[0].length * 0.5f * TILE_SIZE;
+						float p0y = i * TILE_SIZE + (Y_OFFSET_QUEUE + 0.5f * QUEUE_PIECE_BOUND_SIZE - tileMap.length * 0.5f * TILE_SIZE) - index * QUEUE_PIECE_BOUND_SIZE;
+						float p1x = p0x + TILE_SIZE;
+						float p1y = p0y + TILE_SIZE;
 
 						Utils.addBlockVertices(vertices, 0,
 							p0x, p0y, uvs[0], uvs[1],
@@ -420,7 +466,7 @@ public class GameScene extends Scene{
 
 	@Override
 	public Scene nextScene() {
-		return null;
+		return new MenuScene(windowID);
 	}
 
 	@Override
