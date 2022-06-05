@@ -11,7 +11,7 @@ import java.io.IOException;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class KeybindingSettings {
-	private static final String PATH = "./keysettings.ini";
+	private static final String PATH = "./keysettings.nbt";
 
 	private static final String MOVE_LEFT_KEY = "left";
 	private static final String MOVE_RIGHT_KEY = "right";
