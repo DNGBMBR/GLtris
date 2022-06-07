@@ -1,7 +1,6 @@
 package util;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -47,6 +46,40 @@ public class Utils {
 		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 1] = p0y;
 		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 2] = p0u;
 		vertexData[startIndex + Constants.BLOCK_ATTRIBUTES_PER_VERTEX * 5 + 3] = p0v;
+	}
+
+	public static void addBlockVertices(List<Float> vertexData,
+										float p0x, float p0y, float p0u, float p0v,
+										float p1x, float p1y, float p1u, float p1v) {
+		vertexData.add(p0x);
+		vertexData.add(p0y);
+		vertexData.add(p0u);
+		vertexData.add(p0v);
+
+		vertexData.add(p1x);
+		vertexData.add(p0y);
+		vertexData.add(p1u);
+		vertexData.add(p0v);
+
+		vertexData.add(p1x);
+		vertexData.add(p1y);
+		vertexData.add(p1u);
+		vertexData.add(p1v);
+
+		vertexData.add(p1x);
+		vertexData.add(p1y);
+		vertexData.add(p1u);
+		vertexData.add(p1v);
+
+		vertexData.add(p0x);
+		vertexData.add(p1y);
+		vertexData.add(p0u);
+		vertexData.add(p1v);
+
+		vertexData.add(p0x);
+		vertexData.add(p0y);
+		vertexData.add(p0u);
+		vertexData.add(p0v);
 	}
 
 	public static void addBlockVerticesNineSlice(float[] vertexData, int startIndex,

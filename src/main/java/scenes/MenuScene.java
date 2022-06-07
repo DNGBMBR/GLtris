@@ -30,13 +30,12 @@ public class MenuScene extends Scene{
 
 	TopFrame mainFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 
-	boolean shouldChangeScene = false;
 	Scene nextScene;
 
 	public MenuScene(long windowID) {
 		super(windowID);
 
-		menuShader = ResourceManager.getShaderByName("shaders/widget_vertex.glsl", "shaders/widget_fragment.glsl");
+		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 
 		//TODO: make this WAY less dense. Group widgets?
@@ -100,7 +99,7 @@ public class MenuScene extends Scene{
 		menuShader.bind();
 
 		//bind texture for button here
-		widgetTexture.bind(menuShader, "uTexture");
+		menuShader.bindTexture2D("uTexture", widgetTexture);
 
 		float[] buffer = new float[16];
 		menuShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
@@ -114,11 +113,6 @@ public class MenuScene extends Scene{
 		textRenderer.addText(mainFrame);
 
 		textRenderer.draw();
-	}
-
-	@Override
-	public boolean shouldChangeScene() {
-		return shouldChangeScene;
 	}
 
 	@Override

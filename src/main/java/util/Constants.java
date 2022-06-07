@@ -37,7 +37,7 @@ public class Constants {
 	public static final int MAX_SDF = 60;
 
 	public static final int BOARD_WIDTH = 10;
-	public static final int BOARD_HEIGHT = 40;
+	public static final int BOARD_HEIGHT = 20;
 
 	private Constants(){}
 }

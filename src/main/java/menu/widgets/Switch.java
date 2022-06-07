@@ -1,9 +1,13 @@
 package menu.widgets;
 
 import menu.component.Component;
+import menu.component.TextInfo;
 import menu.widgets.callbacks.*;
 import org.joml.Math;
 import render.texture.TextureAtlas;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
@@ -37,8 +41,8 @@ public class Switch extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvsSwitch = isPressed ? texture.getElementUVs(px + 1, py, 1, 1) : texture.getElementUVs(px, py, 1, 1);
-		float[] uvsBackground = texture.getElementUVs(px + 2, py, 1, 1);
+		float[] uvsSwitch = texture.getElementUVs(isPressed ? px + 1 : isOn ? px + 2 : px, py, 1, 1);
+		float[] uvsBackground = texture.getElementUVs(px + 3, py, 1, 1);
 
 		float p0x = (float) (xPos + (isOn ? switchSize : 0));
 		float p0y = (float) yPos;
@@ -66,6 +70,17 @@ public class Switch extends Component implements OnComponentClick, OnComponentHo
 			p0x, p0y, uvsSwitch[0], uvsSwitch[1],
 		};
 		return vertices;
+	}
+
+	@Override
+	public List<TextInfo> getTextInfo() {
+		float fontSize = (float) switchSize * 0.75f;
+		float startXName = (float) (xPos - fontSize * (displayText.length() + 1));
+		float startYName = (float) yPos;
+		TextInfo infoName = new TextInfo(displayText, fontSize, startXName, startYName, 0.0f, 0.0f, 0.0f);
+		List<TextInfo> ret = new ArrayList<>();
+		ret.add(infoName);
+		return ret;
 	}
 
 	@Override

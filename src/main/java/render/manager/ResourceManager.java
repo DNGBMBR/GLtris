@@ -20,7 +20,6 @@ public class ResourceManager {
 
 	public static void initializeResources() throws IOException, URISyntaxException {
 		ResourceManager.createShader("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
-		ResourceManager.createShader("shaders/widget_vertex.glsl", "shaders/widget_fragment.glsl");
 		ResourceManager.createShader("shaders/text_vertex.glsl", "shaders/text_fragment.glsl");
 
 		Texture2DSettings defaultSettings = new Texture2DSettings(GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST);

@@ -6,16 +6,16 @@ public abstract class Piece {
 	//TODO: IMPLEMENT 180 KICKS FOR ALL PIECES
 
 	//remember that when you're putting the tile map in an array, index 0 is at the bottom on the board, so the resulting figure is vertically flipped
-	protected int topLeftX;
-	protected int topLeftY;
+	protected int bottomLeftX;
+	protected int bottomLeftY;
 	protected boolean placed;
 	protected boolean[][] tileMap;
 	protected Orientation orientation;
 	protected PieceName name;
 
-	public Piece(int topLeftX, int topLeftY, boolean[][] tileMap, Orientation orientation, PieceName name) {
-		this.topLeftX = topLeftX;
-		this.topLeftY = topLeftY;
+	public Piece(int bottomLeftX, int bottomLeftY, boolean[][] tileMap, Orientation orientation, PieceName name) {
+		this.bottomLeftX = bottomLeftX;
+		this.bottomLeftY = bottomLeftY;
 		this.placed = false;
 		this.tileMap = tileMap;
 		this.orientation = orientation;
@@ -26,8 +26,8 @@ public abstract class Piece {
 	public int rotate(Rotation rot, TileState[][] board) {
 		boolean[][] potentialRotation;
 		Orientation potentialOrientation;
-		int potentialX = topLeftX;
-		int potentialY = topLeftY;
+		int potentialX = bottomLeftX;
+		int potentialY = bottomLeftY;
 
 		switch(rot) {
 			case CW -> {
@@ -124,8 +124,8 @@ public abstract class Piece {
 		int kickUsed = -1;
 
 		for (int i = 0; i < kickTable[orientation.getVal()].length; i++) {
-			potentialX = topLeftX + kickTable[orientation.getVal()][i][0];
-			potentialY = topLeftY + kickTable[orientation.getVal()][i][1];
+			potentialX = bottomLeftX + kickTable[orientation.getVal()][i][0];
+			potentialY = bottomLeftY + kickTable[orientation.getVal()][i][1];
 			if (!isCollision(board, potentialRotation, potentialX, potentialY)) {
 				kickUsed = i;
 				validKick = true;
@@ -136,8 +136,8 @@ public abstract class Piece {
 		if (validKick) {
 			tileMap = potentialRotation;
 			orientation = potentialOrientation;
-			topLeftX = potentialX;
-			topLeftY = potentialY;
+			bottomLeftX = potentialX;
+			bottomLeftY = potentialY;
 		}
 
 		return kickUsed;
@@ -148,16 +148,16 @@ public abstract class Piece {
 		int potentialY;
 		switch(dir) {
 			case LEFT -> {
-				potentialX = topLeftX - 1;
-				potentialY = topLeftY;
+				potentialX = bottomLeftX - 1;
+				potentialY = bottomLeftY;
 			}
 			case RIGHT -> {
-				potentialX = topLeftX + 1;
-				potentialY = topLeftY;
+				potentialX = bottomLeftX + 1;
+				potentialY = bottomLeftY;
 			}
 			case DOWN -> {
-				potentialX = topLeftX;
-				potentialY = topLeftY - 1;
+				potentialX = bottomLeftX;
+				potentialY = bottomLeftY - 1;
 			}
 			default -> {
 				return false;
@@ -166,14 +166,14 @@ public abstract class Piece {
 		if (isCollision(board, this.tileMap, potentialX, potentialY)) {
 			return false;
 		}
-		topLeftX = potentialX;
-		topLeftY = potentialY;
+		bottomLeftX = potentialX;
+		bottomLeftY = potentialY;
 		return true;
 	}
 
 	//returns true if successfully placed, false if there was something in the way
 	public boolean place(TileState[][] board) {
-		if (isCollision(board, tileMap, topLeftX, topLeftY)) {
+		if (isCollision(board, tileMap, bottomLeftX, bottomLeftY)) {
 			return false;
 		}
 
@@ -207,8 +207,8 @@ public abstract class Piece {
 		for (int i = 0; i < tileMap.length; i++) {
 			for (int j = 0; j < tileMap[i].length; j++) {
 				if (tileMap[i][j]) {
-					int xIndex = topLeftX + j;
-					int yIndex = topLeftY + i;
+					int xIndex = bottomLeftX + j;
+					int yIndex = bottomLeftY + i;
 					board[yIndex][xIndex] = placedTileType;
 				}
 			}
@@ -261,15 +261,15 @@ public abstract class Piece {
 	}
 
 	public boolean testCollision(TileState[][] board, int directionX, int directionY) {
-		return isCollision(board, this.tileMap, this.topLeftX + directionX, this.topLeftY + directionY);
+		return isCollision(board, this.tileMap, this.bottomLeftX + directionX, this.bottomLeftY + directionY);
 	}
 
-	public int getTopLeftX() {
-		return topLeftX;
+	public int getBottomLeftX() {
+		return bottomLeftX;
 	}
 
-	public int getTopLeftY() {
-		return topLeftY;
+	public int getBottomLeftY() {
+		return bottomLeftY;
 	}
 
 	public boolean[][] getTileMap() {

@@ -55,12 +55,12 @@ public class TPiece extends Piece {
 		{false, true, false}
 	};
 
-	public TPiece(int topLeftX, int topLeftY) {
-		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.T);
+	public TPiece(int bottomLeftX, int bottomLeftY) {
+		super(bottomLeftX, bottomLeftY, TILE_MAP_E, Orientation.E, PieceName.T);
 	}
 
 	private TPiece(TPiece piece) {
-		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.T);
+		super(piece.bottomLeftX, piece.bottomLeftY, piece.tileMap, piece.orientation, PieceName.T);
 	}
 
 	@Override

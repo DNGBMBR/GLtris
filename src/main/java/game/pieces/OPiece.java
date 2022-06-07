@@ -30,12 +30,12 @@ public class OPiece extends Piece {
 		{true, true}
 	};
 
-	public OPiece(int topLeftX, int topLeftY) {
-		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.O);
+	public OPiece(int bottomLeftX, int bottomLeftY) {
+		super(bottomLeftX, bottomLeftY, TILE_MAP_E, Orientation.E, PieceName.O);
 	}
 
 	private OPiece(OPiece piece) {
-		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.O);
+		super(piece.bottomLeftX, piece.bottomLeftY, piece.tileMap, piece.orientation, PieceName.O);
 	}
 
 	private static final boolean[][] TILE_MAP_R = TILE_MAP_E;

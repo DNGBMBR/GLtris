@@ -48,12 +48,12 @@ public class ZPiece extends Piece {
 		{false, true, false}
 	};
 
-	public ZPiece(int topLeftX, int topLeftY) {
-		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.Z);
+	public ZPiece(int bottomLeftX, int bottomLeftY) {
+		super(bottomLeftX, bottomLeftY, TILE_MAP_E, Orientation.E, PieceName.Z);
 	}
 
 	private ZPiece(ZPiece piece) {
-		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.Z);
+		super(piece.bottomLeftX, piece.bottomLeftY, piece.tileMap, piece.orientation, PieceName.Z);
 	}
 
 	@Override

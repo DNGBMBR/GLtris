@@ -52,12 +52,12 @@ public class IPiece extends Piece {
 		{false, true, false, false}
 	};
 
-	public IPiece(int topLeftX, int topLeftY) {
-		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.I);
+	public IPiece(int bottomLeftX, int bottomLeftY) {
+		super(bottomLeftX, bottomLeftY, TILE_MAP_E, Orientation.E, PieceName.I);
 	}
 
 	private IPiece(IPiece piece) {
-		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.I);
+		super(piece.bottomLeftX, piece.bottomLeftY, piece.tileMap, piece.orientation, PieceName.I);
 	}
 
 	@Override

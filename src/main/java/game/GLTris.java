@@ -20,6 +20,7 @@ import static game.SpinType.*;
 import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
+//TODO: Make a GLTris wrapper component for use with the current drawing method
 public class GLTris {
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
@@ -94,7 +95,7 @@ public class GLTris {
 		currentGravity = initGravity;
 
 		pieceQueue = new ConcurrentLinkedQueue<>();
-		board = new TileState[boardHeight][boardWidth];
+		board = new TileState[2 * boardHeight][boardWidth];
 		rng = new Random();
 		nextPieceCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceMoveCallback = Collections.synchronizedSet(new HashSet<>());
@@ -126,6 +127,9 @@ public class GLTris {
 		heldPiece = null;
 
 		keyCallback = (long window, int key, int scancode, int action, int mods) -> {
+			if (isGameOver) {
+				return;
+			}
 			if (action == GLFW_PRESS) {
 				for (int i = 0; i < leftKeys.length; i++) {
 					if (scancode == leftKeys[i]) {
@@ -474,8 +478,8 @@ public class GLTris {
 			case T -> {
 				int forwardCornerCount = 0;
 				int cornerCount = 0;
-				int tCenterX = currentPiece.getTopLeftX() + 1;
-				int tCenterY = currentPiece.getTopLeftY() + 1;
+				int tCenterX = currentPiece.getBottomLeftX() + 1;
+				int tCenterY = currentPiece.getBottomLeftY() + 1;
 				Orientation orientation = currentPiece.getOrientation();
 				if (tCenterX - 1 < 0 || tCenterY - 1 < 0 || board[tCenterY - 1][tCenterX - 1] != TileState.EMPTY) {
 					if (orientation == R2 || orientation == R3) {
@@ -586,25 +590,25 @@ public class GLTris {
 		Piece nextPiece;
 		switch (nextPieceName) {
 			case I -> {
-				nextPiece = new IPiece(3, 22);
+				nextPiece = new IPiece(3, 19);
 			}
 			case O -> {
-				nextPiece = new OPiece(4, 22);
+				nextPiece = new OPiece(4, 21);
 			}
 			case L -> {
-				nextPiece = new LPiece(3, 22);
+				nextPiece = new LPiece(3, 20);
 			}
 			case J -> {
-				nextPiece = new JPiece(3, 22);
+				nextPiece = new JPiece(3, 20);
 			}
 			case S -> {
-				nextPiece = new SPiece(3, 22);
+				nextPiece = new SPiece(3, 20);
 			}
 			case Z -> {
-				nextPiece = new ZPiece(3, 22);
+				nextPiece = new ZPiece(3, 20);
 			}
 			case T -> {
-				nextPiece = new TPiece(3, 22);
+				nextPiece = new TPiece(3, 20);
 			}
 			default -> {
 				throw new IllegalStateException("Bag has piece that is not one of the standard game pieces.");
@@ -628,6 +632,14 @@ public class GLTris {
 			bagRandomizer[i] = bagRandomizer[j];
 			bagRandomizer[j] = temp;
 		}
+	}
+
+	public int getBoardHeight() {
+		return boardHeight;
+	}
+
+	public int getBoardWidth() {
+		return boardWidth;
 	}
 
 	public TileState[][] getBoard() {
@@ -654,6 +666,10 @@ public class GLTris {
 
 	public int getLinesCleared() {
 		return linesCleared;
+	}
+
+	public boolean isGameOver() {
+		return isGameOver;
 	}
 
 	public void registerOnNextPieceListener(Runnable listener) {

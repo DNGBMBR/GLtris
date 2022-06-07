@@ -4,7 +4,6 @@ import menu.component.Frame;
 import menu.component.TopFrame;
 import menu.widgets.*;
 import menu.widgets.Button;
-import menu.widgets.callbacks.OnSwitchClick;
 import org.joml.Math;
 import org.joml.Matrix4f;
 import render.Shader;
@@ -25,6 +24,7 @@ public class SettingsScene extends Scene{
 	private static final String SDF = "SDF";
 	private static final String ARR = "ARR";
 	private static final String DAS = "DAS";
+	private static final String DAS_CANCEL = "DAS Cancel";
 
 	private static final double BUTTON_WIDTH = 600.0;
 	private static final double BUTTON_HEIGHT = 100.0;
@@ -41,8 +41,8 @@ public class SettingsScene extends Scene{
 	private static final double CONTROLS_Y_POS = 200.0;
 	private static final double CONTROLS_WIDTH = Constants.VIEWPORT_W - CONTROLS_X_POS - 50;
 	private static final double CONTROLS_HEIGHT = Constants.VIEWPORT_H - CONTROLS_Y_POS - 50;
-	private static final double INPUT_MARGIN_LARGE = 280.0;
-	private static final double INPUT_MARGIN_SMALL = 50.0;
+	private static final double INPUT_MARGIN_LARGE = 310.0;
+	private static final double INPUT_MARGIN_SMALL = 25.0;
 	private static final double INPUT_WIDTH = 300.0;
 	private static final double INPUT_HEIGHT = 50.0;
 	private static final double INPUT_SPACING = 100.0;
@@ -63,13 +63,12 @@ public class SettingsScene extends Scene{
 	double das = LocalSettings.getDAS();
 	boolean isDASCancel = LocalSettings.getDASCancel();
 
-	boolean shouldChangeScene = false;
 	Scene nextScene;
 
 	SettingsScene(long windowID) {
 		super(windowID);
 
-		menuShader = ResourceManager.getShaderByName("shaders/widget_vertex.glsl", "shaders/widget_fragment.glsl");
+		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 
 		settingsFrame.addComponent(new Button(50.0, 50.0, true,
@@ -112,9 +111,9 @@ public class SettingsScene extends Scene{
 
 				KeybindingSettings.saveSettings();
 			}));
-		settingsFrame.addComponent(new Switch(SLIDER_POSITION_X, SLIDER_POSITION_Y - SLIDER_SPACING * 3,
+		settingsFrame.addComponent(new Switch(SLIDER_POSITION_X + (DAS_CANCEL.length() - 3) * 30.0 * 0.75, SLIDER_POSITION_Y - SLIDER_SPACING * 3,
 			30.0, 10.0, isDASCancel, true,
-			widgetTexture, Constants.SWITCH_PX, Constants.SWITCH_PY, "pog",
+			widgetTexture, Constants.SWITCH_PX, Constants.SWITCH_PY, DAS_CANCEL,
 			(boolean isOn) -> {
 				LocalSettings.setDASCancel(isOn);
 			}));
@@ -128,6 +127,9 @@ public class SettingsScene extends Scene{
 		int[] holdKeys = KeybindingSettings.getHoldKeys();
 		int[] hardDropKeys = KeybindingSettings.getHardDropKeys();
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+			"Left", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT, INPUT_WIDTH, INPUT_HEIGHT,
 			"move left 1", true, moveLeftKeys[0],
@@ -143,6 +145,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setMoveLeftKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 1 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+			"Right", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 1 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"move right 1", true, moveRightKeys[0],
@@ -158,6 +163,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setMoveRightKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 2 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Soft Drop", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 2 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"soft drop 1", true, softDropKeys[0],
@@ -173,6 +181,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setSoftDropKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 3 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Rotate CW", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 3 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"rotate cw 1", true, rotateCWKeys[0],
@@ -188,6 +199,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setRotateCWKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 4 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Rotate CCW", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 4 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"rotate ccw 1", true, rotateCCWKeys[0],
@@ -203,6 +217,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setRotateCCWKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 5 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Rotate 180", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 5 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"rotate 180 1", true, rotate180Keys[0],
@@ -218,6 +235,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setRotate180Key(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 6 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Hold", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 6 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"hold 1", true, holdKeys[0],
@@ -233,6 +253,9 @@ public class SettingsScene extends Scene{
 				KeybindingSettings.setHoldKey(scancode, 1);
 			}));
 
+		controlsFrame.addComponent(
+			new TextComponent(INPUT_MARGIN_SMALL, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - 7 * INPUT_SPACING - INPUT_HEIGHT + 0.5 * (INPUT_HEIGHT * 0.5),
+				"Hard Drop", (float) INPUT_HEIGHT * 0.5f, 0.0f, 0.0f, 0.0f, true));
 		controlsFrame.addComponent(new KeyBindingComponent(
 			INPUT_MARGIN_LARGE, CONTROLS_HEIGHT - INPUT_MARGIN_SMALL - INPUT_HEIGHT - 7 * INPUT_SPACING, INPUT_WIDTH, INPUT_HEIGHT,
 			"hard drop 1", true, hardDropKeys[0],
@@ -289,7 +312,7 @@ public class SettingsScene extends Scene{
 	public void draw() {
 		menuShader.bind();
 
-		widgetTexture.bind(menuShader, "uTexture");
+		menuShader.bindTexture2D("uTexture", widgetTexture);
 
 		float[] buffer = new float[16];
 		menuShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
@@ -303,11 +326,6 @@ public class SettingsScene extends Scene{
 		textRenderer.addText(settingsFrame);
 
 		textRenderer.draw();
-	}
-
-	@Override
-	public boolean shouldChangeScene() {
-		return shouldChangeScene;
 	}
 
 	@Override

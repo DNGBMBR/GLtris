@@ -59,12 +59,6 @@ public class Texture2D {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 	}
 
-	public void bind(Shader shader, String uniformName) {
-		glActiveTexture(GL_TEXTURE0 + textureSlot);
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		shader.uploadUniform1i(uniformName, textureSlot);
-	}
-
 	public int getTextureID() {
 		return textureID;
 	}

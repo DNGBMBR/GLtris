@@ -48,12 +48,12 @@ public class LPiece extends Piece {
 		{true, true, false}
 	};
 
-	public LPiece(int topLeftX, int topLeftY) {
-		super(topLeftX, topLeftY, TILE_MAP_E, Orientation.E, PieceName.L);
+	public LPiece(int bottomLeftX, int bottomLeftY) {
+		super(bottomLeftX, bottomLeftY, TILE_MAP_E, Orientation.E, PieceName.L);
 	}
 
 	private LPiece(LPiece piece) {
-		super(piece.topLeftX, piece.topLeftY, piece.tileMap, piece.orientation, PieceName.L);
+		super(piece.bottomLeftX, piece.bottomLeftY, piece.tileMap, piece.orientation, PieceName.L);
 	}
 
 	@Override

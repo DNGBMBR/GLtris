@@ -1,6 +1,7 @@
 package render;
 
 import org.lwjgl.BufferUtils;
+import render.texture.Texture2D;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -206,7 +207,9 @@ public class Shader {
 		glUniformMatrix4fv(location, transpose, matrix);
 	}
 
-	public void bindTexture2D(int textureID) {
-		glBindTexture(GL_TEXTURE_2D, textureID);
+	public void bindTexture2D(String uniformName, Texture2D texture) {
+		glActiveTexture(GL_TEXTURE0 + texture.getTextureSlot());
+		glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
+		uploadUniform1i(uniformName, texture.getTextureSlot());
 	}
 }

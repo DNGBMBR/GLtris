@@ -42,6 +42,9 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 	//generates vertices in local coordinates
 	@Override
 	public float[] generateVertices() {
+		if (!isActive) {
+			return new float[0];
+		}
 		int textureOffset = 0;
 		if (isPressed) {
 			textureOffset = 2;
@@ -66,6 +69,9 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public void onClick(double mouseX, double mouseY, int button, int action, int mods) {
+		if (!isActive) {
+			return;
+		}
 		boolean isInRegion =
 			mouseX >= xPos && mouseX <= xPos + width &&
 			mouseY >= yPos && mouseY <= yPos + height;
@@ -84,6 +90,9 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public void onHover(double mouseX, double mouseY, boolean isInFrame) {
+		if (!isActive) {
+			return;
+		}
 		isHovered =
 			isInFrame &&
 			mouseX >= this.xPos && mouseX <= this.xPos + width &&
@@ -93,6 +102,9 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
+		if (!isActive) {
+			return;
+		}
 		isHovered =
 			mouseX >= this.xPos && mouseX <= this.xPos + width &&
 			mouseY >= this.yPos && mouseY <= this.yPos + height;
@@ -100,6 +112,10 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public List<TextInfo> getTextInfo() {
+		List<TextInfo> ret = new ArrayList<>();
+		if (!isActive) {
+			return ret;
+		}
 		float centerX = ((float) (2.0 * xPos + width)) * 0.5f;
 		float centerY = ((float) (2.0f * yPos + height)) * 0.5f;
 		float fontSize = (float) height * 0.5f;
@@ -107,7 +123,6 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 		float startY = centerY - (float) height * 0.25f;
 
 		TextInfo info = new TextInfo(displayText, fontSize, startX, startY, 1.0f, 1.0f, 1.0f);
-		List<TextInfo> ret = new ArrayList<>();
 		ret.add(info);
 		return ret;
 	}

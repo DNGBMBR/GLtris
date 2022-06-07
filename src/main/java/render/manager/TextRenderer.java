@@ -62,7 +62,7 @@ public class TextRenderer{
 
 	public void bind() {
 		textShader.bind();
-		fontTexture.bind(textShader, "uFontTexture");
+		textShader.bindTexture2D("uFontTexture", fontTexture);
 
 		float[] buffer = new float[16];
 		textShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));

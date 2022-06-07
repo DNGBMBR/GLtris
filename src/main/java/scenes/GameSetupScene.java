@@ -31,7 +31,7 @@ public class GameSetupScene extends Scene{
 	private Matrix4f projection;
 	private Scene nextScene;
 
-	private Shader widgetShader = ResourceManager.getShaderByName("shaders/widget_vertex.glsl", "shaders/widget_fragment.glsl");
+	private Shader blockShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 	private TextureNineSlice widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 	private WidgetBatch batch = new WidgetBatch(80);
 
@@ -151,12 +151,12 @@ public class GameSetupScene extends Scene{
 
 	@Override
 	public void draw() {
-		widgetShader.bind();
-		widgetTexture.bind(widgetShader, "uTexture");
+		blockShader.bind();
+		blockShader.bindTexture2D("uTexture", widgetTexture);
 
 		float[] buffer = new float[16];
 
-		widgetShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
+		blockShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
 
 		batch.addComponent(topFrame);
 		batch.flush();
@@ -166,11 +166,6 @@ public class GameSetupScene extends Scene{
 		textRenderer.addText(topFrame);
 
 		textRenderer.draw();
-	}
-
-	@Override
-	public boolean shouldChangeScene() {
-		return shouldChangeScene;
 	}
 
 	@Override
