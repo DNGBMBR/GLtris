@@ -77,9 +77,9 @@ public class GapBuffer {
 		}
 	}
 
-	public void insert(char c) {
+	public boolean insert(char c) {
 		if (maxCapacity > 0 && numChars >= maxCapacity) {
-			return;
+			return false;
 		}
 		if (gapStart == gapEnd) {
 			growBuffer();
@@ -87,6 +87,15 @@ public class GapBuffer {
 		buffer[gapStart] = c;
 		gapStart++;
 		numChars++;
+		return true;
+	}
+
+	public void insert(String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (!insert(s.charAt(i))) {
+				break;
+			}
+		}
 	}
 
 	public void delete() {
@@ -126,6 +135,10 @@ public class GapBuffer {
 			sb.append(buffer[i]);
 		}
 		return sb.toString();
+	}
+
+	public int getGapStart() {
+		return gapStart;
 	}
 
 	@Override

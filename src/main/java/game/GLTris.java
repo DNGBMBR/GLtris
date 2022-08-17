@@ -6,21 +6,19 @@ import game.callbacks.RotateCallback;
 import game.pieces.*;
 import game.pieces.util.*;
 import org.joml.Random;
+import org.json.simple.parser.ParseException;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import settings.*;
 import util.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static game.SpinType.*;
 import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
-//TODO: Make a GLTris wrapper component for use with the current drawing method
 public class GLTris {
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
@@ -30,15 +28,16 @@ public class GLTris {
 	private Set<RotateCallback> pieceRotateCallback;
 	private Set<LineClearCallback> lineClearCallback;
 
-	private PieceName[] bagRandomizer = {PieceName.I, PieceName.O, PieceName.L, PieceName.J, PieceName.S, PieceName.Z, PieceName.T};
+	private String[] bagRandomizer = {"I", "O", "L", "J", "S", "Z", "T"};
 	private Random rng;
 
 	private GLFWKeyCallbackI keyCallback;
 
-	private ConcurrentLinkedQueue<PieceName> pieceQueue;
+	private PieceFactory pieceFactory;
+	private ConcurrentLinkedQueue<String> pieceQueue;
 	private TileState[][] board;
 	private Piece currentPiece;
-	private PieceName heldPiece;
+	private String heldPiece;
 
 	//TODO: make SDF like tetr.io's scaling
 	private double arr = LocalSettings.getARR();
@@ -91,9 +90,32 @@ public class GLTris {
 	private int linesCleared = 0;
 	private SpinType currentSpinType = NONE;
 
-	public GLTris() {
+	public GLTris(List<PieceBuilder> pieceInfo) {
 		currentGravity = initGravity;
 
+		for (PieceBuilder builder : pieceInfo) {
+			int xSpawn = (this.boardWidth - builder.getTileMapE()[0].length) / 2;
+			boolean[][] currentTileMap = builder.getTileMapE();
+			int yOffset = 0;
+			for (int i = 0; i < currentTileMap.length; i++) {
+				boolean isRowOccupied = false;
+				for (int j = 0; j < currentTileMap[i].length; j++) {
+					if (currentTileMap[i][j]) {
+						yOffset = -i;
+						isRowOccupied = true;
+						break;
+					}
+				}
+				if (isRowOccupied) {
+					break;
+				}
+			}
+			int ySpawn = this.boardHeight + yOffset + 1;
+			builder.setSpawnBottomLeftX(xSpawn);
+			builder.setSpawnBottomLeftY(ySpawn);
+		}
+		this.pieceFactory = new PieceFactory(pieceInfo);
+		bagRandomizer = pieceFactory.getNames();
 		pieceQueue = new ConcurrentLinkedQueue<>();
 		board = new TileState[2 * boardHeight][boardWidth];
 		rng = new Random();
@@ -379,31 +401,9 @@ public class GLTris {
 			return;
 		}
 
-		PieceName temp = heldPiece;
+		String temp = heldPiece;
 		heldPiece = currentPiece.getName();
-		switch(temp) {
-			case I -> {
-				currentPiece = new IPiece(3, 22);
-			}
-			case O -> {
-				currentPiece = new OPiece(4, 22);
-			}
-			case L -> {
-				currentPiece = new LPiece(3, 22);
-			}
-			case J -> {
-				currentPiece = new JPiece(3, 22);
-			}
-			case S -> {
-				currentPiece = new SPiece(3, 22);
-			}
-			case Z -> {
-				currentPiece = new ZPiece(3, 22);
-			}
-			case T -> {
-				currentPiece = new TPiece(3, 22);
-			}
-		}
+		currentPiece = pieceFactory.generatePiece(temp);
 
 		currentSpinType = SpinType.NONE;
 	}
@@ -426,13 +426,13 @@ public class GLTris {
 		testSpinDefault(kickIndex);
 
 		for (RotateCallback runnable : pieceRotateCallback) {
-			runnable.run(currentPiece.getName(), rot, kickIndex);
+			runnable.run(currentPiece.getPieceColour(), rot, kickIndex);
 		}
 	}
 
 	private void testSpinDefault(int kickIndex) {
 		//spins for all pieces except T follow stupid spin rules
-		switch(currentPiece.getName()) {
+		switch(currentPiece.getPieceColour()) {
 			case I -> {
 				if (currentPiece.testCollision(board, 1, 0) &&
 					currentPiece.testCollision(board, -1, 0) &&
@@ -583,37 +583,11 @@ public class GLTris {
 	}
 
 	private Piece nextPieceHelper() {
-		PieceName nextPieceName = pieceQueue.poll();
+		String nextPieceName = pieceQueue.poll();
 		if (nextPieceName == null) {
 			throw new IllegalStateException("Cannot have empty piece queue.");
 		}
-		Piece nextPiece;
-		switch (nextPieceName) {
-			case I -> {
-				nextPiece = new IPiece(3, 19);
-			}
-			case O -> {
-				nextPiece = new OPiece(4, 21);
-			}
-			case L -> {
-				nextPiece = new LPiece(3, 20);
-			}
-			case J -> {
-				nextPiece = new JPiece(3, 20);
-			}
-			case S -> {
-				nextPiece = new SPiece(3, 20);
-			}
-			case Z -> {
-				nextPiece = new ZPiece(3, 20);
-			}
-			case T -> {
-				nextPiece = new TPiece(3, 20);
-			}
-			default -> {
-				throw new IllegalStateException("Bag has piece that is not one of the standard game pieces.");
-			}
-		}
+		Piece nextPiece = pieceFactory.generatePiece(nextPieceName);
 		return nextPiece;
 	}
 
@@ -628,7 +602,7 @@ public class GLTris {
 		//Fisher-Yates shuffle
 		for (int i = bagRandomizer.length - 1; i >= 1; i--) {
 			int j = rng.nextInt(i);
-			PieceName temp = bagRandomizer[i];
+			String temp = bagRandomizer[i];
 			bagRandomizer[i] = bagRandomizer[j];
 			bagRandomizer[j] = temp;
 		}
@@ -650,14 +624,18 @@ public class GLTris {
 		return currentPiece;
 	}
 
-	public PieceName getHeldPiece() {
+	public String getHeldPiece() {
 		return heldPiece;
 	}
 
-	public PieceName[] getPieceQueue() {
-		PieceName[] ret = {};
+	public String[] getPieceQueue() {
+		String[] ret = {};
 		ret = pieceQueue.toArray(ret);
 		return ret;
+	}
+
+	public PieceFactory getPieceFactory() {
+		return pieceFactory;
 	}
 
 	public int getNumPreviews() {

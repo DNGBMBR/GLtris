@@ -12,6 +12,9 @@ import render.texture.TextureAtlas;
 import render.manager.ResourceManager;
 import util.*;
 
+import java.awt.*;
+import java.awt.datatransfer.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,6 +77,10 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 		List<TextInfo> ret = new ArrayList<>();
 		ret.add(title);
 		ret.add(contents);
+		if (this.isFocused) {
+			TextInfo cursor = new TextInfo("^", fontSize * 0.5f, (float) (xPos + 0.5 * (height - fontSize) + fontSize * (textBuffer.getGapStart() - 0.25)), (float) (yPos + (height - fontSize) * 0.125), r, g, b);
+			ret.add(cursor);
+		}
 		return ret;
 	}
 
@@ -126,8 +133,27 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 		}
 		if (action != GLFW_RELEASE) {
 			switch (key) {
+				case GLFW_KEY_RIGHT -> {
+					textBuffer.right();
+				}
+				case GLFW_KEY_LEFT -> {
+					textBuffer.left();
+				}
 				case GLFW_KEY_BACKSPACE -> {
 					textBuffer.delete();
+				}
+				case GLFW_KEY_V -> {
+					if ((mods & GLFW_MOD_CONTROL) != 0) {
+						Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
+						try {
+							Object clipboardObject = c.getData(DataFlavor.stringFlavor);
+							if (clipboardObject instanceof String s) {
+								textBuffer.insert(s);
+							}
+						} catch (UnsupportedFlavorException | IOException e) {
+							//do nothing
+						}
+					}
 				}
 			}
 		}

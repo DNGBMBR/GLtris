@@ -1,5 +1,5 @@
 package game.pieces.util;
 
-public enum PieceName {
+public enum PieceColour {
 	I, O, L, J, S, Z, T
 }

@@ -3,23 +3,72 @@ package game.pieces.util;
 import static game.pieces.util.Orientation.*;
 
 public abstract class Piece {
-	//TODO: IMPLEMENT 180 KICKS FOR ALL PIECES
-
 	//remember that when you're putting the tile map in an array, index 0 is at the bottom on the board, so the resulting figure is vertically flipped
 	protected int bottomLeftX;
 	protected int bottomLeftY;
 	protected boolean placed;
 	protected boolean[][] tileMap;
+	protected boolean[][] tileMapE;
+	protected boolean[][] tileMapR;
+	protected boolean[][] tileMapR2;
+	protected boolean[][] tileMapR3;
+	protected int[][][] kickTableCW;
+	protected int[][][] kickTableCCW;
+	protected int[][][] kickTableHalf;
 	protected Orientation orientation;
-	protected PieceName name;
+	protected PieceColour pieceColour;
+	protected String name;
 
-	public Piece(int bottomLeftX, int bottomLeftY, boolean[][] tileMap, Orientation orientation, PieceName name) {
+	public Piece(
+				String name, PieceColour pieceColour, int bottomLeftX, int bottomLeftY, Orientation orientation,
+				boolean[][] tileMapE, boolean[][] tileMapR, boolean[][] tileMapR2, boolean[][] tileMapR3,
+				int[][][] kickTableCW, int[][][] kickTableCCW, int[][][] kickTableHalf
+				) {
 		this.bottomLeftX = bottomLeftX;
 		this.bottomLeftY = bottomLeftY;
 		this.placed = false;
-		this.tileMap = tileMap;
+		this.tileMapE = tileMapE;
+		this.tileMapR = tileMapR;
+		this.tileMapR2 = tileMapR2;
+		this.tileMapR3 = tileMapR3;
+		this.kickTableCW = kickTableCW;
+		this.kickTableCCW = kickTableCCW;
+		this.kickTableHalf = kickTableHalf;
 		this.orientation = orientation;
+		switch (orientation) {
+			case E -> {
+				this.tileMap = tileMapE;
+			}
+			case R -> {
+				this.tileMap = tileMapR;
+			}
+			case R2 -> {
+				this.tileMap = tileMapR2;
+			}
+			case R3 -> {
+				this.tileMap = tileMapR3;
+			}
+		}
 		this.name = name;
+		this.pieceColour = pieceColour;
+	}
+
+	public Piece(Piece src) {
+		this.bottomLeftX = src.bottomLeftX;
+		this.bottomLeftY = src.bottomLeftY;
+		this.placed = false;
+		this.tileMap = src.tileMap;
+		this.orientation = src.orientation;
+		this.pieceColour = src.pieceColour;
+
+		this.tileMapE = src.tileMapE;
+		this.tileMapR = src.tileMapR;
+		this.tileMapR2 = src.tileMapR2;
+		this.tileMapR3 = src.tileMapR3;
+
+		this.kickTableCW = src.kickTableCW;
+		this.kickTableCCW = src.kickTableCCW;
+		this.kickTableHalf = src.kickTableHalf;
 	}
 
 	//returns index of kick used
@@ -178,7 +227,7 @@ public abstract class Piece {
 		}
 
 		TileState placedTileType;
-		switch(name) {
+		switch(pieceColour) {
 			case I -> {
 				placedTileType = TileState.I;
 			}
@@ -228,16 +277,32 @@ public abstract class Piece {
 		return move(Direction.DOWN, board);
 	}
 
-	public abstract boolean[][] getTileMapE();
-	public abstract boolean[][] getTileMapR();
-	public abstract boolean[][] getTileMapR2();
-	public abstract boolean[][] getTileMapR3();
+	public boolean[][] getTileMapE() {
+		return this.tileMapE;
+	}
+	public boolean[][] getTileMapR() {
+		return this.tileMapR;
+	}
+	public boolean[][] getTileMapR2() {
+		return this.tileMapR2;
+	}
+	public boolean[][] getTileMapR3() {
+		return this.tileMapR3;
+	}
 
-	public abstract int[][][] getKickTableCW();
-	public abstract int[][][] getKickTableCCW();
-	public abstract int[][][] getKickTableHALF();
+	public int[][][] getKickTableCW() {
+		return this.kickTableCW;
+	}
+	public int[][][] getKickTableCCW() {
+		return this.kickTableCCW;
+	}
+	public int[][][] getKickTableHALF() {
+		return this.kickTableHalf;
+	}
 
-	public abstract Piece copy();
+	public Piece copy() {
+		return new Piece(this) {};
+	}
 
 	protected boolean isCollision(TileState[][] board, boolean[][] potentialMap, int potentialX, int potentialY) {
 		for (int i = 0; i < potentialMap.length; i++) {
@@ -280,7 +345,11 @@ public abstract class Piece {
 		return placed;
 	}
 
-	public PieceName getName() {
+	public PieceColour getPieceColour() {
+		return pieceColour;
+	}
+
+	public String getName() {
 		return name;
 	}
 

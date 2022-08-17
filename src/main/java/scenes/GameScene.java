@@ -1,12 +1,12 @@
 package scenes;
 
-import game.GLTris;
-import game.GLTrisBoardComponent;
-import game.pieces.*;
+import game.*;
+import game.pieces.PieceBuilder;
 import game.pieces.util.*;
 import menu.component.TopFrame;
 import menu.widgets.Button;
 import org.joml.Matrix4f;
+import org.json.simple.parser.ParseException;
 import render.*;
 import render.batch.TileBatch;
 import render.batch.WidgetBatch;
@@ -15,7 +15,10 @@ import render.manager.TextRenderer;
 import render.texture.TextureAtlas;
 import render.texture.TextureNineSlice;
 import util.Constants;
-import util.Utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -48,7 +51,7 @@ public class GameScene extends Scene{
 
 	private TextRenderer textRenderer;
 
-	private PieceName[] currentQueue;
+	private PieceColour[] currentQueue;
 
 	//private GLTris game;
 	private GLTrisBoardComponent gameComponent;
@@ -61,8 +64,17 @@ public class GameScene extends Scene{
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 
-		GLTris game = new GLTris();
-		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, game);
+		//TODO: register pieces from file to factory in a way that's not hardcoded
+		String pathName = "./kicks/cursed.json";
+		List<PieceBuilder> pieceInfo = null;
+		try {
+			pieceInfo = PieceBuilder.getPieces(new File(pathName));
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			System.err.println("Could not find kick table for " + pathName + ".");
+			System.exit(1);
+		}
+		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, pieceInfo);
 		topFrame.addComponent(gameComponent);
 		batch = new TileBatch(500);
 		widgetBatch = new WidgetBatch(100);
@@ -151,7 +163,7 @@ public class GameScene extends Scene{
 		GLTris game = gameComponent.getGame();
 
 		textRenderer.addText("Lines cleared: " + game.getLinesCleared(), 24.0f, 1200, 720, 0, 0, 0);
-		if (game.isGameOver()) {
+		if (gameComponent.isGameOver()) {
 			textRenderer.addText("GAME OVER", 24.0f, 1200, 650, 1.0f, 0.0f, 0.0f);
 		}
 
