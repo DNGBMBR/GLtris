@@ -1,11 +1,10 @@
 package scenes;
 
 import game.*;
-import game.pieces.PieceBuilder;
 import game.pieces.util.*;
 import menu.component.TopFrame;
 import menu.widgets.Button;
-import org.joml.Matrix4f;
+import network.lobby.Client;
 import org.json.simple.parser.ParseException;
 import render.*;
 import render.batch.TileBatch;
@@ -14,11 +13,10 @@ import render.manager.ResourceManager;
 import render.manager.TextRenderer;
 import render.texture.TextureAtlas;
 import render.texture.TextureNineSlice;
+import settings.GameSettings;
 import util.Constants;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -41,7 +39,6 @@ public class GameScene extends Scene{
 	private static final float QUEUE_PIECE_BOUND_SIZE = TILE_SIZE * 5.0f;
 
 	private Shader shaderBlocks;
-	private Matrix4f projection;
 
 	private TileBatch batch;
 	private WidgetBatch widgetBatch;
@@ -55,26 +52,26 @@ public class GameScene extends Scene{
 
 	//private GLTris game;
 	private GLTrisBoardComponent gameComponent;
+	private GameSettings settings;
 
 	private TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 	private Button backButton;
 
-	public GameScene(long windowID) {
-		super(windowID);
+	public GameScene(long windowID, Client client) {
+		super(windowID, client);
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 
 		//TODO: register pieces from file to factory in a way that's not hardcoded
-		String pathName = "./kicks/cursed.json";
-		List<PieceBuilder> pieceInfo = null;
 		try {
-			pieceInfo = PieceBuilder.getPieces(new File(pathName));
-		} catch (IOException | ParseException e) {
+			settings = new GameSettings("./game_settings.ini");
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("Could not find kick table for " + pathName + ".");
-			System.exit(1);
+			throw new IllegalStateException("Could not find game settings.");
+		} catch (ParseException e) {
+			throw new IllegalStateException("Could not parse kick table.");
 		}
-		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, pieceInfo);
+		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, settings);
 		topFrame.addComponent(gameComponent);
 		batch = new TileBatch(500);
 		widgetBatch = new WidgetBatch(100);
@@ -87,30 +84,11 @@ public class GameScene extends Scene{
 	}
 
 	@Override
-	public void updateProjection(long windowID) {
-		float projectionWidth = PROJECTION_WIDTH;
-		float projectionHeight = PROJECTION_HEIGHT;
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(windowID, windowWidth, windowHeight);
-		float windowAspect = (float) windowWidth[0] / windowHeight[0];
-		if (windowAspect >= 16.0f / 9.0f) {
-			projectionWidth = projectionHeight * windowAspect;
-		}
-		else {
-			projectionHeight = projectionWidth / windowAspect;
-		}
-		projection = new Matrix4f().identity().ortho(
-			0.0f, projectionWidth,
-			0.0f, projectionHeight,
-			0.0f, 100.0f);
-	}
-
-	@Override
 	public void init() {
-		updateProjection(windowID);
+		super.init();
 
 		gameComponent.init();
+		gameComponent.setStarted(true);
 
 		backButton = new Button(Constants.VIEWPORT_W - 600 - 50, 50, false, 600, 100, 25,
 			"Main Menu", widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
@@ -172,7 +150,7 @@ public class GameScene extends Scene{
 
 	@Override
 	public Scene nextScene() {
-		return new MenuScene(windowID);
+		return new MenuScene(windowID, client);
 	}
 
 	@Override

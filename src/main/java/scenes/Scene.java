@@ -1,18 +1,46 @@
 package scenes;
 
+import network.lobby.Client;
+import org.joml.Matrix4f;
+import util.Constants;
+
+import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
+
 public abstract class Scene {
 
 	protected long windowID;
 	protected boolean shouldChangeScene = false;
+	protected Matrix4f projection;
+	protected Client client;
 
-	Scene(long windowID) {
+	Scene(long windowID, Client client) {
 		this.windowID = windowID;
-		shouldChangeScene = false;
+		this.client = client;
 	}
 
-	public abstract void updateProjection(long windowID);
+	public void updateProjection(long windowID) {
+		float projectionWidth = Constants.VIEWPORT_W;
+		float projectionHeight = Constants.VIEWPORT_H;
+		int[] windowWidth = new int[1];
+		int[] windowHeight = new int[1];
+		glfwGetWindowSize(windowID, windowWidth, windowHeight);
+		float windowAspect = (float) windowWidth[0] / windowHeight[0];
+		if (windowAspect < 16.0f / 9.0f) {
+			projectionWidth = projectionHeight * windowAspect;
+		}
+		else {
+			projectionHeight = projectionWidth / windowAspect;
+		}
+		projection = new Matrix4f().identity().ortho(
+			0.0f, projectionWidth,
+			0.0f, projectionHeight,
+			0.0f, 100.0f);
+	}
 
-	public abstract void init();
+	public void init() {
+		updateProjection(windowID);
+	}
+
 	public abstract void update(double dt);
 	public abstract void draw();
 

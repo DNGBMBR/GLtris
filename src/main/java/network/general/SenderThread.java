@@ -1,17 +1,24 @@
 package network.general;
 
+import network.general.message.Message;
+import network.general.message.ServerLobbyStateMessage;
+
 import java.io.*;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SenderThread extends Thread{
 	Socket socket;
-	private Queue<Object> sendQueue = new ConcurrentLinkedQueue<>(new LinkedList<>());
+	private Queue<Message> sendQueue = new ConcurrentLinkedQueue<>(new LinkedList<>());
 	ObjectOutputStream oos;
+	ReentrantLock lock = new ReentrantLock();
 
-	SenderThread(Socket socket) {
+	boolean shouldClose = false;
+	Set<UnexpectedCloseCallback> closeCallbacks = new HashSet<>();
+
+	public SenderThread(Socket socket) {
 		this.socket = socket;
 		try {
 			OutputStream os = socket.getOutputStream();
@@ -23,25 +30,49 @@ public class SenderThread extends Thread{
 
 	@Override
 	public void run() {
-		while (socket.isConnected()) {
+		while (socket.isConnected() && !socket.isClosed() && !shouldClose) {
 			if (!sendQueue.isEmpty()) {
-				try {
-
-					Object message = sendQueue.poll();
-					oos.writeObject(message);
-				} catch (IOException e) {
-					e.printStackTrace();
-					return;
+				Message queuedMessage = sendQueue.poll();
+				if (queuedMessage != null) {
+					lock.lock();
+					try {
+						if (queuedMessage instanceof ServerLobbyStateMessage message) {
+							oos.writeObject(message);
+						}
+						else {
+							Message message = new Message(queuedMessage);
+							oos.writeObject(message);
+						}
+					} catch (IOException e) {
+						System.err.println("Could not send message of type: " + queuedMessage.messageType + ". Closing connection.");
+						for (UnexpectedCloseCallback callback : closeCallbacks) {
+							callback.onUnexpectedClose(socket);
+						}
+						break;
+					} finally {
+						lock.unlock();
+					}
 				}
 			}
 		}
+
+		try {
+			socket.close();
+		} catch (IOException e) {
+			System.err.println("Unable to close socket.");
+			e.printStackTrace();
+		}
 	}
 
-	public void sendMessage(Object message) {
+	public void sendMessage(Message message) {
 		sendQueue.add(message);
 	}
 
-	public void closeConnection() throws IOException {
-		socket.close();
+	public void setShouldClose() {
+		shouldClose = true;
+	}
+
+	public void registerUnexpectedCloseCallback(UnexpectedCloseCallback callback) {
+		closeCallbacks.add(callback);
 	}
 }

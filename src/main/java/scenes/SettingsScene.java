@@ -4,8 +4,8 @@ import menu.component.Frame;
 import menu.component.TopFrame;
 import menu.widgets.*;
 import menu.widgets.Button;
+import network.lobby.Client;
 import org.joml.Math;
-import org.joml.Matrix4f;
 import render.Shader;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -14,8 +14,6 @@ import render.texture.TextureNineSlice;
 import settings.KeybindingSettings;
 import settings.LocalSettings;
 import util.*;
-
-import static org.lwjgl.glfw.GLFW.*;
 
 public class SettingsScene extends Scene{
 
@@ -52,8 +50,6 @@ public class SettingsScene extends Scene{
 	TextureNineSlice widgetTexture;
 	TextRenderer textRenderer;
 
-	Matrix4f projection;
-
 	TopFrame settingsFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 	Frame controlsFrame = new Frame(CONTROLS_X_POS, CONTROLS_Y_POS, CONTROLS_WIDTH, CONTROLS_HEIGHT,
 		true, false, 0);
@@ -65,8 +61,8 @@ public class SettingsScene extends Scene{
 
 	Scene nextScene;
 
-	SettingsScene(long windowID) {
-		super(windowID);
+	SettingsScene(long windowID, Client client) {
+		super(windowID, client);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
@@ -76,7 +72,7 @@ public class SettingsScene extends Scene{
 			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				shouldChangeScene = true;
-				nextScene = new MenuScene(windowID);
+				nextScene = new MenuScene(windowID, client);
 			}));
 		settingsFrame.addComponent(new DiscreteSlider(SLIDER_POSITION_X, SLIDER_POSITION_Y,true, SDF,
 			sdf,
@@ -276,31 +272,6 @@ public class SettingsScene extends Scene{
 		widgetBatch = new WidgetBatch(100);
 
 		textRenderer = TextRenderer.getInstance();
-	}
-
-	@Override
-	public void updateProjection(long windowID) {
-		float projectionWidth = Constants.VIEWPORT_W;
-		float projectionHeight = Constants.VIEWPORT_H;
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(windowID, windowWidth, windowHeight);
-		float windowAspect = (float) windowWidth[0] / windowHeight[0];
-		if (windowAspect < 16.0f / 9.0f) {
-			projectionWidth = projectionHeight * windowAspect;
-		}
-		else {
-			projectionHeight = projectionWidth / windowAspect;
-		}
-		projection = new Matrix4f().identity().ortho(
-			0.0f, projectionWidth,
-			0.0f, projectionHeight,
-			0.0f, 100.0f);
-	}
-
-	@Override
-	public void init() {
-		updateProjection(windowID);
 	}
 
 	@Override

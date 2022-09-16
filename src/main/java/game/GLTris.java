@@ -1,40 +1,40 @@
 package game;
 
-import game.callbacks.LineClearCallback;
-import game.callbacks.MoveCallback;
-import game.callbacks.RotateCallback;
+import game.callbacks.*;
 import game.pieces.*;
 import game.pieces.util.*;
+import org.joml.Math;
 import org.joml.Random;
-import org.json.simple.parser.ParseException;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import settings.*;
 import util.*;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static game.SpinType.*;
 import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GLTris {
+	//TODO: add garbage queue cancelling
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
 
 	private Set<Runnable> nextPieceCallback;
 	private Set<MoveCallback> pieceMoveCallback;
 	private Set<RotateCallback> pieceRotateCallback;
-	private Set<LineClearCallback> lineClearCallback;
+	private Set<PiecePlacedCallback> piecePlacedCallback;
+	private Set<GameOverCallback> gameOverCallbacks;
 
-	private String[] bagRandomizer = {"I", "O", "L", "J", "S", "Z", "T"};
+	private String[] bagRandomizer;
 	private Random rng;
+
+	private Queue<Garbage> garbageQueue;
 
 	private GLFWKeyCallbackI keyCallback;
 
 	private PieceFactory pieceFactory;
-	private ConcurrentLinkedQueue<String> pieceQueue;
+	private Queue<String> pieceQueue;
 	private TileState[][] board;
 	private Piece currentPiece;
 	private String heldPiece;
@@ -69,12 +69,12 @@ public class GLTris {
 
 	private int boardHeight = Constants.BOARD_HEIGHT;
 	private int boardWidth = Constants.BOARD_WIDTH;
-	private int numPreviews = GameSettings.getNumPreviews();
+	private int numPreviews;
 
-	private double initGravity = GameSettings.getInitGravity(); //measured in G, where 1G = 1 tile per tick
-	private double gravityIncrease = GameSettings.getGravityIncrease();
-	private double gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
-	private double lockDelay = GameSettings.getLockDelay(); //measured in seconds
+	private double initGravity; //measured in G, where 1G = 1 tile per tick
+	private double gravityIncrease;
+	private double gravityIncreaseInterval;
+	private double lockDelay; //measured in seconds
 
 	private double accumulatorSD = 0.0;
 	private double accumulatorARR = 0.0;
@@ -90,10 +90,17 @@ public class GLTris {
 	private int linesCleared = 0;
 	private SpinType currentSpinType = NONE;
 
-	public GLTris(List<PieceBuilder> pieceInfo) {
+	private boolean isStarted = false;
+
+	public GLTris(GameSettings settings) {
 		currentGravity = initGravity;
 
+		pieceFactory = settings.getKickTable();
+
+		List<PieceBuilder> pieceInfo = pieceFactory.getBuilders();
+
 		for (PieceBuilder builder : pieceInfo) {
+			//TODO: improve the centering for xSpawn
 			int xSpawn = (this.boardWidth - builder.getTileMapE()[0].length) / 2;
 			boolean[][] currentTileMap = builder.getTileMapE();
 			int yOffset = 0;
@@ -114,15 +121,25 @@ public class GLTris {
 			builder.setSpawnBottomLeftX(xSpawn);
 			builder.setSpawnBottomLeftY(ySpawn);
 		}
-		this.pieceFactory = new PieceFactory(pieceInfo);
+
+		numPreviews = settings.getNumPreviews();
+
+		initGravity = settings.getInitGravity();
+		gravityIncrease = settings.getGravityIncrease();
+		gravityIncreaseInterval = settings.getGravityIncreaseInterval();
+		lockDelay = settings.getLockDelay();
+
+		garbageQueue = new LinkedList<>();
+
 		bagRandomizer = pieceFactory.getNames();
-		pieceQueue = new ConcurrentLinkedQueue<>();
+		pieceQueue = new LinkedList<>();
 		board = new TileState[2 * boardHeight][boardWidth];
 		rng = new Random();
 		nextPieceCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceMoveCallback = Collections.synchronizedSet(new HashSet<>());
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
-		lineClearCallback = Collections.synchronizedSet(new HashSet<>());
+		piecePlacedCallback = Collections.synchronizedSet(new HashSet<>());
+		gameOverCallbacks = Collections.synchronizedSet(new HashSet<>());
 
 		isLeftPressed = new boolean[leftKeys.length];
 		isRightPressed = new boolean[rightKeys.length];
@@ -149,7 +166,7 @@ public class GLTris {
 		heldPiece = null;
 
 		keyCallback = (long window, int key, int scancode, int action, int mods) -> {
-			if (isGameOver) {
+			if (!isStarted || isGameOver) {
 				return;
 			}
 			if (action == GLFW_PRESS) {
@@ -235,23 +252,23 @@ public class GLTris {
 			}
 		};
 		KeyListener.registerKeyCallback(keyCallback);
-
-		registerOnLineClearListener((int rowsCleared, SpinType spinType) -> {
-			System.out.println("rows cleared: " + rowsCleared + " spin type: " + spinType);
-		});
 	}
 
 	public void update(double dt) {
-		if (!isGameOver) {
+		if (!isGameOver && isStarted) {
 			listenKeys(dt);
 
 			applyGravity(dt);
-			clearLines();
+			int linesCleared = clearLines();
 
 			if (currentPiece.isPlaced()) {
+				for (PiecePlacedCallback callback : piecePlacedCallback) {
+					callback.run(linesCleared, currentSpinType);
+				}
+				addBoardGarbage();
 				setNextPiece();
 				if (currentPiece.testCollision(board, 0, 0)) {
-					isGameOver = true;
+					gameOver();
 				}
 			}
 
@@ -322,9 +339,7 @@ public class GLTris {
 				accumulatorDAS += dt;
 				if (accumulatorDAS >= das * SPF) {
 					if (arr <= 0.0f) {
-						while (currentPiece.move(Direction.LEFT, board)) {
-							//repeat until wall is hit
-						}
+						while (currentPiece.move(Direction.LEFT, board));
 					}
 					else {
 						accumulatorARR += dt;
@@ -348,9 +363,7 @@ public class GLTris {
 				accumulatorDAS += dt;
 				if (accumulatorDAS >= das * SPF) {
 					if (arr <= 0.0f) {
-						while (currentPiece.move(Direction.RIGHT, board)) {
-							//repeat until wall is hit
-						}
+						while (currentPiece.move(Direction.RIGHT, board));
 					}
 					else {
 						accumulatorARR += dt;
@@ -432,6 +445,7 @@ public class GLTris {
 
 	private void testSpinDefault(int kickIndex) {
 		//spins for all pieces except T follow stupid spin rules
+		//TODO: rip this out for a listener system
 		switch(currentPiece.getPieceColour()) {
 			case I -> {
 				if (currentPiece.testCollision(board, 1, 0) &&
@@ -525,14 +539,15 @@ public class GLTris {
 		}
 	}
 
-	private void clearLines() {
+	private int clearLines() {
 		int linesCleared = checkLineClears();
-		this.linesCleared += linesCleared;
+		this.linesCleared += linesCleared; //TODO: get this out of here
 		if (linesCleared > 0) {
-			for (LineClearCallback callback : lineClearCallback) {
+			for (PiecePlacedCallback callback : piecePlacedCallback) {
 				callback.run(linesCleared, currentSpinType);
 			}
 		}
+		return linesCleared;
 	}
 
 	private int checkLineClears() {
@@ -574,6 +589,39 @@ public class GLTris {
 		return indices.size();
 	}
 
+	private void addBoardGarbage() {
+		if (garbageQueue.isEmpty()) {
+			return;
+		}
+		//TODO: add garbage cap
+		while (!garbageQueue.isEmpty()) {
+			Garbage garbage = garbageQueue.poll();
+
+			//copy current board upwards
+			for (int i = board.length - 1; i >= 0; i--) {
+				if (i + garbage.amount >= board.length) {
+					//check if row is empty. If not, and the row is about to be copied out of bounds, end the game
+					for (int j = 0; j < boardWidth; j++) {
+						if (board[i][j] != TileState.EMPTY) {
+							gameOver();
+							break;
+						}
+					}
+				}
+				else {
+					System.arraycopy(board[i], 0, board[i + garbage.amount], 0, board[i].length);
+				}
+			}
+
+			//add garbage to the now empty part of the board
+			for (int i = 0; i < Math.min(garbage.amount, board.length); i++) {
+				for (int j = 0; j < boardWidth; j++) {
+					board[i][j] = j == garbage.column ? TileState.EMPTY : TileState.GARBAGE;
+				}
+			}
+		}
+	}
+
 	private void setNextPiece() {
 		currentPiece = nextPieceHelper();
 		currentSpinType = SpinType.NONE;
@@ -591,10 +639,17 @@ public class GLTris {
 		return nextPiece;
 	}
 
+	private void gameOver() {
+		isGameOver = true;
+		for (GameOverCallback callback : gameOverCallbacks) {
+			callback.onGameOver();
+		}
+	}
+
 	private void enqueueBag() {
 		shufflePieces();
-		for (int i = 0; i < bagRandomizer.length; i++) {
-			pieceQueue.offer(bagRandomizer[i]);
+		for (String s : bagRandomizer) {
+			pieceQueue.offer(s);
 		}
 	}
 
@@ -605,6 +660,16 @@ public class GLTris {
 			String temp = bagRandomizer[i];
 			bagRandomizer[i] = bagRandomizer[j];
 			bagRandomizer[j] = temp;
+		}
+	}
+
+	public void addQueueGarbage(Garbage garbage) {
+		garbageQueue.add(garbage);
+	}
+
+	public void addQueueGarbage(List<Garbage> garbageList) {
+		for (Garbage garbage : garbageList) {
+			addQueueGarbage(garbage);
 		}
 	}
 
@@ -650,6 +715,14 @@ public class GLTris {
 		return isGameOver;
 	}
 
+	public void setStarted(boolean started) {
+		isStarted = started;
+	}
+
+	public void registerOnPiecePlacedCallback(PiecePlacedCallback callback) {
+		piecePlacedCallback.add(callback);
+	}
+
 	public void registerOnNextPieceListener(Runnable listener) {
 		nextPieceCallback.add(listener);
 	}
@@ -658,8 +731,8 @@ public class GLTris {
 		pieceRotateCallback.add(callback);
 	}
 
-	public void registerOnLineClearListener(LineClearCallback callback) {
-		lineClearCallback.add(callback);
+	public void registerOnGameOverListener(GameOverCallback callback) {
+		gameOverCallbacks.add(callback);
 	}
 
 	public void destroy() {

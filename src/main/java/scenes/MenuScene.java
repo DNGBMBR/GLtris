@@ -2,8 +2,7 @@ package scenes;
 
 import menu.component.TopFrame;
 import menu.widgets.*;
-import org.joml.Math;
-import org.joml.Matrix4f;
+import network.lobby.Client;
 import render.*;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -26,14 +25,12 @@ public class MenuScene extends Scene{
 	TextureNineSlice widgetTexture;
 	TextRenderer textRenderer;
 
-	Matrix4f projection;
-
 	TopFrame mainFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 
 	Scene nextScene;
 
-	public MenuScene(long windowID) {
-		super(windowID);
+	public MenuScene(long windowID, Client client) {
+		super(windowID, client);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
@@ -44,7 +41,7 @@ public class MenuScene extends Scene{
 				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
-					nextScene = new GameSetupScene(windowID);
+					nextScene = new GameSetupScene(windowID, client);
 					shouldChangeScene = true;
 				}
 			}));
@@ -53,7 +50,16 @@ public class MenuScene extends Scene{
 			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
-					nextScene = new SettingsScene(windowID);
+					nextScene = new SettingsScene(windowID, client);
+					shouldChangeScene = true;
+				}
+			}));
+		mainFrame.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - 2 * (BUTTON_HEIGHT + 50.0), true,
+			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, "guhdge",
+			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+				if (action == GLFW_RELEASE) {
+					nextScene = new LobbySearchScene(windowID, client);
 					shouldChangeScene = true;
 				}
 			}));
@@ -61,31 +67,6 @@ public class MenuScene extends Scene{
 		widgetBatch = new WidgetBatch(40);
 
 		textRenderer = TextRenderer.getInstance();
-	}
-
-	@Override
-	public void updateProjection(long windowID) {
-		float projectionWidth = Constants.VIEWPORT_W;
-		float projectionHeight = Constants.VIEWPORT_H;
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(windowID, windowWidth, windowHeight);
-		float windowAspect = (float) windowWidth[0] / windowHeight[0];
-		if (windowAspect < 16.0f / 9.0f) {
-			projectionWidth = projectionHeight * windowAspect;
-		}
-		else {
-			projectionHeight = projectionWidth / windowAspect;
-		}
-		projection = new Matrix4f().identity().ortho(
-			0.0f, projectionWidth,
-			0.0f, projectionHeight,
-			0.0f, 100.0f);
-	}
-
-	@Override
-	public void init() {
-		updateProjection(windowID);
 	}
 
 	@Override

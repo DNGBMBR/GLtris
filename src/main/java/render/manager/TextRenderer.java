@@ -148,14 +148,16 @@ public class TextRenderer{
 		float bottom = (float) frame.getYPos();
 		float top = (float) (frame.getYPos() + frame.getHeight());
 		for (Component component : frame.getComponents()) {
-			if (component instanceof Frame subFrame) {
-				addText(subFrame);
-			}
-			else {
-				List<TextInfo> textInfo = component.getTextInfo();
-				for (TextInfo info : textInfo) {
-					addText(info.text, info.fontSize, left + info.startX, bottom + (float) frame.getCurrentScrollHeight() + info.startY,
-						left, right, bottom, top, info.r, info.g, info.b);
+			if (component.isActive()) {
+				if (component instanceof Frame subFrame) {
+					addText(subFrame);
+				}
+				else {
+					List<TextInfo> textInfo = component.getTextInfo();
+					for (TextInfo info : textInfo) {
+						addText(info.text, info.fontSize, left + info.startX, bottom + (float) frame.getCurrentScrollHeight() + info.startY,
+							left, right, bottom, top, info.r, info.g, info.b);
+					}
 				}
 			}
 		}

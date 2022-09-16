@@ -93,5 +93,6 @@ public class Window {
 
 	public void destroy() {
 		glfwTerminate();
+		engine.destroy();
 	}
 }

@@ -2,6 +2,6 @@ package game.callbacks;
 
 import game.SpinType;
 
-public interface LineClearCallback {
+public interface PiecePlacedCallback {
 	void run(int rowsCleared, SpinType spinType);
 }

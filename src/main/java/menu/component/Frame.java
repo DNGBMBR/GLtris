@@ -66,6 +66,9 @@ public class Frame extends Component {
 
 	@Override
 	public float[] generateVertices() {
+		if (!isActive) {
+			return new float[0];
+		}
 		ArrayList<Float> vertexInfo = new ArrayList<>();
 		TextureAtlas texture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 		for (Component component : components) {

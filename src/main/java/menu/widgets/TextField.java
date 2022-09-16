@@ -72,9 +72,12 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 
 	@Override
 	public List<TextInfo> getTextInfo() {
+		List<TextInfo> ret = new ArrayList<>();
+		if (!isActive) {
+			return ret;
+		}
 		TextInfo title = new TextInfo(displayText, fontSize, (float) (xPos - displayText.length() * fontSize - 0.5 * (height - fontSize)), (float) (yPos + 0.5 * (height - fontSize)), r, g, b);
 		TextInfo contents = new TextInfo(textBuffer.getText(), fontSize, (float) (xPos + 0.5 * (height - fontSize)), (float) (yPos + 0.5 * (height - fontSize)), r, g, b);
-		List<TextInfo> ret = new ArrayList<>();
 		ret.add(title);
 		ret.add(contents);
 		if (this.isFocused) {

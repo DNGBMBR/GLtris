@@ -27,7 +27,6 @@ project.ext.jomlVersion = "1.10.4"
 project.ext.lwjglNatives = "natives-windows"
 
 dependencies {
-    implementation 'kryonet:kryonet:2.21-2'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'dev.dewy:nbt:1.5.1'
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")

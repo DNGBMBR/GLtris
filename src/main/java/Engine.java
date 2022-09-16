@@ -1,6 +1,10 @@
+import network.lobby.Client;
 import render.manager.TextRenderer;
 import scenes.*;
 import util.KeyListener;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -19,6 +23,7 @@ public class Engine {
 	* */
 	private Scene currentScene;
 	private long windowID;
+	private Client client;
 
 	public Engine(long windowID) {
 		this.windowID = windowID;
@@ -39,22 +44,13 @@ public class Engine {
 			TextRenderer renderer = TextRenderer.getInstance();
 			renderer.updateProjection(windowID);
 		});
-		KeyListener.registerKeyCallback((long window, int key, int scancode, int action, int mods) -> {
-			//debug for switching scenes
-			if (action == GLFW_PRESS) {
-				if (key == GLFW_KEY_M) {
-					//changeScene(new MenuScene(windowID));
-				}
-				if (key == GLFW_KEY_N) {
-					//changeScene(new GameScene(windowID));
-				}
-			}
-		});
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		changeScene(new MenuScene(windowID));
+		client = new Client(InetAddress.getLoopbackAddress(), 2678, "");
+
+		changeScene(new MenuScene(windowID, client));
 	}
 
 	public void run() {
@@ -82,5 +78,10 @@ public class Engine {
 			dt = endTime - startTime;
 			startTime = glfwGetTime();
 		}
+	}
+
+	public void destroy() {
+		currentScene.destroy();
+		client.close();
 	}
 }

@@ -13,4 +13,26 @@ public enum Orientation {
 	public int getVal() {
 		return this.val;
 	}
+
+	public static Orientation getEnum(int val) {
+		Orientation orientation;
+		switch(val) {
+			case 0 -> {
+				orientation = E;
+			}
+			case 1 -> {
+				orientation = R;
+			}
+			case 2 -> {
+				orientation = R2;
+			}
+			case 3 -> {
+				orientation = R3;
+			}
+			default -> {
+				throw new IllegalArgumentException("Orientation value is not valid.");
+			}
+		}
+		return orientation;
+	}
 }

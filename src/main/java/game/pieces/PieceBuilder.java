@@ -106,7 +106,6 @@ public class PieceBuilder {
 		int[][][] kickCCW = new int[4][][];
 		int[][][] kickHalf = new int[4][][];
 
-		System.out.println(pieceName);
 		for (int i = 0; i < kickCWJson.size(); i++) {
 			JSONArray array1 = (JSONArray) kickCWJson.get(i);
 			kickCW[i] = new int[((JSONArray) kickCWJson.get(i)).size()][];
@@ -153,8 +152,12 @@ public class PieceBuilder {
 	}
 
 	public static List<PieceBuilder> getPieces(File path) throws IOException, ParseException {
-		JSONParser parser = new JSONParser();
 		String jsonString = Files.readString(Path.of(String.valueOf(path)));
+		return parseJSON(jsonString);
+	}
+
+	public static List<PieceBuilder> parseJSON(String jsonString) throws ParseException{
+		JSONParser parser = new JSONParser();
 		JSONObject jsonObject = (JSONObject) parser.parse(jsonString);
 		JSONArray pieces = (JSONArray) jsonObject.get("Pieces");
 		List<PieceBuilder> pieceBuilders = new ArrayList<>();

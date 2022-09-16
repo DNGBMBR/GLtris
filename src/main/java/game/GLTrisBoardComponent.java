@@ -2,6 +2,7 @@ package game;
 
 import game.pieces.PieceBuilder;
 import menu.component.Component;
+import settings.GameSettings;
 
 import java.util.List;
 
@@ -9,9 +10,9 @@ public class GLTrisBoardComponent extends Component {
 	GLTris game;
 	GLTrisBoardRenderer renderer;
 
-	public GLTrisBoardComponent(double xPos, double yPos, float tileSize, boolean isActive, List<PieceBuilder> pieceInfo) {
+	public GLTrisBoardComponent(double xPos, double yPos, float tileSize, boolean isActive, GameSettings settings) {
 		super(xPos, yPos, 0.0, 0.0, "", true);
-		game = new GLTris(pieceInfo);
+		game = new GLTris(settings);
 		renderer = new GLTrisBoardRenderer(this.xPos, this.yPos, tileSize, isActive, game);
 		this.width = tileSize * 5.0f + (game.getBoardWidth() + 1) * tileSize + tileSize * 5.0f;
 		this.height = game.getBoardHeight() * tileSize;
@@ -65,5 +66,9 @@ public class GLTrisBoardComponent extends Component {
 	@Override
 	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
 		renderer.onScroll(mouseX, mouseY, xOffset, yOffset);
+	}
+
+	public void setStarted(boolean started) {
+		game.setStarted(started);
 	}
 }

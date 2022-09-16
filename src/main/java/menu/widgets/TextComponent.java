@@ -24,6 +24,9 @@ public class TextComponent extends Component {
 
 	@Override
 	public List<TextInfo> getTextInfo() {
+		if (!isActive) {
+			return new ArrayList<>();
+		}
 		return text;
 	}
 

@@ -2,7 +2,8 @@ package scenes;
 
 import menu.component.*;
 import menu.widgets.*;
-import org.joml.Matrix4f;
+import network.lobby.Client;
+import org.json.simple.parser.ParseException;
 import render.*;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -10,6 +11,8 @@ import render.manager.TextRenderer;
 import render.texture.TextureNineSlice;
 import util.Constants;
 import settings.GameSettings;
+
+import java.io.IOException;
 
 import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
@@ -28,7 +31,6 @@ public class GameSetupScene extends Scene{
 	public static final int FONT_SIZE = 24;
 	public static final int X_POS_TEXT_FIELD = 20;
 
-	private Matrix4f projection;
 	private Scene nextScene;
 
 	private Shader blockShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
@@ -40,24 +42,34 @@ public class GameSetupScene extends Scene{
 	private TopFrame topFrame;
 	private Frame settingsFrame;
 
+	GameSettings settings;
+
 	TextField textFieldNumPreviews;
 	TextField textFieldGravityInit;
 	TextField textFieldGravityIncrease;
 	TextField textFieldGravityIncreaseInterval;
 	TextField textFieldLockDelay;
 
-	GameSetupScene(long windowID) {
-		super(windowID);
+	GameSetupScene(long windowID, Client client) {
+		super(windowID, client);
 		topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 		settingsFrame = new Frame(FRAME_SETTINGS_X_POS, FRAME_SETTINGS_Y_POS,
 				FRAME_SETTINGS_WIDTH, FRAME_SETTINGS_HEIGHT,
 				true, true, 1000);
 
-		int numPreviews = GameSettings.getNumPreviews();
-		double gravityInit = GameSettings.getInitGravity();
-		double gravityIncrease = GameSettings.getGravityIncrease();
-		int gravityIncreaseInterval = GameSettings.getGravityIncreaseInterval();
-		double lockDelay = GameSettings.getLockDelay();
+		try {
+			settings = new GameSettings("./game_settings.ini");
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			System.err.println("Could not find game settings. Using defaults.");
+			settings = new GameSettings();
+		}
+
+		int numPreviews = settings.getNumPreviews();
+		double gravityInit = settings.getInitGravity();
+		double gravityIncrease = settings.getGravityIncrease();
+		int gravityIncreaseInterval = settings.getGravityIncreaseInterval();
+		double lockDelay = settings.getLockDelay();
 
 		textFieldNumPreviews = new TextField(X_POS_TEXT_FIELD + PREVIEWS.length() * FONT_SIZE, 600, 200, 50, true,
 			PREVIEWS, String.valueOf(numPreviews), FONT_SIZE, 0.0f, 0.0f, 0.0f);
@@ -88,15 +100,18 @@ public class GameSetupScene extends Scene{
 					int gravityIncreaseIntervalNew = Integer.parseInt(textFieldGravityIncreaseInterval.getText());
 					double lockDelayNew = Double.parseDouble(textFieldLockDelay.getText());
 
-					GameSettings.setNumPreviews(numPreviewsNew);
-					GameSettings.setInitGravity(gravityInitNew);
-					GameSettings.setGravityIncrease(gravityIncreaseNew);
-					GameSettings.setGravityIncreaseInterval(gravityIncreaseIntervalNew);
-					GameSettings.setLockDelay(lockDelayNew);
+					settings.setNumPreviews(numPreviewsNew);
+					settings.setInitGravity(gravityInitNew);
+					settings.setGravityIncrease(gravityIncreaseNew);
+					settings.setGravityIncreaseInterval(gravityIncreaseIntervalNew);
+					settings.setLockDelay(lockDelayNew);
+					settings.setKickTableLocation("./kicks/SRS.json"); //TODO: make this not hardcoded
 
-					GameSettings.saveSettings();
+					settings.saveSettings();
 				} catch (NumberFormatException e) {
 					//replace with in game error message
+					e.printStackTrace();
+				} catch (IOException | ParseException e) {
 					e.printStackTrace();
 				}
 			}));
@@ -106,7 +121,7 @@ public class GameSetupScene extends Scene{
 			600, 100, 25, "Start Game",
 				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
-					nextScene = new GameScene(windowID);
+					nextScene = new GameScene(windowID, client);
 					shouldChangeScene = true;
 				}));
 		topFrame.addComponent(
@@ -114,34 +129,9 @@ public class GameSetupScene extends Scene{
 				600, 100, 25, "Back",
 				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
-					nextScene = new MenuScene(windowID);
+					nextScene = new MenuScene(windowID, client);
 					shouldChangeScene = true;
 				}));
-	}
-
-	@Override
-	public void updateProjection(long windowID) {
-		float projectionWidth = Constants.VIEWPORT_W;
-		float projectionHeight = Constants.VIEWPORT_H;
-		int[] windowWidth = new int[1];
-		int[] windowHeight = new int[1];
-		glfwGetWindowSize(windowID, windowWidth, windowHeight);
-		float windowAspect = (float) windowWidth[0] / windowHeight[0];
-		if (windowAspect >= 16.0f / 9.0f) {
-			projectionWidth = projectionHeight * windowAspect;
-		}
-		else {
-			projectionHeight = projectionWidth / windowAspect;
-		}
-		projection = new Matrix4f().identity().ortho(
-			0.0f, projectionWidth,
-			0.0f, projectionHeight,
-			0.0f, 100.0f);
-	}
-
-	@Override
-	public void init() {
-		updateProjection(windowID);
 	}
 
 	@Override
