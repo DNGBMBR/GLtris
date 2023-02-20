@@ -1,20 +1,20 @@
 package scenes;
 
-import menu.component.*;
-import menu.widgets.*;
-import network.lobby.Client;
+import menu.component.Frame;
+import menu.component.TopFrame;
+import menu.widgets.Button;
+import menu.widgets.TextField;
+import network.lobby.GameClient;
 import org.json.simple.parser.ParseException;
-import render.*;
+import render.Shader;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
 import render.manager.TextRenderer;
 import render.texture.TextureNineSlice;
-import util.Constants;
 import settings.GameSettings;
+import util.Constants;
 
 import java.io.IOException;
-
-import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameSetupScene extends Scene{
 	private static final double FRAME_SETTINGS_WIDTH = 1000;
@@ -50,7 +50,7 @@ public class GameSetupScene extends Scene{
 	TextField textFieldGravityIncreaseInterval;
 	TextField textFieldLockDelay;
 
-	GameSetupScene(long windowID, Client client) {
+	GameSetupScene(long windowID, GameClient client) {
 		super(windowID, client);
 		topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 		settingsFrame = new Frame(FRAME_SETTINGS_X_POS, FRAME_SETTINGS_Y_POS,

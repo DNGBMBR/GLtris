@@ -71,7 +71,7 @@ public class PieceBuilder {
 			}
 		}
 
-		//what the frick, double cast?
+		//double cast???
 		int tileMapSize = (int) (long) json.get("size");
 		boolean[][] tileMapE = new boolean[tileMapSize][tileMapSize];
 		boolean[][] tileMapR = new boolean[tileMapSize][tileMapSize];
@@ -108,7 +108,7 @@ public class PieceBuilder {
 
 		for (int i = 0; i < kickCWJson.size(); i++) {
 			JSONArray array1 = (JSONArray) kickCWJson.get(i);
-			kickCW[i] = new int[((JSONArray) kickCWJson.get(i)).size()][];
+			kickCW[i] = new int[array1.size()][];
 			for (int j = 0; j < array1.size(); j++) {
 				JSONArray array2 = (JSONArray) array1.get(j);
 				kickCW[i][j] = new int[2];

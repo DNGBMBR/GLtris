@@ -59,13 +59,6 @@ public class GLTris {
 	private boolean[] isLeftPressed;
 	private boolean[] isRightPressed;
 	private boolean[] isSoftDropPressed;
-	/*
-	private boolean[] isRotateCWPressed;
-	private boolean[] isRotateCCWPressed;
-	private boolean[] isRotate180Pressed;
-	private boolean[] isHoldPressed;
-	private boolean[] isHardDropPressed;
-	 */
 
 	private int boardHeight = Constants.BOARD_HEIGHT;
 	private int boardWidth = Constants.BOARD_WIDTH;
@@ -144,13 +137,6 @@ public class GLTris {
 		isLeftPressed = new boolean[leftKeys.length];
 		isRightPressed = new boolean[rightKeys.length];
 		isSoftDropPressed = new boolean[softDropKeys.length];
-		/*
-		isRotateCWPressed = new boolean[rotateCWKeys.length];
-		isRotateCCWPressed = new boolean[rotateCCWKeys.length];
-		isRotate180Pressed = new boolean[rotate180Keys.length];
-		isHoldPressed = new boolean[holdKeys.length];
-		isHardDropPressed = new boolean[hardDropKeys.length];
-		 */
 	}
 
 	public void init() {
@@ -542,11 +528,6 @@ public class GLTris {
 	private int clearLines() {
 		int linesCleared = checkLineClears();
 		this.linesCleared += linesCleared; //TODO: get this out of here
-		if (linesCleared > 0) {
-			for (PiecePlacedCallback callback : piecePlacedCallback) {
-				callback.run(linesCleared, currentSpinType);
-			}
-		}
 		return linesCleared;
 	}
 
@@ -635,8 +616,7 @@ public class GLTris {
 		if (nextPieceName == null) {
 			throw new IllegalStateException("Cannot have empty piece queue.");
 		}
-		Piece nextPiece = pieceFactory.generatePiece(nextPieceName);
-		return nextPiece;
+		return pieceFactory.generatePiece(nextPieceName);
 	}
 
 	private void gameOver() {

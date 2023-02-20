@@ -1,14 +1,14 @@
 package network.lobby;
 
 import game.pieces.PieceFactory;
-import settings.LobbySettings;
+import settings.GameSettings;
 
 import java.util.*;
 
 public class ClientLobby {
-	GameState state;
+	ServerState state;
 	Map<String, Player> players = new HashMap<>();
-	LobbySettings lobbySettings;
+	GameSettings lobbySettings;
 
 	Set<OnStartGame> startGameCallbacks = new HashSet<>();
 
@@ -16,7 +16,7 @@ public class ClientLobby {
 
 	boolean isStarted = false;
 
-	public ClientLobby(List<Player> players, LobbySettings lobbySettings, network.lobby.LobbyState state) {
+	public ClientLobby(List<Player> players, GameSettings lobbySettings, GameState state) {
 		this.lobbySettings = lobbySettings;
 		for (Player player : players) {
 			this.players.put(player.name, player);
@@ -24,7 +24,7 @@ public class ClientLobby {
 		changeState(state);
 	}
 
-	public void changeState(network.lobby.LobbyState state) {
+	public void changeState(GameState state) {
 		switch(state) {
 			case LOBBY -> {
 				changeState(new LobbyState());
@@ -35,11 +35,11 @@ public class ClientLobby {
 		}
 	}
 
-	public void changeState(network.lobby.LobbyState lobby, String winningPlayer) {
+	public void changeState(GameState lobby, String winningPlayer) {
 		changeState(new LobbyState(winningPlayer));
 	}
 
-	public void changeState(GameState newState) {
+	public void changeState(ServerState newState) {
 		if (this.state != null) {
 			this.state.onDestroy();
 		}
@@ -47,15 +47,15 @@ public class ClientLobby {
 		this.state.onCreate();
 	}
 
-	public network.lobby.LobbyState getState() {
+	public GameState getState() {
 		return this.state.state;
 	}
 
-	public LobbySettings getLobbySettings() {
+	public GameSettings getLobbySettings() {
 		return lobbySettings;
 	}
 
-	public void setLobbySettings(LobbySettings lobbySettings) {
+	public void setLobbySettings(GameSettings lobbySettings) {
 		this.lobbySettings = lobbySettings;
 	}
 
@@ -112,7 +112,7 @@ public class ClientLobby {
 		startGameCallbacks.remove(callback);
 	}
 
-	protected static class LobbyState extends GameState {
+	protected static class LobbyState extends ServerState {
 		LobbyState() {
 			//go directly to the lobby
 		}
@@ -132,7 +132,7 @@ public class ClientLobby {
 		}
 	}
 
-	protected static class InGameState extends GameState {
+	protected static class InGameState extends ServerState {
 		@Override
 		void onDestroy() {
 

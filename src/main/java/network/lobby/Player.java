@@ -7,6 +7,7 @@ public class Player {
 	boolean isReady = false;
 	boolean isSpectator = false;
 	boolean isAlive = true;
+	boolean isPrepared = false;
 	TileState[][] board;
 
 	Player(String name) {
@@ -55,6 +56,14 @@ public class Player {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public boolean isPrepared() {
+		return isPrepared;
+	}
+
+	public void setPrepared(boolean prepared) {
+		isPrepared = prepared;
 	}
 
 	public TileState[][] getBoard() {

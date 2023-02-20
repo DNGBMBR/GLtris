@@ -32,8 +32,31 @@ public class LobbyScene extends Scene {
 
 	OnPrepareGame prepareGameCallback;
 
-	LobbyScene(long windowID, Client client) {
+	LobbyScene(long windowID, GameClient client) {
 		super(windowID, client);
+		createUIElements();
+		this.client.sendUsername();
+	}
+
+	LobbyScene(long windowID, GameClient client, String winner) {
+		super(windowID, client);
+		createUIElements();
+		postGameFrame.addComponent(new TextComponent(Constants.VIEWPORT_W * 0.5, Constants.VIEWPORT_H * 0.5, winner, 36, 0.0f, 0.0f, 0.0f, true));
+		//TODO: interface for post game
+		postGameFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 50, true,
+			600, 100, 20, "Next",
+			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			(double mouseX, double mouseY, int button, int action, int mods) -> {
+				if (action == GLFW_RELEASE) {
+					postGameFrame.setActive(false);
+					lobbyFrame.setActive(true);
+				}
+			}));
+		lobbyFrame.setActive(false);
+		postGameFrame.setActive(true);
+	}
+
+	private void createUIElements() {
 		prepareGameCallback = () -> {
 			prepareForGame = true;
 		};
@@ -76,21 +99,9 @@ public class LobbyScene extends Scene {
 		topFrame.addComponent(postGameFrame);
 	}
 
-	public LobbyScene(long windowID, Client client, String winner) {
-		this(windowID, client);
-		postGameFrame.addComponent(new TextComponent(Constants.VIEWPORT_W * 0.5, Constants.VIEWPORT_H * 0.5, winner, 36, 0.0f, 0.0f, 0.0f, true));
-		//TODO: interface for post game
-		postGameFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 50, true,
-			600, 100, 20, "Next",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
-			(double mouseX, double mouseY, int button, int action, int mods) -> {
-				if (action == GLFW_RELEASE) {
-					postGameFrame.setActive(false);
-					lobbyFrame.setActive(true);
-				}
-			}));
-		lobbyFrame.setActive(false);
-		postGameFrame.setActive(true);
+	@Override
+	public void init() {
+		super.init();
 	}
 
 	@Override

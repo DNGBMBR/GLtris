@@ -3,7 +3,7 @@ package scenes;
 import menu.component.TopFrame;
 import menu.widgets.Button;
 import menu.widgets.TextField;
-import network.lobby.Client;
+import network.lobby.GameClient;
 import render.Shader;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -31,7 +31,7 @@ public class LobbySearchScene extends Scene{
 
 	Scene nextScene;
 
-	LobbySearchScene(long windowID, Client client) {
+	LobbySearchScene(long windowID, GameClient client) {
 		super(windowID, client);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
@@ -64,6 +64,7 @@ public class LobbySearchScene extends Scene{
 				if (action == GLFW_RELEASE) {
 					try {
 						InetAddress address = InetAddress.getByName(textFieldIP.getText());
+						System.out.println(address);
 						client.setAddress(address, Integer.parseInt(textFieldPort.getText()), textFieldUsername.getText());
 						boolean foundServer = client.start();
 						if (foundServer) {

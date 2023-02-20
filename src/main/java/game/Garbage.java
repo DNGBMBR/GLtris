@@ -5,10 +5,6 @@ public class Garbage {
 	public int amount;
 	//TODO: add target
 
-	public Garbage(int amount) {
-		this.amount = amount;
-	}
-
 	public Garbage(int amount, int column) {
 		this.amount = amount;
 		this.column = column;

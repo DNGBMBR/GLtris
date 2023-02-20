@@ -2,7 +2,7 @@ package scenes;
 
 import menu.component.TopFrame;
 import menu.widgets.*;
-import network.lobby.Client;
+import network.lobby.GameClient;
 import render.*;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -29,7 +29,7 @@ public class MenuScene extends Scene{
 
 	Scene nextScene;
 
-	public MenuScene(long windowID, Client client) {
+	public MenuScene(long windowID, GameClient client) {
 		super(windowID, client);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");

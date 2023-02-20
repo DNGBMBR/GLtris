@@ -1,10 +1,9 @@
-import network.lobby.Client;
+import network.lobby.GameClient;
 import render.manager.TextRenderer;
 import scenes.*;
-import util.KeyListener;
 
+import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -23,7 +22,7 @@ public class Engine {
 	* */
 	private Scene currentScene;
 	private long windowID;
-	private Client client;
+	private GameClient client;
 
 	public Engine(long windowID) {
 		this.windowID = windowID;
@@ -48,7 +47,11 @@ public class Engine {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		client = new Client(InetAddress.getLoopbackAddress(), 2678, "");
+		try {
+			client = new GameClient(InetAddress.getLoopbackAddress(), 2678, "");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		changeScene(new MenuScene(windowID, client));
 	}

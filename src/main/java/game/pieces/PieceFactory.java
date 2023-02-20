@@ -3,6 +3,7 @@ package game.pieces;
 import game.pieces.util.Piece;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 
 import java.util.*;
 
@@ -16,6 +17,10 @@ public class PieceFactory {
 		for (PieceBuilder builder : info) {
 			registerPiece(builder);
 		}
+	}
+
+	public PieceFactory(String json) throws ParseException {
+		this(PieceBuilder.parseJSON(json));
 	}
 
 	public void registerPiece(PieceBuilder info) {

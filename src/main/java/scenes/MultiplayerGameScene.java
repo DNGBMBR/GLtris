@@ -44,7 +44,7 @@ public class MultiplayerGameScene extends Scene{
 	boolean shouldSetNextScene = false;
 	String winner = "";
 
-	MultiplayerGameScene(long windowID, Client client) {
+	MultiplayerGameScene(long windowID, GameClient client) {
 		//TODO: listener for garbage, topping out, etc.
 		super(windowID, client);
 
@@ -79,6 +79,10 @@ public class MultiplayerGameScene extends Scene{
 				if (rowsCleared > 0) {
 					List<Garbage> garbage = new ArrayList<>();
 					//TODO: add combo table support
+					//it's gonna be hardcoded for the time being
+					//function is G(b, c, n) = ((c + b) / 4) * n + c + b, where
+					//b = b2b level, c = clear type (1 for double, 2 for triple/tss, 4 for quad/tsd, 6 for tst), n is the combo
+					//TODO: THIS IS VERY TEMPORARY
 					garbage.add(new Garbage(rowsCleared, rng.nextInt(10)));
 					client.sendGarbage(garbage);
 				}

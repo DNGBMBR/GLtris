@@ -1,6 +1,6 @@
 package scenes;
 
-import network.lobby.Client;
+import network.lobby.GameClient;
 import org.joml.Matrix4f;
 import util.Constants;
 
@@ -11,9 +11,9 @@ public abstract class Scene {
 	protected long windowID;
 	protected boolean shouldChangeScene = false;
 	protected Matrix4f projection;
-	protected Client client;
+	protected GameClient client;
 
-	Scene(long windowID, Client client) {
+	Scene(long windowID, GameClient client) {
 		this.windowID = windowID;
 		this.client = client;
 	}

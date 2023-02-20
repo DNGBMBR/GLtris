@@ -1,9 +1,8 @@
 package network.lobby;
 
 import game.pieces.PieceFactory;
-import settings.LobbySettings;
+import settings.GameSettings;
 
-import java.net.Socket;
 import java.util.*;
 
 public class ServerLobby {
@@ -32,17 +31,17 @@ public class ServerLobby {
 	* 	OPTIONAL
 	* 	- stats?
 	* */
-	GameState state;
-	Map<Socket, Player> players = new HashMap<>();
-	LobbySettings lobbySettings;
+	ServerState state;
+	Map<String, Player> players = new HashMap<>();
+	GameSettings gameSettings;
 
-	public ServerLobby(LobbySettings settings) {
+	public ServerLobby(GameSettings settings) {
 		setLobbySettings(settings);
 		state = new LobbyState();
 	}
 
-	public void changeState(network.lobby.LobbyState state) {
-		GameState newState;
+	public void changeState(GameState state) {
+		ServerState newState;
 		switch(state) {
 			case LOBBY -> {
 				newState = new LobbyState();
@@ -57,60 +56,60 @@ public class ServerLobby {
 		changeState(newState);
 	}
 
-	public void changeState(GameState newState) {
+	public void changeState(ServerState newState) {
 		this.state.onDestroy();
 		this.state = newState;
 		this.state.onCreate();
 	}
 
-	public GameState getState() {
+	public ServerState getState() {
 		return this.state;
 	}
 
-	public LobbySettings getLobbySettings() {
-		return this.lobbySettings;
+	public GameSettings getLobbySettings() {
+		return this.gameSettings;
 	}
 
-	public void setLobbySettings(LobbySettings settings) {
-		this.lobbySettings = settings;
+	public void setLobbySettings(GameSettings settings) {
+		this.gameSettings = settings;
 	}
 
 	public int getNumPreviews() {
-		return lobbySettings.getNumPreviews();
+		return gameSettings.getNumPreviews();
 	}
 
 	public PieceFactory getKickTable() {
-		return this.lobbySettings.getKickTable();
+		return this.gameSettings.getKickTable();
 	}
 
-	public boolean addPlayer(Socket socket, String name) {
-		if (players.containsKey(socket)) {
+	public boolean addPlayer(String name) {
+		if (players.containsKey(name)) {
 			return false;
 		}
-		players.put(socket, new Player(name));
+		players.put(name, new Player(name));
 		return true;
 	}
 
-	public Player removePlayer(Socket socket) {
-		return players.remove(socket);
+	public Player removePlayer(String name) {
+		return players.remove(name);
 	}
 
-	public boolean hasPlayer(Socket socket) {
-		return players.containsKey(socket);
+	public boolean hasPlayer(String name) {
+		return players.containsKey(name);
 	}
 
-	public Player getPlayer(Socket socket) {
-		return players.get(socket);
+	public Player getPlayer(String name) {
+		return players.get(name);
 	}
 
 	public Collection<Player> getPlayers() {
 		return this.players.values();
 	}
 
-	public class LobbyState extends GameState {
+	public class LobbyState extends ServerState {
 
 		LobbyState() {
-			this.state = network.lobby.LobbyState.LOBBY;
+			this.state = GameState.LOBBY;
 		}
 
 		@Override
@@ -126,10 +125,10 @@ public class ServerLobby {
 		}
 	}
 
-	public class InGameState extends GameState {
+	public class InGameState extends ServerState {
 
 		InGameState() {
-			this.state = network.lobby.LobbyState.IN_GAME;
+			this.state = GameState.IN_GAME;
 		}
 
 		@Override

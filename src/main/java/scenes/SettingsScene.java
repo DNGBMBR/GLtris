@@ -4,7 +4,7 @@ import menu.component.Frame;
 import menu.component.TopFrame;
 import menu.widgets.*;
 import menu.widgets.Button;
-import network.lobby.Client;
+import network.lobby.GameClient;
 import org.joml.Math;
 import render.Shader;
 import render.batch.WidgetBatch;
@@ -61,7 +61,7 @@ public class SettingsScene extends Scene{
 
 	Scene nextScene;
 
-	SettingsScene(long windowID, Client client) {
+	SettingsScene(long windowID, GameClient client) {
 		super(windowID, client);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");

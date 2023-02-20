@@ -1,9 +1,11 @@
-import network.lobby.Server;
+import network.lobby.GameServer;
+import network.lobby.ServerHandler;
 import server_interface.ServerPanel;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 public class ServerMain {
 	public static void main(String[] args) {
@@ -25,22 +27,29 @@ public class ServerMain {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		ServerPanel panel = new ServerPanel();
-		Server server = new Server(2678, panel);
-		server.start();
-		frame.add(panel);
 
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				server.close();
-				super.windowClosing(e);
-				e.getWindow().dispose();
-			}
-		});
+		try {
+			GameServer server = new GameServer(2678, panel);
+			server.setPacketHandler(ServerHandler.class);
+			server.start();
+			frame.add(panel);
 
-		frame.pack();
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					server.stop();
+					super.windowClosing(e);
+					e.getWindow().dispose();
+				}
+			});
 
-		frame.setVisible(true);
+			frame.pack();
+
+			frame.setVisible(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 }

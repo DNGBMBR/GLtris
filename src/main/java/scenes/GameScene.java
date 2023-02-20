@@ -1,12 +1,13 @@
 package scenes;
 
-import game.*;
-import game.pieces.util.*;
+import game.GLTris;
+import game.GLTrisBoardComponent;
+import game.pieces.util.PieceColour;
 import menu.component.TopFrame;
 import menu.widgets.Button;
-import network.lobby.Client;
+import network.lobby.GameClient;
 import org.json.simple.parser.ParseException;
-import render.*;
+import render.Shader;
 import render.batch.TileBatch;
 import render.batch.WidgetBatch;
 import render.manager.ResourceManager;
@@ -17,8 +18,6 @@ import settings.GameSettings;
 import util.Constants;
 
 import java.io.IOException;
-
-import static org.lwjgl.glfw.GLFW.glfwGetWindowSize;
 
 public class GameScene extends Scene{
 
@@ -57,7 +56,7 @@ public class GameScene extends Scene{
 	private TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 	private Button backButton;
 
-	public GameScene(long windowID, Client client) {
+	public GameScene(long windowID, GameClient client) {
 		super(windowID, client);
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");

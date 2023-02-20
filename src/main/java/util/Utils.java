@@ -190,4 +190,32 @@ public class Utils {
 
 		return displayText;
 	}
+
+	public static void copyShort(byte[] dst, int index, int val) {
+		for (int i = 0; i < Short.BYTES; i++) {
+			dst[index + i] = (byte) ((val >> (Byte.SIZE * i)) & 0xFF);
+		}
+	}
+
+	public static short readShort(byte[] src, int index) {
+		short val = 0;
+		for (int i = 0; i < Short.BYTES; i++) {
+			val |= src[index + i] << (Byte.SIZE * i);
+		}
+		return val;
+	}
+
+	public static void copyInt(byte[] dst, int index, int val) {
+		for (int i = 0; i < Integer.BYTES; i++) {
+			dst[index + i] = (byte) ((val >> (Byte.SIZE * i)) & 0xFF);
+		}
+	}
+
+	public static int readInt(byte[] src, int index) {
+		int val = 0;
+		for (int i = 0; i < Integer.BYTES; i++) {
+			val |= src[index + i] << (Byte.SIZE * i);
+		}
+		return val;
+	}
 }

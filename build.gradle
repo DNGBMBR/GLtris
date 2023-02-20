@@ -6,6 +6,9 @@ group 'org.example'
 version '1.0-SNAPSHOT'
 
 repositories {
+    flatDir {
+        dirs 'lib'
+    }
     mavenCentral()
     maven {
         url 'https://repo.clojars.org'
@@ -14,24 +17,46 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation name: 'jRUDP-1.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 }
 
 test {
     useJUnitPlatform()
 }
 
-project.ext.lwjglVersion = "3.3.1"
-project.ext.jomlVersion = "1.10.4"
-project.ext.lwjglNatives = "natives-windows"
-
 dependencies {
+
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'dev.dewy:nbt:1.5.1'
-    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
     implementation 'org.ini4j:ini4j:0.5.4'
+}
+
+import org.gradle.internal.os.OperatingSystem
+
+project.ext.lwjglVersion = "3.3.1"
+project.ext.jomlVersion = "1.10.5"
+
+switch (OperatingSystem.current()) {
+    case OperatingSystem.LINUX:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.startsWith("arm") || osArch.startsWith("aarch64")
+                ? "natives-linux-${osArch.contains("64") || osArch.startsWith("armv8") ? "arm64" : "arm32"}"
+                : "natives-linux"
+        break
+    case OperatingSystem.WINDOWS:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.contains("64")
+                ? "natives-windows${osArch.startsWith("aarch64") ? "-arm64" : ""}"
+                : "natives-windows-x86"
+        break
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
     implementation "org.lwjgl:lwjgl"
     implementation "org.lwjgl:lwjgl-assimp"
