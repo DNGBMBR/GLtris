@@ -33,7 +33,7 @@ public class ServerGarbageMessage extends MessageSerializer {
 
 	@Override
 	public void deserialize(byte[] data) {
-		if (data[0] != MessageConstants.CLIENT || data[1] != MessageConstants.MESSAGE_CLIENT_GARBAGE) {
+		if (data[0] != MessageConstants.SERVER || data[1] != MessageConstants.MESSAGE_SERVER_GARBAGE) {
 			throw new IllegalArgumentException("Illegal message type given to deserialize.");
 		}
 		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);

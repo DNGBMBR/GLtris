@@ -27,12 +27,18 @@ public class GLTrisBoardRenderer extends Component {
 	private float queuePieceBoundSizeX;
 	private float queuePieceBoundSizeY;
 
+	private float xOffsetGarbage;
+	private float yOffsetGarbage;
+	private float garbageMargin;
+	private float garbageBoundSize;
+
 	private TextureNineSlice backgroundTexture;
 	private TextureAtlas tileTexture;
 
 	private GLTris game;
 
 	private String[] currentQueue;
+	private List<Garbage> garbageQueue;
 
 	public GLTrisBoardRenderer(double xPos, double yPos, float tileSize, boolean isActive, GLTris game) {
 		super(xPos, yPos,
@@ -44,12 +50,17 @@ public class GLTrisBoardRenderer extends Component {
 		xOffsetHeld = (float) xPos;
 		yOffsetHeld = (float) (yPos + game.getBoardHeight() * tileSize - heldPieceBoundSize);
 
-		xOffsetBoard = (float) (xPos + heldPieceBoundSize + 0.5 * tileSize);
+		xOffsetGarbage = (float) (xPos + heldPieceBoundSize + 0.5 * tileSize);
+		yOffsetGarbage = (float) yPos;
+		garbageMargin = (tileSize * 0.0625f);
+		garbageBoundSize = tileSize;
+
+		xOffsetBoard = (float) (xPos + heldPieceBoundSize + 2.0 * tileSize);
 		yOffsetBoard = (float) yPos;
 
 		queuePieceBoundSizeX = tileSize * 5.0f;
 		queuePieceBoundSizeY = tileSize * 3.5f;
-		xOffsetQueue = (float) (xPos + heldPieceBoundSize + (game.getBoardWidth() + 1) * tileSize);
+		xOffsetQueue = (float) (xPos + xOffsetBoard + (game.getBoardWidth() + 1) * tileSize);
 		yOffsetQueue = (float) (yPos + game.getBoardHeight() * tileSize - queuePieceBoundSizeY - tileSize);
 
 		backgroundTexture = ResourceManager.getTextureNineSliceByName("images/game_background.png");
@@ -58,13 +69,20 @@ public class GLTrisBoardRenderer extends Component {
 		this.game = game;
 		game.registerOnNextPieceListener(() -> {
 			currentQueue = this.game.getPieceQueue();
+			garbageQueue = this.game.getGarbageQueue();
+		});
+		game.registerOnGarbageReceivedListener(() -> {
+			garbageQueue = this.game.getGarbageQueue();
 		});
 	}
 
 	public float[] generateBackgroundVertices() {
+		//TODO: this needs to be refactored ASAP if literally anything in the UI needs to change
 		float[] vertices = new float[
 			game.getBoardHeight() * game.getBoardWidth() * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
-			2 * 9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+			9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
+			9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
+			garbageQueue.size() * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
 		float[] uvsBoard = backgroundTexture.getElementUVs(0, 3, 1, 1);
 
 		int index = 0;
@@ -85,10 +103,7 @@ public class GLTrisBoardRenderer extends Component {
 		}
 
 		//queue
-
 		float[] uvsQueue = backgroundTexture.getElementUVsNineSlice(1, 3, 2, 2);
-
-		//queue
 		Utils.addBlockVerticesNineSlice(vertices, index,
 			(float) xPos + xOffsetQueue, (float) yPos + yOffsetQueue - (game.getNumPreviews() - 1) * queuePieceBoundSizeY,
 			(float) xPos + xOffsetQueue + queuePieceBoundSizeX, (float) yPos + yOffsetQueue + queuePieceBoundSizeY + tileSize,
@@ -100,6 +115,22 @@ public class GLTrisBoardRenderer extends Component {
 			(float) xPos + xOffsetHeld, (float) yPos + yOffsetHeld,
 			(float) xPos + xOffsetHeld + heldPieceBoundSize, (float) yPos + yOffsetHeld + heldPieceBoundSize,
 			tileSize, uvsQueue);
+		index += 9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD;
+
+		//garbage queue
+		int increment = 0;
+		float[] uvsGarbage = backgroundTexture.getElementUVs(0, 2, 1, 1);
+		for (Garbage garbage : garbageQueue) {
+			Utils.addBlockVertices(vertices, index,
+				(float) xPos + xOffsetGarbage + garbageMargin,
+				(float) yPos + yOffsetGarbage + increment * garbageBoundSize + garbageMargin,
+				uvsGarbage[0], uvsGarbage[1],
+				(float) xPos + xOffsetGarbage + garbageBoundSize - garbageMargin,
+				(float) yPos + yOffsetGarbage + (increment + garbage.amount) * garbageBoundSize - garbageMargin,
+				uvsGarbage[2], uvsGarbage[3]);
+			increment += garbage.amount;
+			index += Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD;
+		}
 		return vertices;
 	}
 

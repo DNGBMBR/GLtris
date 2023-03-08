@@ -25,6 +25,7 @@ public class GLTris {
 	private Set<RotateCallback> pieceRotateCallback;
 	private Set<PiecePlacedCallback> piecePlacedCallback;
 	private Set<GameOverCallback> gameOverCallbacks;
+	private Set<GarbageReceivedCallback> garbageReceivedCallbacks;
 
 	private String[] bagRandomizer;
 	private Random rng;
@@ -83,6 +84,9 @@ public class GLTris {
 	private int linesCleared = 0;
 	private SpinType currentSpinType = NONE;
 
+	private int combo = -1;
+	private int b2bLevel = 0;
+
 	private boolean isStarted = false;
 
 	public GLTris(GameSettings settings) {
@@ -133,6 +137,7 @@ public class GLTris {
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
 		piecePlacedCallback = Collections.synchronizedSet(new HashSet<>());
 		gameOverCallbacks = Collections.synchronizedSet(new HashSet<>());
+		garbageReceivedCallbacks = Collections.synchronizedSet(new HashSet<>());
 
 		isLeftPressed = new boolean[leftKeys.length];
 		isRightPressed = new boolean[rightKeys.length];
@@ -248,13 +253,22 @@ public class GLTris {
 			int linesCleared = clearLines();
 
 			if (currentPiece.isPlaced()) {
-				for (PiecePlacedCallback callback : piecePlacedCallback) {
-					callback.run(linesCleared, currentSpinType);
+				int attack = 0;
+				if (linesCleared > 0) {
+					int baseAttack = computeAttack(linesCleared, currentSpinType);
+					attack = cancelGarbageQueue(baseAttack);
 				}
-				addBoardGarbage();
+				else {
+					addBoardGarbage();
+				}
+
+				for (PiecePlacedCallback callback : piecePlacedCallback) {
+					callback.run(linesCleared, currentSpinType, attack);
+				}
 				setNextPiece();
-				if (currentPiece.testCollision(board, 0, 0)) {
+				if (!isGameOver && currentPiece.testCollision(board, 0, 0)) {
 					gameOver();
+					isGameOver = true;
 				}
 			}
 
@@ -570,6 +584,63 @@ public class GLTris {
 		return indices.size();
 	}
 
+	private int computeAttack(int rowsCleared, SpinType spinType) {
+		int linesToSend;
+		if (rowsCleared > 0) {
+			//TODO: add combo table support
+			//it's gonna be hardcoded for the time being
+			//function is G(b, c, n) = ((c + b) / 4) * n + c + b, where
+			//b = b2b level, c = clear type (1 for double/t-mini double, 2 for triple/tss, 4 for quad/tsd, 6 for tst), n is the combo
+			//TODO: THIS IS VERY TEMPORARY
+			int linesBase;
+			boolean isB2B;
+			switch (spinType) {
+				case T_SPIN -> {
+					linesBase = 2 * rowsCleared;
+					isB2B = true;
+				}
+				case T_SPIN_MINI -> {
+					linesBase = (4 * (rowsCleared - 1)) / 3;
+					isB2B = true;
+				}
+				default -> {
+					//evaluates to 0, 1, 2, 4 for inputs 1, 2, 3, 4
+					linesBase = (4 * (rowsCleared - 1)) / 3;
+					isB2B = rowsCleared >= 4;
+					if (!isB2B) {
+						b2bLevel = 0;
+					}
+				}
+			}
+			combo++;
+			linesToSend = ((linesBase + b2bLevel) / 4) * combo + linesBase + b2bLevel;
+			System.out.println("base lines sent: " + linesBase + " combo: " + combo + " b2b: " + b2bLevel);
+			System.out.println("Attack of size: " + linesToSend);
+			b2bLevel = isB2B ? 1 : 0;
+		}
+		else {
+			combo = -1;
+			linesToSend = 0;
+		}
+		return linesToSend;
+	}
+
+	private int cancelGarbageQueue(int attack) {
+		int remainingAttack = attack;
+		while (remainingAttack > 0 && !garbageQueue.isEmpty()) {
+			Garbage garbage = garbageQueue.peek();
+			if (remainingAttack >= garbage.amount) {
+				garbageQueue.poll();
+				remainingAttack -= garbage.amount;
+			}
+			else {
+				garbage.amount -= remainingAttack;
+				remainingAttack = 0;
+			}
+		}
+		return remainingAttack;
+	}
+
 	private void addBoardGarbage() {
 		if (garbageQueue.isEmpty()) {
 			return;
@@ -643,7 +714,7 @@ public class GLTris {
 		}
 	}
 
-	public void addQueueGarbage(Garbage garbage) {
+	private void addQueueGarbage(Garbage garbage) {
 		garbageQueue.add(garbage);
 	}
 
@@ -651,6 +722,17 @@ public class GLTris {
 		for (Garbage garbage : garbageList) {
 			addQueueGarbage(garbage);
 		}
+		for (GarbageReceivedCallback callback : garbageReceivedCallbacks) {
+			callback.onGarbageReceived();
+		}
+	}
+
+	public List<Garbage> getGarbageQueue() {
+		List<Garbage> list = new ArrayList<>();
+		for (Garbage garbage : garbageQueue) {
+			list.add(garbage);
+		}
+		return list;
 	}
 
 	public int getBoardHeight() {
@@ -713,6 +795,10 @@ public class GLTris {
 
 	public void registerOnGameOverListener(GameOverCallback callback) {
 		gameOverCallbacks.add(callback);
+	}
+
+	public void registerOnGarbageReceivedListener(GarbageReceivedCallback callback) {
+		garbageReceivedCallbacks.add(callback);
 	}
 
 	public void destroy() {

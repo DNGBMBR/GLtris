@@ -16,7 +16,7 @@ public class ServerHandler extends PacketHandler {
 
 	@Override
 	public void onConnection() {
-		System.out.println("Received connection request.");
+
 	}
 
 	@Override
@@ -95,13 +95,7 @@ public class ServerHandler extends PacketHandler {
 				case MessageConstants.MESSAGE_CLIENT_GARBAGE -> {
 					ClientGarbageMessage msg = new ClientGarbageMessage(bytes);
 					//redirect garbage to a player that's not the sender
-					Collection<Player> players = gameServer.lobby.getPlayers();
-					List<Player> livingPlayers = new ArrayList<>();
-					for (Player player : players) {
-						if (player.isAlive()) {
-							livingPlayers.add(player);
-						}
-					}
+					List<Player> livingPlayers = getLivingPlayers();
 					if (livingPlayers.size() <= 1) {
 						gameServer.endGame(livingPlayers);
 						return;
@@ -123,10 +117,28 @@ public class ServerHandler extends PacketHandler {
 				}
 				case MessageConstants.MESSAGE_CLIENT_BOARD -> {
 					//TODO: make other player's boards visible
-					//ClientBoardMessage msg = new ClientBoardMessage(bytes);
+					ClientBoardMessage msg = new ClientBoardMessage(bytes);
+					if (msg.isToppedOut) {
+						this.gameServer.lobby.getPlayer(username).setAlive(!msg.isToppedOut);
+						List<Player> livingPlayers = getLivingPlayers();
+						if (livingPlayers.size() <= 1) {
+							gameServer.endGame(livingPlayers);
+						}
+					}
 				}
 			}
 		}
+	}
+
+	private List<Player> getLivingPlayers() {
+		Collection<Player> players = gameServer.lobby.getPlayers();
+		List<Player> livingPlayers = new ArrayList<>();
+		for (Player player : players) {
+			if (player.isAlive()) {
+				livingPlayers.add(player);
+			}
+		}
+		return livingPlayers;
 	}
 
 	@Override

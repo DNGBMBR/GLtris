@@ -91,7 +91,11 @@ public class ClientBoardMessage extends MessageSerializer {
 		assert data[0] == MessageConstants.CLIENT && data[1] == MessageConstants.MESSAGE_CLIENT_BOARD : "Illegal message type given to deserialize.";
 
 		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);
-		isToppedOut = (buffer.get() & IS_TOPPED_OUT_MASK) != 0;
+		int flags = buffer.get();
+		this.isToppedOut = (flags & IS_TOPPED_OUT_MASK) != 0;
+		if (isToppedOut) {
+			return;
+		}
 
 		int nameLength = buffer.getShort();
 		byte[] usernameBytes = new byte[nameLength];

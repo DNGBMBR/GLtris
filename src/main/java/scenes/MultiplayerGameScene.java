@@ -1,7 +1,6 @@
 package scenes;
 
 import game.*;
-import game.callbacks.GameOverCallback;
 import game.callbacks.PiecePlacedCallback;
 import menu.component.TopFrame;
 import network.lobby.*;
@@ -75,24 +74,16 @@ public class MultiplayerGameScene extends Scene{
 		GLTris game = gameComponent.getGame();
 		game.registerOnPiecePlacedCallback(new PiecePlacedCallback() {
 			@Override
-			public void run(int rowsCleared, SpinType spinType) {
-				if (rowsCleared > 0) {
+			public void run(int rowsCleared, SpinType spinType, int attack) {
+				if (attack > 0) {
 					List<Garbage> garbage = new ArrayList<>();
-					//TODO: add combo table support
-					//it's gonna be hardcoded for the time being
-					//function is G(b, c, n) = ((c + b) / 4) * n + c + b, where
-					//b = b2b level, c = clear type (1 for double, 2 for triple/tss, 4 for quad/tsd, 6 for tst), n is the combo
-					//TODO: THIS IS VERY TEMPORARY
-					garbage.add(new Garbage(rowsCleared, rng.nextInt(10)));
+					garbage.add(new Garbage(attack, rng.nextInt(10)));
 					client.sendGarbage(garbage);
 				}
 			}
 		});
-		game.registerOnGameOverListener(new GameOverCallback() {
-			@Override
-			public void onGameOver() {
-				client.sendGameOver();
-			}
+		game.registerOnGameOverListener(() -> {
+			client.sendGameOver();
 		});
 	}
 
