@@ -7,7 +7,6 @@ import network.general.*;
 import java.util.*;
 
 public class ServerHandler extends PacketHandler {
-	//TODO: make this class static to fix the stupid constructor issue
 	String username;
 	GameServer gameServer;
 
@@ -34,6 +33,8 @@ public class ServerHandler extends PacketHandler {
 		gameServer.clients.remove(this.username);
 		gameServer.log(this.username + " has disconnected.");
 		gameServer.updateUsers();
+		ServerLobbyPlayerUpdateMessage disconnectMessage = new ServerLobbyPlayerUpdateMessage(this.username, true, false, false);
+		gameServer.sendAll(disconnectMessage);
 	}
 
 	@Override
@@ -73,8 +74,10 @@ public class ServerHandler extends PacketHandler {
 						this.username = msg.username;
 						gameServer.clients.put(this.username, this.rudp);
 						gameServer.log(msg.username + " has connected.");
-						ServerLobbyStateMessage response = new ServerLobbyStateMessage(gameServer.lobby.getLobbySettings(), false);
+						ServerLobbyStateMessage response = new ServerLobbyStateMessage(gameServer.lobby.getLobbySettings(), gameServer.lobby.getPlayers().stream().toList(), false);
 						this.rudp.sendReliablePacket(response.serialize());
+						ServerLobbyPlayerUpdateMessage updatePlayer = new ServerLobbyPlayerUpdateMessage(msg.username, false, false, false);
+						gameServer.sendAll(updatePlayer);
 					}
 					gameServer.updateUsers();
 				}
@@ -83,7 +86,10 @@ public class ServerHandler extends PacketHandler {
 					Player player = gameServer.lobby.getPlayer(this.username);
 					player.setReady(msg.isReady);
 					player.setSpectator(msg.isSpectating);
+					ServerLobbyPlayerUpdateMessage updatePlayer = new ServerLobbyPlayerUpdateMessage(this.username, false, msg.isReady, msg.isSpectating);
+					gameServer.sendAll(updatePlayer);
 					gameServer.log(this.username + " is " + (msg.isSpectating ? "spectating" : (msg.isReady ? "ready" : "not ready")) + ".");
+
 				}
 				case MessageConstants.MESSAGE_CLIENT_CONFIRM_START -> {
 					//ClientConfirmStartMessage msg = new ClientConfirmStartMessage(bytes);

@@ -18,6 +18,7 @@ public class GameClient extends RUDPClient {
 	Set<OnPrepareGame> prepareCallbacks = new HashSet<>();
 	Set<OnGarbageReceived> garbageReceivedCallbacks = new HashSet<>();
 	Set<OnGameFinish> finishCallbacks = new HashSet<>();
+	Set<OnLobbyUpdate> lobbyUpdateCallbacks = new HashSet<>();
 
 	public GameClient(InetAddress dstAddress, int dstPort, String username) throws IOException {
 		super(dstAddress, dstPort);
@@ -92,6 +93,10 @@ public class GameClient extends RUDPClient {
 		garbageReceivedCallbacks.add(callback);
 	}
 
+	public void registerOnLobbyUpdate(OnLobbyUpdate callback) {
+		lobbyUpdateCallbacks.add(callback);
+	}
+
 	public void unregisterOnGarbageReceived(OnGarbageReceived callback) {
 		garbageReceivedCallbacks.remove(callback);
 	}
@@ -102,6 +107,10 @@ public class GameClient extends RUDPClient {
 
 	public void unregisterOnGameFinish(OnGameFinish callback) {
 		finishCallbacks.remove(callback);
+	}
+
+	public void unregisterOnLobbyUpdate(OnLobbyUpdate callback) {
+		lobbyUpdateCallbacks.remove(callback);
 	}
 }
 

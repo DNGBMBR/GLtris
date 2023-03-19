@@ -44,7 +44,6 @@ public class MultiplayerGameScene extends Scene{
 	String winner = "";
 
 	MultiplayerGameScene(long windowID, GameClient client) {
-		//TODO: listener for garbage, topping out, etc.
 		super(windowID, client);
 
 		startGameCallback = () -> {

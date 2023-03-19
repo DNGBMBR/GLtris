@@ -83,6 +83,10 @@ public class ClientLobby {
 		return players.get(name);
 	}
 
+	public List<Player> getPlayerList() {
+		return players.values().stream().toList();
+	}
+
 	public boolean isStarted() {
 		return isStarted;
 	}

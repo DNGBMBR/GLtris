@@ -3,6 +3,8 @@ package network.lobby;
 import fr.slaynash.communication.handlers.PacketHandler;
 import network.general.*;
 
+import java.util.List;
+
 public class ClientHandler extends PacketHandler {
 
 	GameClient gameClient;
@@ -62,9 +64,33 @@ public class ClientHandler extends PacketHandler {
 				case MessageConstants.MESSAGE_SERVER_LOBBY_STATE -> {
 					ServerLobbyStateMessage msg = new ServerLobbyStateMessage(bytes);
 					this.gameClient.lobby.setLobbySettings(msg.settings);
+					for (Player player : msg.players) {
+						this.gameClient.lobby.addPlayer(player.getName());
+						Player currentPlayer = this.gameClient.lobby.getPlayer(player.getName());
+						currentPlayer.setReady(player.isReady());
+						currentPlayer.setSpectator(player.isSpectator());
+					}
+					for (OnLobbyUpdate callback : this.gameClient.lobbyUpdateCallbacks) {
+						callback.onLobbyUpdate(msg.players);
+					}
 				}
 				case MessageConstants.MESSAGE_SERVER_UPDATE_PLAYER -> {
-
+					ServerLobbyPlayerUpdateMessage msg = new ServerLobbyPlayerUpdateMessage(bytes);
+					if (this.gameClient.lobby.getPlayer(msg.username) == null) {
+						this.gameClient.lobby.addPlayer(msg.username);
+					}
+					else if (msg.isDisconnected) {
+						this.gameClient.lobby.removePlayer(msg.username);
+					}
+					else {
+						Player player = this.gameClient.lobby.getPlayer(msg.username);
+						player.setSpectator(msg.isSpectating);
+						player.setReady(msg.isReady);
+					}
+					List<Player> players = this.gameClient.lobby.getPlayerList();
+					for (OnLobbyUpdate callback : this.gameClient.lobbyUpdateCallbacks) {
+						callback.onLobbyUpdate(players);
+					}
 				}
 				case MessageConstants.MESSAGE_SERVER_COUNTDOWN -> {
 					ServerCountdownMessage msg = new ServerCountdownMessage(bytes);

@@ -12,6 +12,9 @@ import render.manager.TextRenderer;
 import render.texture.TextureNineSlice;
 import util.Constants;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
 public class LobbyScene extends Scene {
@@ -22,6 +25,8 @@ public class LobbyScene extends Scene {
 
 	TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 	Frame lobbyFrame = new Frame(0, 0, Constants.VIEWPORT_W, Constants.VIEWPORT_H, true, false, 0);
+	Frame playerListFrame = new Frame(50, 200, 500, Constants.VIEWPORT_H - 2 * 200, true, true, 0);
+	List<Player> players = new ArrayList<>();
 	Frame postGameFrame = new Frame(0, 0, Constants.VIEWPORT_W, Constants.VIEWPORT_H, false, false, 0);
 
 	boolean isSpectating = false;
@@ -31,6 +36,7 @@ public class LobbyScene extends Scene {
 	Scene nextScene;
 
 	OnPrepareGame prepareGameCallback;
+	OnLobbyUpdate lobbyUpdateCallback;
 
 	LobbyScene(long windowID, GameClient client) {
 		super(windowID, client);
@@ -60,12 +66,19 @@ public class LobbyScene extends Scene {
 		prepareGameCallback = () -> {
 			prepareForGame = true;
 		};
+		lobbyUpdateCallback = (List<Player> players) -> {
+			this.players = players;
+			this.updatePlayers();
+		};
 		client.registerOnGamePrepare(prepareGameCallback);
+		client.registerOnLobbyUpdate(lobbyUpdateCallback);
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
 		widgetBatch = new WidgetBatch(200);
 		textRenderer = TextRenderer.getInstance();
+
+		lobbyFrame.addComponent(playerListFrame);
 
 		lobbyFrame.addComponent(new Button(50, 50, true,
 			600, 100, 20, "Disconnect",
@@ -97,6 +110,23 @@ public class LobbyScene extends Scene {
 			}));
 		topFrame.addComponent(lobbyFrame);
 		topFrame.addComponent(postGameFrame);
+	}
+
+	private void updatePlayers() {
+		float nameSize = 24.0f;
+		double acc = playerListFrame.getHeight() - 2 * nameSize;
+		this.playerListFrame.getComponents().clear();
+		for (Player player : players) {
+			String text = player.getName();
+			this.playerListFrame.addComponent(new TextComponent(20, acc, text, nameSize, 0.0f, 0.0f, 0.0f, true));
+			if (player.isSpectator()) {
+				this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "S", nameSize, 0.25f, 0.5f, 1.0f, true));
+			}
+			else if (player.isReady()) {
+				this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "R", nameSize, 0.25f, 0.60f, 0.25f, true));
+			}
+			acc -= nameSize;
+		}
 	}
 
 	@Override
@@ -141,5 +171,6 @@ public class LobbyScene extends Scene {
 	public void destroy() {
 		topFrame.destroy();
 		client.unregisterOnGamePrepare(prepareGameCallback);
+		client.unregisterOnLobbyUpdate(lobbyUpdateCallback);
 	}
 }

@@ -167,7 +167,7 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 		display.updatePlayers(lobby.getPlayers());
 	}
 
-	private void sendAll(MessageSerializer message) {
+	void sendAll(MessageSerializer message) {
 		for (RUDPClient client : GameServer.this.getConnectedClients()) {
 			client.sendReliablePacket(message.serialize());
 		}

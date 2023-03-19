@@ -10,8 +10,14 @@ public class Player {
 	boolean isPrepared = false;
 	TileState[][] board;
 
-	Player(String name) {
+	public Player(String name) {
 		this.name = name;
+	}
+
+	public Player(String name, boolean isReady, boolean isSpectator) {
+		this.name = name;
+		this.isReady = isReady;
+		this.isSpectator = isSpectator;
 	}
 
 	public void initialize(TileState[][] board) {
