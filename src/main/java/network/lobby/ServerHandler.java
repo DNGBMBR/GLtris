@@ -131,6 +131,8 @@ public class ServerHandler extends PacketHandler {
 							gameServer.endGame(livingPlayers);
 						}
 					}
+					ServerBoardMessage boardMessage = new ServerBoardMessage(msg.username, msg.isToppedOut, msg.board, msg.queue, msg.hold);
+					gameServer.sendAll(boardMessage);
 				}
 			}
 		}

@@ -14,6 +14,7 @@ import util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
@@ -72,6 +73,7 @@ public class LobbyScene extends Scene {
 		};
 		client.registerOnGamePrepare(prepareGameCallback);
 		client.registerOnLobbyUpdate(lobbyUpdateCallback);
+		client.triggerLobbyUpdate();
 
 		menuShader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
@@ -113,19 +115,21 @@ public class LobbyScene extends Scene {
 	}
 
 	private void updatePlayers() {
-		float nameSize = 24.0f;
-		double acc = playerListFrame.getHeight() - 2 * nameSize;
-		this.playerListFrame.getComponents().clear();
-		for (Player player : players) {
-			String text = player.getName();
-			this.playerListFrame.addComponent(new TextComponent(20, acc, text, nameSize, 0.0f, 0.0f, 0.0f, true));
-			if (player.isSpectator()) {
-				this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "S", nameSize, 0.25f, 0.5f, 1.0f, true));
+		synchronized (topFrame) {
+			float nameSize = 24.0f;
+			double acc = playerListFrame.getHeight() - 2 * nameSize;
+			this.playerListFrame.getComponents().clear();
+			for (Player player : players) {
+				String text = player.getName();
+				this.playerListFrame.addComponent(new TextComponent(20, acc, text, nameSize, 0.0f, 0.0f, 0.0f, true));
+				if (player.isSpectator()) {
+					this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "S", nameSize, 0.25f, 0.5f, 1.0f, true));
+				}
+				else if (player.isReady()) {
+					this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "R", nameSize, 0.25f, 0.60f, 0.25f, true));
+				}
+				acc -= nameSize + 20.0;
 			}
-			else if (player.isReady()) {
-				this.playerListFrame.addComponent(new TextComponent(500 - 20 - nameSize, acc, "R", nameSize, 0.25f, 0.60f, 0.25f, true));
-			}
-			acc -= nameSize;
 		}
 	}
 
@@ -151,15 +155,17 @@ public class LobbyScene extends Scene {
 		float[] buffer = new float[16];
 		menuShader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
 
-		widgetBatch.addComponent(topFrame);
+		synchronized (topFrame) {
+			widgetBatch.addComponent(topFrame);
 
-		widgetBatch.flush();
+			widgetBatch.flush();
 
-		textRenderer.bind();
+			textRenderer.bind();
 
-		textRenderer.addText(topFrame);
+			textRenderer.addText(topFrame);
 
-		textRenderer.draw();
+			textRenderer.draw();
+		}
 	}
 
 	@Override

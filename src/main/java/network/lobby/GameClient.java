@@ -2,6 +2,7 @@ package network.lobby;
 
 import fr.slaynash.communication.rudp.RUDPClient;
 import game.Garbage;
+import game.pieces.util.TileState;
 import network.general.*;
 import settings.GameSettings;
 import settings.LobbySettings;
@@ -19,6 +20,7 @@ public class GameClient extends RUDPClient {
 	Set<OnGarbageReceived> garbageReceivedCallbacks = new HashSet<>();
 	Set<OnGameFinish> finishCallbacks = new HashSet<>();
 	Set<OnLobbyUpdate> lobbyUpdateCallbacks = new HashSet<>();
+	Set<OnBoardUpdate> boardUpdateCallbacks = new HashSet<>();
 
 	public GameClient(InetAddress dstAddress, int dstPort, String username) throws IOException {
 		super(dstAddress, dstPort);
@@ -49,6 +51,10 @@ public class GameClient extends RUDPClient {
 		this.disconnect();
 	}
 
+	public String getUsername() {
+		return username;
+	}
+
 	public void sendUsername() {
 		ClientConnectMessage message = new ClientConnectMessage(this.username);
 		this.sendReliablePacket(message.serialize());
@@ -67,6 +73,11 @@ public class GameClient extends RUDPClient {
 	public void sendGameOver() {
 		ClientBoardMessage topOutMessage = new ClientBoardMessage(username, true, null, null, null);
 		this.sendReliablePacket(topOutMessage.serialize());
+	}
+
+	public void sendBoardUpdate(boolean gameOver, TileState[][] board, String[] queue, String hold) {
+		ClientBoardMessage message = new ClientBoardMessage(this.username, gameOver, board, queue, hold);
+		this.sendPacket(message.serialize());
 	}
 
 	public GameSettings getLobbySettings() {
@@ -111,6 +122,37 @@ public class GameClient extends RUDPClient {
 
 	public void unregisterOnLobbyUpdate(OnLobbyUpdate callback) {
 		lobbyUpdateCallbacks.remove(callback);
+	}
+
+	public void registerOnBoardUpdate(OnBoardUpdate callback) {
+		boardUpdateCallbacks.add(callback);
+	}
+
+	public void unregisterOnBoardUpdate(OnBoardUpdate callback) {
+		boardUpdateCallbacks.remove(callback);
+	}
+
+	public void triggerLobbyUpdate() {
+		List<Player> players = this.lobby.getPlayerList();
+		for (OnLobbyUpdate callback : this.lobbyUpdateCallbacks) {
+			callback.onLobbyUpdate(players);
+		}
+	}
+
+	public void updatePlayer(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
+		Player player = lobby.getPlayer(username);
+		if (player != null) {
+			if (isToppedOut) {
+				player.setAlive(false);
+			}
+			for (OnBoardUpdate callback : this.boardUpdateCallbacks) {
+				callback.onBoardUpdate(username, isToppedOut, board, queue, hold);
+			}
+		}
+	}
+
+	public List<Player> getPlayers() {
+		return lobby.getPlayerList();
 	}
 }
 

@@ -15,7 +15,7 @@ import static game.SpinType.*;
 import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
-public class GLTris {
+public class GLTris extends GLTrisRender {
 	//TODO: add garbage queue cancelling
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
@@ -25,7 +25,6 @@ public class GLTris {
 	private Set<RotateCallback> pieceRotateCallback;
 	private Set<PiecePlacedCallback> piecePlacedCallback;
 	private Set<GameOverCallback> gameOverCallbacks;
-	private Set<GarbageReceivedCallback> garbageReceivedCallbacks;
 
 	private String[] bagRandomizer;
 	private Random rng;
@@ -137,7 +136,6 @@ public class GLTris {
 		pieceRotateCallback = Collections.synchronizedSet(new HashSet<>());
 		piecePlacedCallback = Collections.synchronizedSet(new HashSet<>());
 		gameOverCallbacks = Collections.synchronizedSet(new HashSet<>());
-		garbageReceivedCallbacks = Collections.synchronizedSet(new HashSet<>());
 
 		isLeftPressed = new boolean[leftKeys.length];
 		isRightPressed = new boolean[rightKeys.length];
@@ -243,6 +241,10 @@ public class GLTris {
 			}
 		};
 		KeyListener.registerKeyCallback(keyCallback);
+
+		for (BoardUpdateCallback callback : boardUpdateCallbacks) {
+			callback.onBoardUpdate();
+		}
 	}
 
 	public void update(double dt) {
@@ -253,12 +255,13 @@ public class GLTris {
 			int linesCleared = clearLines();
 
 			if (currentPiece.isPlaced()) {
-				int attack = 0;
+				int attack;
+				int baseAttack = computeAttack(linesCleared, currentSpinType);
 				if (linesCleared > 0) {
-					int baseAttack = computeAttack(linesCleared, currentSpinType);
 					attack = cancelGarbageQueue(baseAttack);
 				}
 				else {
+					attack = 0;
 					addBoardGarbage();
 				}
 
@@ -266,6 +269,9 @@ public class GLTris {
 					callback.run(linesCleared, currentSpinType, attack);
 				}
 				setNextPiece();
+				for (BoardUpdateCallback callback : boardUpdateCallbacks) {
+					callback.onBoardUpdate();
+				}
 				if (!isGameOver && currentPiece.testCollision(board, 0, 0)) {
 					gameOver();
 					isGameOver = true;
@@ -411,14 +417,17 @@ public class GLTris {
 		if (heldPiece == null) {
 			heldPiece = currentPiece.getName();
 			setNextPiece();
-			return;
+		}
+		else {
+			String temp = heldPiece;
+			heldPiece = currentPiece.getName();
+			currentPiece = pieceFactory.generatePiece(temp);
 		}
 
-		String temp = heldPiece;
-		heldPiece = currentPiece.getName();
-		currentPiece = pieceFactory.generatePiece(temp);
-
 		currentSpinType = SpinType.NONE;
+		for (BoardUpdateCallback callback : boardUpdateCallbacks) {
+			callback.onBoardUpdate();
+		}
 	}
 
 	private void movePiece(Direction dir) {
@@ -613,7 +622,29 @@ public class GLTris {
 				}
 			}
 			combo++;
-			linesToSend = ((linesBase + b2bLevel) / 4) * combo + linesBase + b2bLevel;
+			if (rowsCleared < 2) {
+				if (combo < 2) {
+					linesToSend = 0;
+				}
+				else if (combo < 6) {
+					linesToSend = 1;
+				}
+				else if (combo < 16) {
+					linesToSend = 2;
+				}
+				else if (combo < 43) {
+					linesToSend = 3;
+				}
+				else if (combo < 118) {
+					linesToSend = 4;
+				}
+				else {
+					linesToSend = 5;
+				}
+			}
+			else {
+				linesToSend = ((linesBase + b2bLevel) / 4) * combo + linesBase + b2bLevel;
+			}
 			System.out.println("base lines sent: " + linesBase + " combo: " + combo + " b2b: " + b2bLevel);
 			System.out.println("Attack of size: " + linesToSend);
 			b2bLevel = isB2B ? 1 : 0;
@@ -722,11 +753,44 @@ public class GLTris {
 		for (Garbage garbage : garbageList) {
 			addQueueGarbage(garbage);
 		}
-		for (GarbageReceivedCallback callback : garbageReceivedCallbacks) {
-			callback.onGarbageReceived();
+		for (BoardUpdateCallback callback : boardUpdateCallbacks) {
+			callback.onBoardUpdate();
 		}
 	}
 
+	@Override
+	public int getBoardHeight() {
+		return boardHeight;
+	}
+
+	@Override
+	public int getBoardWidth() {
+		return boardWidth;
+	}
+
+	@Override
+	public TileState[][] getBoard() {
+		return this.board;
+	}
+
+	@Override
+	public Piece getCurrentPiece() {
+		return currentPiece;
+	}
+
+	@Override
+	public String getHeldPiece() {
+		return heldPiece;
+	}
+
+	@Override
+	public String[] getPieceQueue() {
+		String[] ret = {};
+		ret = pieceQueue.toArray(ret);
+		return ret;
+	}
+
+	@Override
 	public List<Garbage> getGarbageQueue() {
 		List<Garbage> list = new ArrayList<>();
 		for (Garbage garbage : garbageQueue) {
@@ -735,36 +799,11 @@ public class GLTris {
 		return list;
 	}
 
-	public int getBoardHeight() {
-		return boardHeight;
-	}
-
-	public int getBoardWidth() {
-		return boardWidth;
-	}
-
-	public TileState[][] getBoard() {
-		return this.board;
-	}
-
-	public Piece getCurrentPiece() {
-		return currentPiece;
-	}
-
-	public String getHeldPiece() {
-		return heldPiece;
-	}
-
-	public String[] getPieceQueue() {
-		String[] ret = {};
-		ret = pieceQueue.toArray(ret);
-		return ret;
-	}
-
 	public PieceFactory getPieceFactory() {
 		return pieceFactory;
 	}
 
+	@Override
 	public int getNumPreviews() {
 		return numPreviews;
 	}
@@ -795,10 +834,6 @@ public class GLTris {
 
 	public void registerOnGameOverListener(GameOverCallback callback) {
 		gameOverCallbacks.add(callback);
-	}
-
-	public void registerOnGarbageReceivedListener(GarbageReceivedCallback callback) {
-		garbageReceivedCallbacks.add(callback);
 	}
 
 	public void destroy() {

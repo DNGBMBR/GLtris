@@ -29,6 +29,7 @@ public class ClientHandler extends PacketHandler {
 
 	private void onDisconnect(String s) {
 		System.out.println(s);
+		this.gameClient.lobby.clearPlayers();
 	}
 
 	@Override
@@ -74,7 +75,7 @@ public class ClientHandler extends PacketHandler {
 						callback.onLobbyUpdate(msg.players);
 					}
 				}
-				case MessageConstants.MESSAGE_SERVER_UPDATE_PLAYER -> {
+				case MessageConstants.MESSAGE_SERVER_LOBBY_UPDATE_PLAYER -> {
 					ServerLobbyPlayerUpdateMessage msg = new ServerLobbyPlayerUpdateMessage(bytes);
 					if (this.gameClient.lobby.getPlayer(msg.username) == null) {
 						this.gameClient.lobby.addPlayer(msg.username);
@@ -95,6 +96,9 @@ public class ClientHandler extends PacketHandler {
 				case MessageConstants.MESSAGE_SERVER_COUNTDOWN -> {
 					ServerCountdownMessage msg = new ServerCountdownMessage(bytes);
 					if (msg.state == ServerCountdownMessage.TELL_EVERYONE_TO_PREPARE) {
+						for (Player player : this.gameClient.lobby.players.values()) {
+							player.setReady(false);
+						}
 						this.gameClient.lobby.changeState(GameState.IN_GAME);
 						for (OnPrepareGame callback : this.gameClient.prepareCallbacks) {
 							callback.onPrepareGame();
@@ -121,6 +125,10 @@ public class ClientHandler extends PacketHandler {
 					for (OnGameFinish callback : this.gameClient.finishCallbacks) {
 						callback.onGameFinish(msg.winningPlayer);
 					}
+				}
+				case MessageConstants.MESSAGE_SERVER_BOARD -> {
+					ServerBoardMessage msg = new ServerBoardMessage(bytes);
+					this.gameClient.updatePlayer(msg.username, msg.isToppedOut, msg.board, msg.queue, msg.hold);
 				}
 			}
 		}

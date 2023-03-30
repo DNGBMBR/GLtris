@@ -6,14 +6,14 @@ import settings.GameSettings;
 
 import java.util.List;
 
-public class GLTrisBoardComponent extends Component {
+public class GLTrisGameComponent extends Component {
 	GLTris game;
 	GLTrisBoardRenderer renderer;
 
-	public GLTrisBoardComponent(double xPos, double yPos, float tileSize, boolean isActive, GameSettings settings) {
-		super(xPos, yPos, 0.0, 0.0, "", true);
+	public GLTrisGameComponent(double xPos, double yPos, float tileSize, boolean isActive, GameSettings settings) {
+		super(xPos, yPos, 0.0, 0.0, "", isActive);
 		game = new GLTris(settings);
-		renderer = new GLTrisBoardRenderer(this.xPos, this.yPos, tileSize, isActive, game);
+		renderer = new GLTrisBoardRenderer(this.xPos, this.yPos, tileSize, isActive, game, game.getPieceFactory());
 		this.width = tileSize * 5.0f + (game.getBoardWidth() + 1) * tileSize + tileSize * 5.0f;
 		this.height = game.getBoardHeight() * tileSize;
 	}

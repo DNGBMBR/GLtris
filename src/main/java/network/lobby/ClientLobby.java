@@ -116,6 +116,10 @@ public class ClientLobby {
 		startGameCallbacks.remove(callback);
 	}
 
+	public void clearPlayers() {
+		this.players.clear();
+	}
+
 	protected static class LobbyState extends ServerState {
 		LobbyState() {
 			//go directly to the lobby

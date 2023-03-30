@@ -2,6 +2,7 @@ package scenes;
 
 import game.*;
 import game.callbacks.PiecePlacedCallback;
+import game.pieces.util.TileState;
 import menu.component.TopFrame;
 import network.lobby.*;
 import org.joml.Random;
@@ -12,12 +13,23 @@ import render.manager.ResourceManager;
 import render.manager.TextRenderer;
 import render.texture.TextureAtlas;
 import render.texture.TextureNineSlice;
+import settings.GameSettings;
 import util.Constants;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class MultiplayerGameScene extends Scene{
+
+	public static final double GAME_X_POS = 30.0;
+	public static final double GAME_Y_POS = 39.0;
+	public static final float GAME_TILE_SIZE = 42.0f;
+
+	public static final double OTHER_X_POS = GAME_X_POS + 20 * GAME_TILE_SIZE;
+	public static final double OTHER_Y_POS = GAME_Y_POS;
+	public static final float OTHER_TILE_SIZE = 5.0f;
+	public static final double OTHER_BOARD_OFFSET = 20 * OTHER_TILE_SIZE;
+
+	public static final double BOARD_UPDATE_INTERVAL = 1.0;
 
 	private Shader shader;
 
@@ -30,13 +42,17 @@ public class MultiplayerGameScene extends Scene{
 	private TextRenderer textRenderer;
 
 	TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
-	GLTrisBoardComponent gameComponent;
+	GLTrisGameComponent gameComponent;
+	Map<String, GLTrisDisplayComponent> otherPlayerComponents;
 
 	Scene nextScene;
 
 	OnStartGame startGameCallback;
 	OnGarbageReceived garbageCallback;
 	OnGameFinish finishCallback;
+	OnBoardUpdate boardUpdateCallback;
+
+	double nextBoardUpdateAccumulator = 0.0;
 
 	Random rng = new Random();
 
@@ -56,9 +72,23 @@ public class MultiplayerGameScene extends Scene{
 			shouldSetNextScene = true;
 			this.winner = winner;
 		};
+		boardUpdateCallback = (String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) -> {
+			GLTrisDisplayComponent player = otherPlayerComponents.get(username);
+			if (player == null) {
+				return;
+			}
+			if (isToppedOut) {
+				player.setActive(false);
+				return;
+			}
+			player.setBoard(board);
+			player.setHeldPiece(hold);
+			player.setQueue(queue);
+		};
 		client.registerOnGameStart(startGameCallback);
 		client.registerOnGarbageReceived(garbageCallback);
 		client.registerOnGameFinish(finishCallback);
+		client.registerOnBoardUpdate(boardUpdateCallback);
 
 		shader = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 		widgetTexture = ResourceManager.getTextureNineSliceByName("images/widgets.png");
@@ -69,7 +99,18 @@ public class MultiplayerGameScene extends Scene{
 		widgetBatch = new WidgetBatch(100);
 		textRenderer = TextRenderer.getInstance();
 
-		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, client.getLobbySettings());
+		GameSettings settings = client.getLobbySettings();
+		List<Player> players = client.getPlayers();
+		otherPlayerComponents = new HashMap<>();
+		String username = client.getUsername();
+		int offset = 0;
+		for (Player player : players) {
+			if (!player.getName().equals(username)) {
+				otherPlayerComponents.put(player.getName(), new GLTrisDisplayComponent(OTHER_X_POS + offset, OTHER_Y_POS, OTHER_TILE_SIZE, true, settings));
+				offset += OTHER_BOARD_OFFSET;
+			}
+		}
+		gameComponent = new GLTrisGameComponent(GAME_X_POS, GAME_Y_POS, GAME_TILE_SIZE, true, settings);
 		GLTris game = gameComponent.getGame();
 		game.registerOnPiecePlacedCallback(new PiecePlacedCallback() {
 			@Override
@@ -81,6 +122,7 @@ public class MultiplayerGameScene extends Scene{
 				}
 			}
 		});
+
 		game.registerOnGameOverListener(() -> {
 			client.sendGameOver();
 		});
@@ -98,6 +140,12 @@ public class MultiplayerGameScene extends Scene{
 		if (shouldSetNextScene) {
 			nextScene = new LobbyScene(windowID, client, winner);
 			shouldChangeScene = true;
+		}
+		nextBoardUpdateAccumulator += dt;
+		if (nextBoardUpdateAccumulator >= BOARD_UPDATE_INTERVAL) {
+			nextBoardUpdateAccumulator = 0.0;
+			GLTris game = this.gameComponent.getGame();
+			client.sendBoardUpdate(game.isGameOver(), game.getBoard(), game.getPieceQueue(), game.getHeldPiece());
 		}
 	}
 
@@ -141,5 +189,6 @@ public class MultiplayerGameScene extends Scene{
 		client.unregisterOnGameStart(startGameCallback);
 		client.unregisterOnGarbageReceived(garbageCallback);
 		client.unregisterOnGameFinish(finishCallback);
+		client.unregisterOnBoardUpdate(boardUpdateCallback);
 	}
 }

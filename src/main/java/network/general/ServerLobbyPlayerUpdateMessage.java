@@ -31,7 +31,7 @@ public class ServerLobbyPlayerUpdateMessage extends MessageSerializer{
 		byte flags = (byte) ((isDisconnected ? DISCONNECTED_MASK : 0) | (isReady ? READY_MASK : 0) | (isSpectating ? SPECTATING_MASK : 0));
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 		buffer.put(MessageConstants.SERVER);
-		buffer.put(MessageConstants.MESSAGE_SERVER_UPDATE_PLAYER);
+		buffer.put(MessageConstants.MESSAGE_SERVER_LOBBY_UPDATE_PLAYER);
 		buffer.put(flags);
 		buffer.putShort((short) usernameBytes.length);
 		buffer.put(usernameBytes);
@@ -40,7 +40,7 @@ public class ServerLobbyPlayerUpdateMessage extends MessageSerializer{
 
 	@Override
 	public void deserialize(byte[] data) {
-		assert data[0] == MessageConstants.SERVER && data[1] == MessageConstants.MESSAGE_SERVER_UPDATE_PLAYER : "Illegal message type given to deserialize.";
+		assert data[0] == MessageConstants.SERVER && data[1] == MessageConstants.MESSAGE_SERVER_LOBBY_UPDATE_PLAYER : "Illegal message type given to deserialize.";
 		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);
 		byte flags = buffer.get();
 		isDisconnected = (flags & DISCONNECTED_MASK) != 0;

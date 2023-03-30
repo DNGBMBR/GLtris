@@ -5,20 +5,20 @@ import game.pieces.util.TileState;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class ClientBoardMessage extends MessageSerializer {
+public class ServerBoardMessage extends MessageSerializer{
 	private static final byte IS_TOPPED_OUT_MASK = 0x01;
-	//TODO: add garbage meter
+
 	public String username;
 	public boolean isToppedOut;
 	public TileState[][] board;
 	public String[] queue;
 	public String hold;
 
-	public ClientBoardMessage(byte[] data) {
+	public ServerBoardMessage(byte[] data) {
 		super(data);
 	}
 
-	public ClientBoardMessage(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
+	public ServerBoardMessage(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
 		this.username = username;
 		this.isToppedOut = isToppedOut;
 		this.hold = hold;
@@ -37,7 +37,7 @@ public class ClientBoardMessage extends MessageSerializer {
 			return data;
 		}
 		byte[] usernameBytes = this.username.getBytes(StandardCharsets.UTF_8);
-		byte[] holdBytes = this.hold == null ? "".getBytes(StandardCharsets.UTF_8) : this.hold.getBytes(StandardCharsets.UTF_8);
+		byte[] holdBytes = (this.hold == null ? "" : this.hold).getBytes(StandardCharsets.UTF_8);
 		byte[][] queueBytes = new byte[queue.length][];
 		int queueByteSize = 0;
 		for (int i = 0; i < queue.length; i++) {
@@ -46,10 +46,10 @@ public class ClientBoardMessage extends MessageSerializer {
 		}
 		byte[] data = new byte[
 			2 + 1 +
-			Short.BYTES + usernameBytes.length +
-			Short.BYTES + holdBytes.length +
-			Byte.BYTES + queueBytes.length * Short.BYTES + queueByteSize +
-			2 * Short.BYTES + (board.length * board[0].length + 1) / 2];
+				Short.BYTES + usernameBytes.length +
+				Short.BYTES + holdBytes.length +
+				Byte.BYTES + queueBytes.length * Short.BYTES + queueByteSize +
+				2 * Short.BYTES + (board.length * board[0].length + 1) / 2];
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 
 		buffer.put(MessageConstants.CLIENT);
@@ -78,12 +78,8 @@ public class ClientBoardMessage extends MessageSerializer {
 			byte value = (byte) (((board[i1][j1].getVal() << 0) & 0x0F) | ((board[i2][j2].getVal() << 4) & 0xF0));
 			buffer.put(value);
 		}
-		if (((board.length * board[0].length) % 2) == 1) {
+		if (((board.length * board[0].length) & 1) == 0) {
 			byte value = (byte) ((board[board.length - 1][board[0].length - 1].getVal()) & 0x0F);
-			System.out.println("buffer size: " + data.length);
-			System.out.println("board width: " + board[0].length);
-			System.out.println("board height: " + board.length);
-			System.out.println("board byte size: " + (board.length * board[0].length + 1) / 2);
 			buffer.put(value);
 		}
 
@@ -92,7 +88,7 @@ public class ClientBoardMessage extends MessageSerializer {
 
 	@Override
 	public void deserialize(byte[] data) {
-		assert data[0] == MessageConstants.CLIENT && data[1] == MessageConstants.MESSAGE_CLIENT_BOARD : "Illegal message type given to deserialize.";
+		assert data[0] == MessageConstants.SERVER && data[1] == MessageConstants.MESSAGE_SERVER_BOARD : "Illegal message type given to deserialize.";
 
 		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);
 		int flags = buffer.get();

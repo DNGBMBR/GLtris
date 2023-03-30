@@ -1,7 +1,7 @@
 package scenes;
 
 import game.GLTris;
-import game.GLTrisBoardComponent;
+import game.GLTrisGameComponent;
 import game.pieces.util.PieceColour;
 import menu.component.TopFrame;
 import menu.widgets.Button;
@@ -50,7 +50,7 @@ public class GameScene extends Scene{
 	private PieceColour[] currentQueue;
 
 	//private GLTris game;
-	private GLTrisBoardComponent gameComponent;
+	private GLTrisGameComponent gameComponent;
 	private GameSettings settings;
 
 	private TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
@@ -70,7 +70,7 @@ public class GameScene extends Scene{
 		} catch (ParseException e) {
 			throw new IllegalStateException("Could not parse kick table.");
 		}
-		gameComponent = new GLTrisBoardComponent(30.0, 39.0, 42.0f, true, settings);
+		gameComponent = new GLTrisGameComponent(30.0, 39.0, 42.0f, true, settings);
 		topFrame.addComponent(gameComponent);
 		batch = new TileBatch(500);
 		widgetBatch = new WidgetBatch(100);
