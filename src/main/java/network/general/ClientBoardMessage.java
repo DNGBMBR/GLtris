@@ -80,10 +80,6 @@ public class ClientBoardMessage extends MessageSerializer {
 		}
 		if (((board.length * board[0].length) % 2) == 1) {
 			byte value = (byte) ((board[board.length - 1][board[0].length - 1].getVal()) & 0x0F);
-			System.out.println("buffer size: " + data.length);
-			System.out.println("board width: " + board[0].length);
-			System.out.println("board height: " + board.length);
-			System.out.println("board byte size: " + (board.length * board[0].length + 1) / 2);
 			buffer.put(value);
 		}
 
@@ -109,7 +105,7 @@ public class ClientBoardMessage extends MessageSerializer {
 		int holdLength = buffer.getShort();
 		byte[] holdBytes = new byte[holdLength];
 		buffer.get(holdBytes);
-		this.username = new String(holdBytes, StandardCharsets.UTF_8);
+		this.hold = new String(holdBytes, StandardCharsets.UTF_8);
 
 		int queueNumElements = buffer.get();
 		this.queue = new String[queueNumElements];

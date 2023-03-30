@@ -31,8 +31,8 @@ public class ServerBoardMessage extends MessageSerializer{
 		byte flags = (isToppedOut ? IS_TOPPED_OUT_MASK : 0);
 		if (isToppedOut) {
 			byte[] data = new byte[3];
-			data[0] = MessageConstants.CLIENT;
-			data[1] = MessageConstants.MESSAGE_CLIENT_BOARD;
+			data[0] = MessageConstants.SERVER;
+			data[1] = MessageConstants.MESSAGE_SERVER_BOARD;
 			data[2] = flags;
 			return data;
 		}
@@ -52,8 +52,8 @@ public class ServerBoardMessage extends MessageSerializer{
 				2 * Short.BYTES + (board.length * board[0].length + 1) / 2];
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 
-		buffer.put(MessageConstants.CLIENT);
-		buffer.put(MessageConstants.MESSAGE_CLIENT_BOARD);
+		buffer.put(MessageConstants.SERVER);
+		buffer.put(MessageConstants.MESSAGE_SERVER_BOARD);
 		buffer.put(flags);
 		//username
 		buffer.putShort((short) usernameBytes.length);
@@ -78,7 +78,7 @@ public class ServerBoardMessage extends MessageSerializer{
 			byte value = (byte) (((board[i1][j1].getVal() << 0) & 0x0F) | ((board[i2][j2].getVal() << 4) & 0xF0));
 			buffer.put(value);
 		}
-		if (((board.length * board[0].length) & 1) == 0) {
+		if (((board.length * board[0].length) % 2) == 1) {
 			byte value = (byte) ((board[board.length - 1][board[0].length - 1].getVal()) & 0x0F);
 			buffer.put(value);
 		}
@@ -105,7 +105,7 @@ public class ServerBoardMessage extends MessageSerializer{
 		int holdLength = buffer.getShort();
 		byte[] holdBytes = new byte[holdLength];
 		buffer.get(holdBytes);
-		this.username = new String(holdBytes, StandardCharsets.UTF_8);
+		this.hold = new String(holdBytes, StandardCharsets.UTF_8);
 
 		int queueNumElements = buffer.get();
 		this.queue = new String[queueNumElements];

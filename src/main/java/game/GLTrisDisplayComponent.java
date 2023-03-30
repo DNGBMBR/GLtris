@@ -21,6 +21,14 @@ public class GLTrisDisplayComponent extends Component {
 		return renderer.generateVertices();
 	}
 
+	public float[] generateBackgroundVertices() {
+		return renderer.generateBackgroundVertices();
+	}
+
+	public float[] generateTileVertices() {
+		return renderer.generateTileVertices();
+	}
+
 	@Override
 	public void destroy() {
 		renderer.destroy();

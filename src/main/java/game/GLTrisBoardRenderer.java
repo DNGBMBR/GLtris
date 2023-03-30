@@ -51,26 +51,26 @@ public class GLTrisBoardRenderer extends Component {
 			"Game", isActive);
 		TileState[][] board = game.getBoard();
 		this.pieces = pieces;
-		boardHeight = board.length / 2;
-		boardWidth = board[0].length;
+		boardHeight = game.getBoardHeight();
+		boardWidth = game.getBoardWidth();
 		this.tileSize = tileSize;
 
 		heldPieceBoundSize = tileSize * 5.0f;
-		xOffsetHeld = (float) xPos;
-		yOffsetHeld = (float) (yPos + boardHeight * tileSize - heldPieceBoundSize);
+		xOffsetHeld = (float) 0.0;
+		yOffsetHeld = (float) (0.0 + boardHeight * tileSize - heldPieceBoundSize);
 
-		xOffsetGarbage = (float) (xPos + heldPieceBoundSize + 0.5 * tileSize);
-		yOffsetGarbage = (float) yPos;
+		xOffsetGarbage = (float) (0.0 + heldPieceBoundSize + 0.5 * tileSize);
+		yOffsetGarbage = (float) 0.0;
 		garbageMargin = (tileSize * 0.0625f);
 		garbageBoundSize = tileSize;
 
-		xOffsetBoard = (float) (xPos + heldPieceBoundSize + 2.0 * tileSize);
-		yOffsetBoard = (float) yPos;
+		xOffsetBoard = (float) (0.0 + heldPieceBoundSize + 2.0 * tileSize);
+		yOffsetBoard = (float) 0.0;
 
 		queuePieceBoundSizeX = tileSize * 5.0f;
 		queuePieceBoundSizeY = tileSize * 3.5f;
-		xOffsetQueue = (float) (xPos + xOffsetBoard + (boardWidth + 1) * tileSize);
-		yOffsetQueue = (float) (yPos + boardHeight * tileSize - queuePieceBoundSizeY - tileSize);
+		xOffsetQueue = (float) (0.0 + xOffsetBoard + (boardWidth + 1) * tileSize);
+		yOffsetQueue = (float) (0.0 + boardHeight * tileSize - queuePieceBoundSizeY - tileSize);
 
 		backgroundTexture = ResourceManager.getTextureNineSliceByName("images/game_background.png");
 		tileTexture = ResourceManager.getAtlasByName("images/default_skin.png");

@@ -145,9 +145,9 @@ public class GameClient extends RUDPClient {
 			if (isToppedOut) {
 				player.setAlive(false);
 			}
-			for (OnBoardUpdate callback : this.boardUpdateCallbacks) {
-				callback.onBoardUpdate(username, isToppedOut, board, queue, hold);
-			}
+		}
+		for (OnBoardUpdate callback : this.boardUpdateCallbacks) {
+			callback.onBoardUpdate(username, isToppedOut, board, queue, hold);
 		}
 	}
 

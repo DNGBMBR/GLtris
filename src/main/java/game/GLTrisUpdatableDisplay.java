@@ -18,6 +18,14 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 
 	public GLTrisUpdatableDisplay(int numPreviews) {
 		this.numPreviews = numPreviews;
+		board = new TileState[2 * Constants.BOARD_HEIGHT][2 * Constants.BOARD_WIDTH];
+		for (int i = 0; i < board.length; i++) {
+			for (int j = 0; j < board[i].length; j++) {
+				board[i][j] = TileState.EMPTY;
+			}
+		}
+		queue = new String[0];
+		heldPiece = null;
 	}
 
 	@Override

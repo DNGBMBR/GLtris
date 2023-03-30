@@ -24,9 +24,9 @@ public class MultiplayerGameScene extends Scene{
 	public static final double GAME_Y_POS = 39.0;
 	public static final float GAME_TILE_SIZE = 42.0f;
 
-	public static final double OTHER_X_POS = GAME_X_POS + 20 * GAME_TILE_SIZE;
+	public static final double OTHER_X_POS = GAME_X_POS + 30 * GAME_TILE_SIZE;
 	public static final double OTHER_Y_POS = GAME_Y_POS;
-	public static final float OTHER_TILE_SIZE = 5.0f;
+	public static final float OTHER_TILE_SIZE = 15.0f;
 	public static final double OTHER_BOARD_OFFSET = 20 * OTHER_TILE_SIZE;
 
 	public static final double BOARD_UPDATE_INTERVAL = 1.0;
@@ -44,6 +44,7 @@ public class MultiplayerGameScene extends Scene{
 	TopFrame topFrame = new TopFrame(Constants.VIEWPORT_W, Constants.VIEWPORT_H, true);
 	GLTrisGameComponent gameComponent;
 	Map<String, GLTrisDisplayComponent> otherPlayerComponents;
+	List<GLTrisDisplayComponent> displayComponents;
 
 	Scene nextScene;
 
@@ -102,11 +103,14 @@ public class MultiplayerGameScene extends Scene{
 		GameSettings settings = client.getLobbySettings();
 		List<Player> players = client.getPlayers();
 		otherPlayerComponents = new HashMap<>();
+		displayComponents = new ArrayList<>();
 		String username = client.getUsername();
 		int offset = 0;
 		for (Player player : players) {
 			if (!player.getName().equals(username)) {
-				otherPlayerComponents.put(player.getName(), new GLTrisDisplayComponent(OTHER_X_POS + offset, OTHER_Y_POS, OTHER_TILE_SIZE, true, settings));
+				GLTrisDisplayComponent playerComponent = new GLTrisDisplayComponent(OTHER_X_POS + offset, OTHER_Y_POS, OTHER_TILE_SIZE, true, settings);
+				otherPlayerComponents.put(player.getName(), playerComponent);
+				displayComponents.add(playerComponent);
 				offset += OTHER_BOARD_OFFSET;
 			}
 		}
@@ -158,10 +162,16 @@ public class MultiplayerGameScene extends Scene{
 
 		shader.bindTexture2D("uTexture", backgroundTexture);
 		batch.addVertices(gameComponent.generateBackgroundVertices());
+		for (GLTrisDisplayComponent component : displayComponents) {
+			batch.addVertices(component.generateBackgroundVertices());
+		}
 		batch.flush();
 
 		shader.bindTexture2D("uTexture", pieceTexture);
 		batch.addVertices(gameComponent.generateTileVertices());
+		for (GLTrisDisplayComponent component : displayComponents) {
+			batch.addVertices(component.generateTileVertices());
+		}
 		batch.flush();
 
 		shader.bindTexture2D("uTexture", widgetTexture);
