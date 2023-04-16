@@ -218,4 +218,8 @@ public class Utils {
 		}
 		return val;
 	}
+
+	public static String getKickTableLocation(String name) {
+		return "./kicks/" + name + ".json";
+	}
 }

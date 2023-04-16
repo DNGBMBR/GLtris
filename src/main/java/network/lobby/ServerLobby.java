@@ -19,7 +19,6 @@ public class ServerLobby {
 	* 	NECESSARY
 	* 	- countdown, buffer at start of game (make sure everyone's connected)
 	* 	- list of players that are alive/dead/spectating
-	* 	- first to n points
 	* 	- way to send garbage to other players (do pure random per garbage package for now)
 	* 	- display other player's boards
 	* 	- spectate (after death or at start)
@@ -36,7 +35,7 @@ public class ServerLobby {
 	GameSettings gameSettings;
 
 	public ServerLobby(GameSettings settings) {
-		setLobbySettings(settings);
+		this.gameSettings = settings;
 		state = new LobbyState();
 	}
 
@@ -138,11 +137,7 @@ public class ServerLobby {
 
 		@Override
 		void onCreate() {
-			for (Player player : players.values()) {
-				if (!player.isSpectator()) {
-					player.setAlive(true);
-				}
-			}
+			
 		}
 	}
 }

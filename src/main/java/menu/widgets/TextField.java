@@ -50,7 +50,7 @@ public class TextField extends Component implements GLFWCharCallbackI, GLFWKeyCa
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvs = texture.getElementUVs(0, 0, 1, 1);
+		float[] uvs = texture.getElementUVs(Constants.TEXT_FIELD_PX, Constants.TEXT_FIELD_PY, Constants.TEXT_FIELD_TEX_WIDTH, Constants.TEXT_FIELD_TEX_HEIGHT);
 		float p0x = (float) xPos;
 		float p0y = (float) yPos;
 		float p0u = uvs[0];

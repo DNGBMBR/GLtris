@@ -45,6 +45,7 @@ public class MultiplayerGameScene extends Scene{
 	GLTrisGameComponent gameComponent;
 	Map<String, GLTrisDisplayComponent> otherPlayerComponents;
 	List<GLTrisDisplayComponent> displayComponents;
+	boolean isSpectator;
 
 	Scene nextScene;
 
@@ -60,15 +61,11 @@ public class MultiplayerGameScene extends Scene{
 	boolean shouldSetNextScene = false;
 	String winner = "";
 
-	MultiplayerGameScene(long windowID, GameClient client) {
+	MultiplayerGameScene(long windowID, GameClient client, boolean isSpectating) {
 		super(windowID, client);
 
-		startGameCallback = () -> {
-			gameComponent.setStarted(true);
-		};
-		garbageCallback = (List<Garbage> garbage) -> {
-			gameComponent.getGame().addQueueGarbage(garbage);
-		};
+		this.isSpectator = isSpectating;
+
 		finishCallback = (String winner) -> {
 			shouldSetNextScene = true;
 			this.winner = winner;
@@ -86,8 +83,6 @@ public class MultiplayerGameScene extends Scene{
 			player.setHeldPiece(hold);
 			player.setQueue(queue);
 		};
-		client.registerOnGameStart(startGameCallback);
-		client.registerOnGarbageReceived(garbageCallback);
 		client.registerOnGameFinish(finishCallback);
 		client.registerOnBoardUpdate(boardUpdateCallback);
 
@@ -101,7 +96,7 @@ public class MultiplayerGameScene extends Scene{
 		textRenderer = TextRenderer.getInstance();
 
 		GameSettings settings = client.getLobbySettings();
-		List<Player> players = client.getPlayers();
+		List<Player> players = client.getPlayerList();
 		otherPlayerComponents = new HashMap<>();
 		displayComponents = new ArrayList<>();
 		String username = client.getUsername();
@@ -114,22 +109,32 @@ public class MultiplayerGameScene extends Scene{
 				offset += OTHER_BOARD_OFFSET;
 			}
 		}
-		gameComponent = new GLTrisGameComponent(GAME_X_POS, GAME_Y_POS, GAME_TILE_SIZE, true, settings);
-		GLTris game = gameComponent.getGame();
-		game.registerOnPiecePlacedCallback(new PiecePlacedCallback() {
-			@Override
-			public void run(int rowsCleared, SpinType spinType, int attack) {
+
+		if (!this.isSpectator) {
+			startGameCallback = () -> {
+				gameComponent.setStarted(true);
+			};
+			garbageCallback = (List<Garbage> garbage) -> {
+				gameComponent.getGame().addQueueGarbage(garbage);
+			};
+
+			client.registerOnGameStart(startGameCallback);
+			client.registerOnGarbageReceived(garbageCallback);
+
+			gameComponent = new GLTrisGameComponent(GAME_X_POS, GAME_Y_POS, GAME_TILE_SIZE, true, settings);
+			GLTris game = gameComponent.getGame();
+			game.registerOnPiecePlacedCallback((int rowsCleared, SpinType spinType, int attack) -> {
 				if (attack > 0) {
 					List<Garbage> garbage = new ArrayList<>();
 					garbage.add(new Garbage(attack, rng.nextInt(10)));
 					client.sendGarbage(garbage);
 				}
-			}
-		});
+			});
 
-		game.registerOnGameOverListener(() -> {
-			client.sendGameOver();
-		});
+			game.registerOnGameOverListener(() -> {
+				client.sendGameOver();
+			});
+		}
 	}
 
 	@Override
@@ -160,19 +165,21 @@ public class MultiplayerGameScene extends Scene{
 		float[] buffer = new float[16];
 		shader.uploadUniformMatrix4fv("uProjection", false, projection.get(buffer));
 
-		shader.bindTexture2D("uTexture", backgroundTexture);
-		batch.addVertices(gameComponent.generateBackgroundVertices());
-		for (GLTrisDisplayComponent component : displayComponents) {
-			batch.addVertices(component.generateBackgroundVertices());
-		}
-		batch.flush();
+		if (!isSpectator) {
+			shader.bindTexture2D("uTexture", backgroundTexture);
+			batch.addVertices(gameComponent.generateBackgroundVertices());
+			for (GLTrisDisplayComponent component : displayComponents) {
+				batch.addVertices(component.generateBackgroundVertices());
+			}
+			batch.flush();
 
-		shader.bindTexture2D("uTexture", pieceTexture);
-		batch.addVertices(gameComponent.generateTileVertices());
-		for (GLTrisDisplayComponent component : displayComponents) {
-			batch.addVertices(component.generateTileVertices());
+			shader.bindTexture2D("uTexture", pieceTexture);
+			batch.addVertices(gameComponent.generateTileVertices());
+			for (GLTrisDisplayComponent component : displayComponents) {
+				batch.addVertices(component.generateTileVertices());
+			}
+			batch.flush();
 		}
-		batch.flush();
 
 		shader.bindTexture2D("uTexture", widgetTexture);
 
@@ -196,8 +203,10 @@ public class MultiplayerGameScene extends Scene{
 	public void destroy() {
 		gameComponent.destroy();
 		topFrame.destroy();
-		client.unregisterOnGameStart(startGameCallback);
-		client.unregisterOnGarbageReceived(garbageCallback);
+		if (!isSpectator) {
+			client.unregisterOnGameStart(startGameCallback);
+			client.unregisterOnGarbageReceived(garbageCallback);
+		}
 		client.unregisterOnGameFinish(finishCallback);
 		client.unregisterOnBoardUpdate(boardUpdateCallback);
 	}

@@ -52,6 +52,7 @@ public class ServerHandler extends PacketHandler {
 	}
 
 	private void decodePacket(byte[] bytes) {
+		/*
 		for (int i = 0; i < bytes.length; i++) {
 			System.out.printf("%2x ", bytes[i]);
 			if (i % 16 == 7) {
@@ -62,6 +63,7 @@ public class ServerHandler extends PacketHandler {
 			}
 		}
 		System.out.println();
+		 */
 		if (bytes[0] == MessageConstants.CLIENT) {
 			switch (bytes[1]) {
 				case MessageConstants.MESSAGE_CLIENT_CONNECT -> {
@@ -89,6 +91,7 @@ public class ServerHandler extends PacketHandler {
 					ServerLobbyPlayerUpdateMessage updatePlayer = new ServerLobbyPlayerUpdateMessage(this.username, false, msg.isReady, msg.isSpectating);
 					gameServer.sendAll(updatePlayer);
 					gameServer.log(this.username + " is " + (msg.isSpectating ? "spectating" : (msg.isReady ? "ready" : "not ready")) + ".");
+					gameServer.updateUsers();
 
 				}
 				case MessageConstants.MESSAGE_CLIENT_CONFIRM_START -> {
@@ -122,7 +125,6 @@ public class ServerHandler extends PacketHandler {
 					destination.sendReliablePacket(send.serialize());
 				}
 				case MessageConstants.MESSAGE_CLIENT_BOARD -> {
-					//TODO: make other player's boards visible
 					ClientBoardMessage msg = new ClientBoardMessage(bytes);
 					if (msg.isToppedOut) {
 						this.gameServer.lobby.getPlayer(username).setAlive(!msg.isToppedOut);

@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ClientBoardMessage extends MessageSerializer {
 	private static final byte IS_TOPPED_OUT_MASK = 0x01;
-	//TODO: add garbage meter
+	//TODO: add garbage meter and current piece
 	public String username;
 	public boolean isToppedOut;
 	public TileState[][] board;
@@ -37,7 +37,7 @@ public class ClientBoardMessage extends MessageSerializer {
 			return data;
 		}
 		byte[] usernameBytes = this.username.getBytes(StandardCharsets.UTF_8);
-		byte[] holdBytes = this.hold == null ? "".getBytes(StandardCharsets.UTF_8) : this.hold.getBytes(StandardCharsets.UTF_8);
+		byte[] holdBytes = (this.hold == null ? "" : this.hold).getBytes(StandardCharsets.UTF_8);
 		byte[][] queueBytes = new byte[queue.length][];
 		int queueByteSize = 0;
 		for (int i = 0; i < queue.length; i++) {

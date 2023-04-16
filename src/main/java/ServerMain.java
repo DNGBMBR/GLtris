@@ -1,15 +1,21 @@
+import game.pieces.PieceFactory;
 import network.lobby.GameServer;
 import network.lobby.ServerHandler;
+import org.json.simple.parser.ParseException;
 import server_interface.ServerPanel;
+import settings.GameSettings;
+import settings.ServerSettings;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
+import java.io.*;
+import java.util.Properties;
 
 public class ServerMain {
+	public static final String PROPERTIES_LOCATION = "./server.properties";
+
 	public static void main(String[] args) {
-		//TODO: read config file for lobby settings
 		createAndShowGUI();
 	}
 
@@ -28,11 +34,22 @@ public class ServerMain {
 
 		ServerPanel panel = new ServerPanel();
 
+		ServerSettings settings;
 		try {
-			GameServer server = new GameServer(2678, panel);
+			settings = new ServerSettings(new File(PROPERTIES_LOCATION));
+		} catch (Exception e) {
+			settings = new ServerSettings();
+			try {
+				settings.writeSettings(new File(PROPERTIES_LOCATION));
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
+
+		try {
+			GameServer server = new GameServer(settings, panel);
 			server.setPacketHandler(ServerHandler.class);
 			server.start();
-			frame.add(panel);
 
 			frame.addWindowListener(new WindowAdapter() {
 				@Override
@@ -42,14 +59,13 @@ public class ServerMain {
 					e.getWindow().dispose();
 				}
 			});
-
-			frame.pack();
-
-			frame.setVisible(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-	}
+		frame.add(panel);
 
+		frame.pack();
+		frame.setVisible(true);
+	}
 }

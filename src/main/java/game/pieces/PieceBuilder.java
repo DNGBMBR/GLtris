@@ -152,7 +152,7 @@ public class PieceBuilder {
 	}
 
 	public static List<PieceBuilder> getPieces(File path) throws IOException, ParseException {
-		String jsonString = Files.readString(Path.of(String.valueOf(path)));
+		String jsonString = Files.readString(Path.of(path.getAbsolutePath()));
 		return parseJSON(jsonString);
 	}
 

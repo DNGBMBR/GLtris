@@ -52,7 +52,7 @@ public class LobbyScene extends Scene {
 		//TODO: interface for post game
 		postGameFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 50, true,
 			600, 100, 20, "Next",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					postGameFrame.setActive(false);
@@ -84,7 +84,7 @@ public class LobbyScene extends Scene {
 
 		lobbyFrame.addComponent(new Button(50, 50, true,
 			600, 100, 20, "Disconnect",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					client.close();
@@ -94,7 +94,7 @@ public class LobbyScene extends Scene {
 			}));
 		lobbyFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 170, true,
 			600, 100, 20, "Spectate",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					isSpectating = !isSpectating;
@@ -103,7 +103,7 @@ public class LobbyScene extends Scene {
 			}));
 		lobbyFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 50, true,
 			600, 100, 20, "Ready Up",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					isReady = !isReady;
@@ -141,7 +141,7 @@ public class LobbyScene extends Scene {
 	@Override
 	public void update(double dt) {
 		if (prepareForGame) {
-			nextScene = new MultiplayerGameScene(windowID, client);
+			nextScene = new MultiplayerGameScene(windowID, client, isSpectating);
 			shouldChangeScene = true;
 		}
 	}

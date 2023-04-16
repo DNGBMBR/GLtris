@@ -23,12 +23,11 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 	protected boolean isHorizontal;
 	protected boolean isClicked;
 	private TextureAtlas texture;
-	private int px, py;
 	OnSliderMove onDrag;
 
 	public Slider(double xPos, double yPos, boolean isInteractable, String displayText,
 				  double percentage, double length, double minValue, double maxValue, double clickerSize, double barWidth, boolean isHorizontal,
-				  TextureAtlas texture, int px, int py,
+				  TextureAtlas texture,
 				  OnSliderMove onDrag) {
 		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), displayText, isInteractable);
 		this.percentage = percentage;
@@ -39,8 +38,6 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 		this.barWidth = barWidth;
 		this.isHorizontal = isHorizontal;
 		this.texture = texture;
-		this.px = px;
-		this.py = py;
 		this.isClicked = false;
 		this.onDrag = onDrag;
 	}
@@ -104,8 +101,8 @@ public class Slider extends Component implements OnComponentClick, OnComponentHo
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvsClicker = texture.getElementUVs(px, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
-		float[] uvsBar = texture.getElementUVs(px + 1, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
+		float[] uvsClicker = texture.getElementUVs(Constants.SLIDER_PX_CLICKER, Constants.SLIDER_PY, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
+		float[] uvsBar = texture.getElementUVs(Constants.SLIDER_PX_BACKING, Constants.SLIDER_PY, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
 
 		float p0xBar = (float) (xPos + (clickerSize - barWidth) * 0.5);
 		float p0yBar = (float) (yPos + (clickerSize - barWidth) * 0.5);

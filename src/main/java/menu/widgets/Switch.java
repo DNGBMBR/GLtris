@@ -5,6 +5,7 @@ import menu.component.TextInfo;
 import menu.widgets.callbacks.*;
 import org.joml.Math;
 import render.texture.TextureAtlas;
+import util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,16 +18,14 @@ public class Switch extends Component implements OnComponentClick, OnComponentHo
 	private double backgroundWidth;
 
 	private TextureAtlas texture;
-	private int px, py;
 
 	protected boolean isOn;
 	private boolean isPressed = false;
 	private OnSwitchClick onClickCallback;
 
-	//assumes there are 3 tiles allocated in the atlas, all side by side, with px, py being the coordinates of the leftmost one.
 	public Switch(double xPos, double yPos, double switchSize, double backgroundWidth,
 				  boolean isOn, boolean isActive,
-				  TextureAtlas texture, int px, int py,
+				  TextureAtlas texture,
 				  String displayText,
 				  OnSwitchClick onClickCallback) {
 		super(xPos, yPos, 2 * switchSize, Math.max(switchSize, backgroundWidth), displayText, isActive);
@@ -35,14 +34,14 @@ public class Switch extends Component implements OnComponentClick, OnComponentHo
 		this.isOn = isOn;
 		this.onClickCallback = onClickCallback;
 		this.texture = texture;
-		this.px = px;
-		this.py = py;
 	}
 
 	@Override
 	public float[] generateVertices() {
-		float[] uvsSwitch = texture.getElementUVs(isPressed ? px + 1 : isOn ? px + 2 : px, py, 1, 1);
-		float[] uvsBackground = texture.getElementUVs(px + 3, py, 1, 1);
+		float[] uvsSwitch = texture.getElementUVs(
+			isPressed ? Constants.SWITCH_PX_PRESSED : isOn ? Constants.SWITCH_PX_ON : Constants.SWITCH_PX_OFF, Constants.SWITCH_PY,
+			Constants.SWITCH_TEX_WIDTH, Constants.SWITCH_TEX_HEIGHT);
+		float[] uvsBackground = texture.getElementUVs(Constants.SWITCH_PX_BACKGROUND, Constants.SWITCH_PY, Constants.SWITCH_TEX_WIDTH, Constants.SWITCH_TEX_HEIGHT);
 
 		float p0x = (float) (xPos + (isOn ? switchSize : 0));
 		float p0y = (float) yPos;

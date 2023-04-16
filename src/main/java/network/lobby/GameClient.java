@@ -5,7 +5,6 @@ import game.Garbage;
 import game.pieces.util.TileState;
 import network.general.*;
 import settings.GameSettings;
-import settings.LobbySettings;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,8 +13,12 @@ import java.util.*;
 public class GameClient extends RUDPClient {
 	//TODO: handle server going down when it doesn't send a disconnect message (send client back to connection menu/main menu)
 	String username;
-	ClientLobby lobby;
 
+	GameState state;
+	Map<String, Player> players = new HashMap<>();
+	GameSettings lobbySettings;
+
+	Set<OnStartGame> startGameCallbacks = new HashSet<>();
 	Set<OnPrepareGame> prepareCallbacks = new HashSet<>();
 	Set<OnGarbageReceived> garbageReceivedCallbacks = new HashSet<>();
 	Set<OnGameFinish> finishCallbacks = new HashSet<>();
@@ -28,7 +31,8 @@ public class GameClient extends RUDPClient {
 
 		setPacketHandler(ClientHandler.class);
 
-		this.lobby = new ClientLobby(new ArrayList<>(), new LobbySettings(), GameState.LOBBY);
+		this.state = GameState.LOBBY;
+		this.lobbySettings = new GameSettings();
 	}
 
 	public void setAddress(InetAddress address, int port, String username) {
@@ -81,7 +85,11 @@ public class GameClient extends RUDPClient {
 	}
 
 	public GameSettings getLobbySettings() {
-		return lobby.getLobbySettings();
+		return lobbySettings;
+	}
+
+	public void setLobbySettings(GameSettings lobbySettings) {
+		this.lobbySettings = lobbySettings;
 	}
 
 	public void registerOnGamePrepare(OnPrepareGame callback) {
@@ -93,11 +101,11 @@ public class GameClient extends RUDPClient {
 	}
 
 	public void registerOnGameStart(OnStartGame callback) {
-		lobby.registerOnGameStart(callback);
+		startGameCallbacks.add(callback);
 	}
 
 	public void unregisterOnGameStart(OnStartGame callback) {
-		lobby.unregisterOnGameStart(callback);
+		startGameCallbacks.remove(callback);
 	}
 
 	public void registerOnGarbageReceived(OnGarbageReceived callback) {
@@ -133,14 +141,14 @@ public class GameClient extends RUDPClient {
 	}
 
 	public void triggerLobbyUpdate() {
-		List<Player> players = this.lobby.getPlayerList();
+		List<Player> players = getPlayerList();
 		for (OnLobbyUpdate callback : this.lobbyUpdateCallbacks) {
 			callback.onLobbyUpdate(players);
 		}
 	}
 
 	public void updatePlayer(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
-		Player player = lobby.getPlayer(username);
+		Player player = this.getPlayer(username);
 		if (player != null) {
 			if (isToppedOut) {
 				player.setAlive(false);
@@ -151,8 +159,45 @@ public class GameClient extends RUDPClient {
 		}
 	}
 
-	public List<Player> getPlayers() {
-		return lobby.getPlayerList();
+	public boolean addPlayer(String name) {
+		if (players.containsKey(name)) {
+			return false;
+		}
+		players.put(name, new Player(name));
+		return true;
+	}
+
+	public Player getPlayer(String name) {
+		return players.get(name);
+	}
+
+	public void removePlayer(String name) {
+		players.remove(name);
+	}
+
+	public void clearPlayers() {
+		this.players.clear();
+	}
+
+	public List<Player> getPlayerList() {
+		return players.values().stream().toList();
+	}
+
+	public void changeState(GameState state) {
+		this.state = state;
+	}
+
+	public void changeState(GameState state, String winningPlayer) {
+		changeState(state);
+		for (OnGameFinish callback : finishCallbacks) {
+			callback.onGameFinish(winningPlayer);
+		}
+	}
+
+	public void callStartGame() {
+		for (OnStartGame callback : this.startGameCallbacks) {
+			callback.onStartGame();
+		}
 	}
 }
 

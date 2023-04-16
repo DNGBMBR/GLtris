@@ -28,8 +28,7 @@ public class ClientHandler extends PacketHandler {
 	}
 
 	private void onDisconnect(String s) {
-		System.out.println(s);
-		this.gameClient.lobby.clearPlayers();
+		this.gameClient.clearPlayers();
 	}
 
 	@Override
@@ -50,6 +49,7 @@ public class ClientHandler extends PacketHandler {
 		if (this.gameClient == null) {
 			this.gameClient = (GameClient) this.rudp;
 		}
+		/*
 		for (int i = 0; i < bytes.length; i++) {
 			System.out.printf("%2x ", bytes[i]);
 			if (i % 16 == 7) {
@@ -60,14 +60,15 @@ public class ClientHandler extends PacketHandler {
 			}
 		}
 		System.out.println();
+		*/
 		if (bytes[0] == MessageConstants.SERVER) {
 			switch (bytes[1]) {
 				case MessageConstants.MESSAGE_SERVER_LOBBY_STATE -> {
 					ServerLobbyStateMessage msg = new ServerLobbyStateMessage(bytes);
-					this.gameClient.lobby.setLobbySettings(msg.settings);
+					this.gameClient.setLobbySettings(msg.settings);
 					for (Player player : msg.players) {
-						this.gameClient.lobby.addPlayer(player.getName());
-						Player currentPlayer = this.gameClient.lobby.getPlayer(player.getName());
+						this.gameClient.addPlayer(player.getName());
+						Player currentPlayer = this.gameClient.getPlayer(player.getName());
 						currentPlayer.setReady(player.isReady());
 						currentPlayer.setSpectator(player.isSpectator());
 					}
@@ -77,18 +78,18 @@ public class ClientHandler extends PacketHandler {
 				}
 				case MessageConstants.MESSAGE_SERVER_LOBBY_UPDATE_PLAYER -> {
 					ServerLobbyPlayerUpdateMessage msg = new ServerLobbyPlayerUpdateMessage(bytes);
-					if (this.gameClient.lobby.getPlayer(msg.username) == null) {
-						this.gameClient.lobby.addPlayer(msg.username);
+					if (this.gameClient.getPlayer(msg.username) == null) {
+						this.gameClient.addPlayer(msg.username);
 					}
 					else if (msg.isDisconnected) {
-						this.gameClient.lobby.removePlayer(msg.username);
+						this.gameClient.removePlayer(msg.username);
 					}
 					else {
-						Player player = this.gameClient.lobby.getPlayer(msg.username);
+						Player player = this.gameClient.getPlayer(msg.username);
 						player.setSpectator(msg.isSpectating);
 						player.setReady(msg.isReady);
 					}
-					List<Player> players = this.gameClient.lobby.getPlayerList();
+					List<Player> players = this.gameClient.getPlayerList();
 					for (OnLobbyUpdate callback : this.gameClient.lobbyUpdateCallbacks) {
 						callback.onLobbyUpdate(players);
 					}
@@ -96,10 +97,10 @@ public class ClientHandler extends PacketHandler {
 				case MessageConstants.MESSAGE_SERVER_COUNTDOWN -> {
 					ServerCountdownMessage msg = new ServerCountdownMessage(bytes);
 					if (msg.state == ServerCountdownMessage.TELL_EVERYONE_TO_PREPARE) {
-						for (Player player : this.gameClient.lobby.players.values()) {
+						for (Player player : this.gameClient.players.values()) {
 							player.setReady(false);
 						}
-						this.gameClient.lobby.changeState(GameState.IN_GAME);
+						this.gameClient.changeState(GameState.IN_GAME);
 						for (OnPrepareGame callback : this.gameClient.prepareCallbacks) {
 							callback.onPrepareGame();
 						}
@@ -107,10 +108,7 @@ public class ClientHandler extends PacketHandler {
 						this.rudp.sendReliablePacket(prepMsg.serialize());
 					}
 					if (msg.state == ServerCountdownMessage.START) {
-						this.gameClient.lobby.setStarted(true);
-						for (OnStartGame callback : this.gameClient.lobby.startGameCallbacks) {
-							callback.onStartGame();
-						}
+						this.gameClient.callStartGame();
 					}
 				}
 				case MessageConstants.MESSAGE_SERVER_GARBAGE -> {
@@ -121,7 +119,7 @@ public class ClientHandler extends PacketHandler {
 				}
 				case MessageConstants.MESSAGE_SERVER_GAME_END -> {
 					ServerGameEndMessage msg = new ServerGameEndMessage(bytes);
-					this.gameClient.lobby.changeState(GameState.LOBBY, msg.winningPlayer);
+					this.gameClient.changeState(GameState.LOBBY, msg.winningPlayer);
 					for (OnGameFinish callback : this.gameClient.finishCallbacks) {
 						callback.onGameFinish(msg.winningPlayer);
 					}

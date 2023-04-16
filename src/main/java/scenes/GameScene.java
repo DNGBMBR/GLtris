@@ -90,7 +90,7 @@ public class GameScene extends Scene{
 		gameComponent.setStarted(true);
 
 		backButton = new Button(Constants.VIEWPORT_W - 600 - 50, 50, false, 600, 100, 25,
-			"Main Menu", widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			"Main Menu", widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				shouldChangeScene = true;
 			});

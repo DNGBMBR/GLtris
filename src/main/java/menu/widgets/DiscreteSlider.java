@@ -3,7 +3,6 @@ package menu.widgets;
 import menu.component.Component;
 import menu.component.TextInfo;
 import menu.widgets.callbacks.OnDiscreteSliderMove;
-import menu.widgets.callbacks.OnSliderMove;
 import org.joml.Math;
 import render.texture.TextureAtlas;
 import util.Constants;
@@ -24,21 +23,18 @@ public class DiscreteSlider extends Component {
 	protected boolean isHorizontal;
 	protected boolean isClicked;
 	private TextureAtlas texture;
-	private int px, py;
 	private OnDiscreteSliderMove onDrag;
 
 	public DiscreteSlider(double xPos, double yPos, boolean isInteractable, String displayText,
 						  int currentValue, int minValue, int maxValue, int interval,
 						  double length, double clickerSize, double barWidth, boolean isHorizontal,
-						  TextureAtlas texture, int px, int py, OnDiscreteSliderMove onDrag) {
+						  TextureAtlas texture, OnDiscreteSliderMove onDrag) {
 		super(xPos, yPos, isHorizontal ? length : Math.max(clickerSize, barWidth), !isHorizontal ? length : Math.max(clickerSize, barWidth), displayText, isInteractable);
 		this.length = length;
 		this.clickerSize = clickerSize;
 		this.barWidth = barWidth;
 		this.isHorizontal = isHorizontal;
 		this.texture = texture;
-		this.px = px;
-		this.py = py;
 		this.isClicked = false;
 		this.onDrag = onDrag;
 
@@ -52,8 +48,8 @@ public class DiscreteSlider extends Component {
 	public float[] generateVertices() {
 		float percentage = (float) (currentValue - minValue) / (maxValue - minValue);
 
-		float[] uvsClicker = texture.getElementUVs(px, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
-		float[] uvsBar = texture.getElementUVs(px + 1, py, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
+		float[] uvsClicker = texture.getElementUVs(Constants.SLIDER_PX_CLICKER, Constants.SLIDER_PY, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
+		float[] uvsBar = texture.getElementUVs(Constants.SLIDER_PX_BACKING, Constants.SLIDER_PY, Constants.SLIDER_TEX_WIDTH, Constants.SLIDER_TEX_HEIGHT);
 
 		float p0xBar = (float) (xPos + (clickerSize - barWidth) * 0.5);
 		float p0yBar = (float) (yPos + (clickerSize - barWidth) * 0.5);

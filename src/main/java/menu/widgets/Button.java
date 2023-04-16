@@ -18,7 +18,6 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 	//always assumes we're working on a 1920x1080 canvas
 	public double borderWidth;
 	TextureNineSlice texture;
-	private int px, py;
 	OnComponentClick onClickCallback;
 
 	public boolean isPressed;
@@ -26,15 +25,13 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 
 	public Button(double xPos, double yPos, boolean isInteractable, double width, double height,
 				  double borderWidth, String displayText,
-				  TextureNineSlice texture, int px, int py,
+				  TextureNineSlice texture,
 				  OnComponentClick onClickCallback) {
 		super(xPos, yPos, width, height, displayText, isInteractable);
 		this.width = width;
 		this.height = height;
 		this.borderWidth = borderWidth;
 		this.texture = texture;
-		this.px = px;
-		this.py = py;
 		this.onClickCallback = onClickCallback;
 		this.isPressed = false;
 	}
@@ -45,21 +42,15 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 		if (!isActive) {
 			return new float[0];
 		}
-		int textureOffset = 0;
-		if (isPressed) {
-			textureOffset = 2;
-		}
-		else if (isHovered) {
-			textureOffset = 1;
-		}
-		float[] uvs = texture.getElementUVsNineSlice(px + textureOffset, py, Constants.BUTTON_TEX_WIDTH, Constants.BUTTON_TEX_HEIGHT);
+		int px = isPressed ? Constants.BUTTON_PX_PRESSED : isHovered ? Constants.BUTTON_PX_HOVERED : Constants.BUTTON_PX_DEFAULT;
+		float[] uvs = texture.getElementUVsNineSlice(px, Constants.BUTTON_PY, Constants.BUTTON_TEX_WIDTH, Constants.BUTTON_TEX_HEIGHT);
 
 		float p0x = (float) xPos;
 		float p0y = (float) yPos;
 		float p3x = (float) (xPos + this.width);
 		float p3y = (float) (yPos + this.height);
 
-		float[] vertices = new float[6 * 9 * 4];
+		float[] vertices = new float[9 * Constants.WIDGET_ELEMENTS_PER_QUAD * Constants.WIDGET_ATTRIBUTES_PER_VERTEX];
 
 		Utils.addBlockVerticesNineSlice(vertices, 0, p0x, p0y, p3x, p3y, (float) borderWidth, uvs);
 
@@ -77,12 +68,11 @@ public class Button extends Component implements OnComponentClick, OnComponentHo
 			mouseY >= yPos && mouseY <= yPos + height;
 		if (!isInRegion) {
 			isPressed = false;
-			return;
 		}
-		if (action == GLFW_PRESS) {
+		else if (action == GLFW_PRESS) {
 			isPressed = true;
 		}
-		if (action == GLFW_RELEASE) {
+		else if (action == GLFW_RELEASE && isPressed) {
 			isPressed = false;
 			onClickCallback.onClick(mouseX, mouseY, button, action, mods);
 		}

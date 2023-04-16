@@ -5,6 +5,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class PieceFactory {
@@ -21,6 +23,10 @@ public class PieceFactory {
 
 	public PieceFactory(String json) throws ParseException {
 		this(PieceBuilder.parseJSON(json));
+	}
+
+	public PieceFactory(File file) throws IOException, ParseException {
+		this(PieceBuilder.getPieces(file));
 	}
 
 	public void registerPiece(PieceBuilder info) {

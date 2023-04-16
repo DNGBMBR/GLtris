@@ -16,7 +16,6 @@ import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GLTris extends GLTrisRender {
-	//TODO: add garbage queue cancelling
 	public static final int TPS = 60;
 	public static final double SPF = 1.0 / TPS;
 
@@ -64,24 +63,15 @@ public class GLTris extends GLTrisRender {
 	private int boardWidth = Constants.BOARD_WIDTH;
 	private int numPreviews;
 
-	private double initGravity; //measured in G, where 1G = 1 tile per tick
-	private double gravityIncrease;
-	private double gravityIncreaseInterval;
-	private double lockDelay; //measured in seconds
-
 	private double accumulatorSD = 0.0;
 	private double accumulatorARR = 0.0;
 	private double accumulatorDAS = 0.0;
-
-	private double accumulatorGravityIncrease = 0.0;
-	private double accumulatorGravity = 0.0;
-	private double accumulatorLock = 0.0;
-	private double currentGravity;
 
 	private boolean isGameOver = false;
 
 	private int linesCleared = 0;
 	private SpinType currentSpinType = NONE;
+	private SpinDetection spinDetection;
 
 	private int combo = -1;
 	private int b2bLevel = 0;
@@ -89,9 +79,11 @@ public class GLTris extends GLTrisRender {
 	private boolean isStarted = false;
 
 	public GLTris(GameSettings settings) {
-		currentGravity = initGravity;
 
+		this.boardHeight = settings.getBoardHeight();
+		this.boardWidth = settings.getBoardWidth();
 		pieceFactory = settings.getKickTable();
+		this.spinDetection = SpinDetector.getDetection(settings.getSpinDetector());
 
 		List<PieceBuilder> pieceInfo = pieceFactory.getBuilders();
 
@@ -120,10 +112,12 @@ public class GLTris extends GLTrisRender {
 
 		numPreviews = settings.getNumPreviews();
 
+		/*
 		initGravity = settings.getInitGravity();
 		gravityIncrease = settings.getGravityIncrease();
 		gravityIncreaseInterval = settings.getGravityIncreaseInterval();
 		lockDelay = settings.getLockDelay();
+		 */
 
 		garbageQueue = new LinkedList<>();
 
@@ -251,7 +245,7 @@ public class GLTris extends GLTrisRender {
 		if (!isGameOver && isStarted) {
 			listenKeys(dt);
 
-			applyGravity(dt);
+			//applyGravity(dt);
 			int linesCleared = clearLines();
 
 			if (currentPiece.isPlaced()) {
@@ -387,32 +381,7 @@ public class GLTris extends GLTrisRender {
 		}
 	}
 
-	private void applyGravity(double dt) {
-		accumulatorGravity += dt;
-		accumulatorGravityIncrease += dt;
-		if (accumulatorGravity >= SPF / currentGravity) {
-			boolean onFloor = !currentPiece.gravity(board);
-			if (onFloor) {
-				accumulatorLock += dt;
-				if (accumulatorLock >= SPF * lockDelay) {
-					currentPiece.place(board);
-					accumulatorLock = 0.0;
-					accumulatorGravity = 0.0;
-				}
-			}
-			else {
-				accumulatorGravity = 0.0;
-				accumulatorLock = 0.0;
-			}
-		}
-		if (accumulatorGravityIncrease >= gravityIncreaseInterval * SPF) {
-			currentGravity += gravityIncrease;
-			accumulatorGravityIncrease = 0.0;
-		}
-	}
-
 	private void hold() {
-		accumulatorLock = 0.0;
 
 		if (heldPiece == null) {
 			heldPiece = currentPiece.getName();
@@ -431,7 +400,6 @@ public class GLTris extends GLTrisRender {
 	}
 
 	private void movePiece(Direction dir) {
-		accumulatorLock = 0.0;
 		boolean hasMoved = currentPiece.move(dir, board);
 		if (hasMoved) {
 			for (MoveCallback callback : pieceMoveCallback) {
@@ -441,7 +409,6 @@ public class GLTris extends GLTrisRender {
 	}
 
 	private void rotatePiece(Rotation rot) {
-		accumulatorLock = 0.0;
 		int kickIndex = currentPiece.rotate(rot, board);
 		//detect spin, if any
 		//can have support for different spin detection methods
@@ -453,99 +420,7 @@ public class GLTris extends GLTrisRender {
 	}
 
 	private void testSpinDefault(int kickIndex) {
-		//spins for all pieces except T follow stupid spin rules
-		//TODO: rip this out for a listener system
-		switch(currentPiece.getPieceColour()) {
-			case I -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = I_SPIN;
-				}
-			}
-			case O -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = O_SPIN;
-				}
-			}
-			case L -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = L_SPIN;
-				}
-			}
-			case J -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = J_SPIN;
-				}
-			}
-			case S -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = S_SPIN;
-				}
-			}
-			case Z -> {
-				if (currentPiece.testCollision(board, 1, 0) &&
-					currentPiece.testCollision(board, -1, 0) &&
-					currentPiece.testCollision(board, 0, -1)) {
-					currentSpinType = Z_SPIN;
-				}
-			}
-			case T -> {
-				int forwardCornerCount = 0;
-				int cornerCount = 0;
-				int tCenterX = currentPiece.getBottomLeftX() + 1;
-				int tCenterY = currentPiece.getBottomLeftY() + 1;
-				Orientation orientation = currentPiece.getOrientation();
-				if (tCenterX - 1 < 0 || tCenterY - 1 < 0 || board[tCenterY - 1][tCenterX - 1] != TileState.EMPTY) {
-					if (orientation == R2 || orientation == R3) {
-						forwardCornerCount++;
-					}
-					cornerCount++;
-				}
-				if (tCenterX - 1 < 0 || tCenterY + 1 >= board.length || board[tCenterY + 1][tCenterX - 1] != TileState.EMPTY) {
-					if (orientation == E || orientation == R3) {
-						forwardCornerCount++;
-					}
-					cornerCount++;
-				}
-				if (tCenterX + 1 >= board[0].length || tCenterY - 1 < 0 || board[tCenterY - 1][tCenterX + 1] != TileState.EMPTY) {
-					if (orientation == R || orientation == R2) {
-						forwardCornerCount++;
-					}
-					cornerCount++;
-				}
-				if (tCenterX + 1 >= board[0].length || tCenterY + 1 >= board.length || board[tCenterY + 1][tCenterX + 1] != TileState.EMPTY) {
-					if (orientation == E || orientation == R) {
-						forwardCornerCount++;
-					}
-					cornerCount++;
-				}
-
-				if (cornerCount >= 3) {
-					//4 is the magic index in SRS that uses the t-spin triple kick
-					if (kickIndex >= 4) {
-						currentSpinType = T_SPIN;
-					}
-					else if (forwardCornerCount < 2) {
-						currentSpinType = T_SPIN_MINI;
-					}
-					else {
-						currentSpinType = T_SPIN;
-					}
-				}
-			}
-			default -> {
-				currentSpinType = NONE;
-			}
-		}
+		currentSpinType = spinDetection.detectSpin(currentPiece, board, kickIndex);
 	}
 
 	private int clearLines() {
@@ -600,7 +475,6 @@ public class GLTris extends GLTrisRender {
 			//it's gonna be hardcoded for the time being
 			//function is G(b, c, n) = ((c + b) / 4) * n + c + b, where
 			//b = b2b level, c = clear type (1 for double/t-mini double, 2 for triple/tss, 4 for quad/tsd, 6 for tst), n is the combo
-			//TODO: THIS IS VERY TEMPORARY
 			int linesBase;
 			boolean isB2B;
 			switch (spinType) {
@@ -645,8 +519,6 @@ public class GLTris extends GLTrisRender {
 			else {
 				linesToSend = ((linesBase + b2bLevel) / 4) * combo + linesBase + b2bLevel;
 			}
-			System.out.println("base lines sent: " + linesBase + " combo: " + combo + " b2b: " + b2bLevel);
-			System.out.println("Attack of size: " + linesToSend);
 			b2bLevel = isB2B ? 1 : 0;
 		}
 		else {

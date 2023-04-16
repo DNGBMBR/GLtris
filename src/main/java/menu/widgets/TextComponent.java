@@ -9,6 +9,7 @@ import java.util.List;
 //just shows text, no editing capabilities or otherwise
 public class TextComponent extends Component {
 
+	private static final float[] EMPTY_VERTEX = new float[0];
 	private List<TextInfo> text;
 
 	public TextComponent(double xPos, double yPos, String displayText, float fontSize, float r, float g, float b, boolean isActive) {
@@ -19,7 +20,7 @@ public class TextComponent extends Component {
 
 	@Override
 	public float[] generateVertices() {
-		return new float[0];
+		return EMPTY_VERTEX;
 	}
 
 	@Override

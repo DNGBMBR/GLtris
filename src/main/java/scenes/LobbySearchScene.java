@@ -41,7 +41,7 @@ public class LobbySearchScene extends Scene{
 
 		topFrame.addComponent(new Button(50, 50, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, "Back",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					nextScene = new MenuScene(windowID, client);
@@ -59,12 +59,11 @@ public class LobbySearchScene extends Scene{
 		topFrame.addComponent(textFieldPort);
 		topFrame.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, 50, true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, "Join",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					try {
 						InetAddress address = InetAddress.getByName(textFieldIP.getText());
-						System.out.println(address);
 						client.setAddress(address, Integer.parseInt(textFieldPort.getText()), textFieldUsername.getText());
 						boolean foundServer = client.start();
 						if (foundServer) {

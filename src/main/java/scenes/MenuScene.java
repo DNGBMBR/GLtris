@@ -38,7 +38,7 @@ public class MenuScene extends Scene{
 		mainFrame.addComponent(
 			new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4, true,
 				BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, START_GAME,
-				widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+				widgetTexture,
 				(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					nextScene = new GameSetupScene(windowID, client);
@@ -47,7 +47,7 @@ public class MenuScene extends Scene{
 			}));
 		mainFrame.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - (BUTTON_HEIGHT + 50.0), true,
 			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, SETTINGS,
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					nextScene = new SettingsScene(windowID, client);
@@ -55,8 +55,8 @@ public class MenuScene extends Scene{
 				}
 			}));
 		mainFrame.addComponent(new Button((Constants.VIEWPORT_W - BUTTON_WIDTH) * 0.5, Constants.VIEWPORT_H * 0.4 - 2 * (BUTTON_HEIGHT + 50.0), true,
-			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, "guhdge",
-			widgetTexture, Constants.BUTTON_PX, Constants.BUTTON_PY,
+			BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_BORDER_WIDTH, "Multiplayer",
+			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
 					nextScene = new LobbySearchScene(windowID, client);

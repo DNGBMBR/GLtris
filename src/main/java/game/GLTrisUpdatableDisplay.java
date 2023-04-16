@@ -45,7 +45,7 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 
 	@Override
 	public Piece getCurrentPiece() {
-		//TODO: add in message the current piece instead of baking it into the board
+		//TODO: add the current piece in message instead of baking it into the board
 		return null;
 	}
 

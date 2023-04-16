@@ -1,9 +1,12 @@
 package settings;
 
+import game.SpinDetector;
 import game.pieces.PieceBuilder;
 import game.pieces.PieceFactory;
 import org.ini4j.Wini;
 import org.json.simple.parser.ParseException;
+import util.Constants;
+import util.Utils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -14,51 +17,47 @@ public class GameSettings {
 	protected String filePath = "./game_settings.ini";
 
 	protected static final int NUM_PREVIEWS = 6;
-	protected static final String SRS_KICK_TABLE = "./kicks/SRS.json"; //to be changed
+	protected static final String SRS_KICK_TABLE = "SRS"; //to be changed
 
+	/*
 	protected static final double INIT_GRAVITY = 0.1; //measured in G, where 1G = 1 tile per tick
 	protected static final double GRAVITY_INCREASE = 0.008;
 	protected static final int GRAVITY_INCREASE_INTERVAL = 3600; //measured in frames
 	protected static final double LOCK_DELAY = 30.0; //measured in frames
+	 */
 
 	protected static final String SECTION_GENERAL = "general";
 	protected static final String OPTION_BOARD_HEIGHT = "board_height";
 	protected static final String OPTION_BOARD_WIDTH = "board_width";
 	protected static final String OPTION_NUM_PREVIEWS = "previews";
 	protected static final String OPTION_KICK_TABLE = "kick_table";
-
-	protected static final String SECTION_GRAVITY = "gravity";
-	protected static final String OPTION_INIT_GRAVITY = "initial_gravity";
-	protected static final String OPTION_GRAVITY_INCREASE = "gravity_increase";
-	protected static final String OPTIONS_GRAVITY_INCREASE_INTERVAL = "gravity_increase_interval";
-	protected static final String OPTION_LOCK_DELAY = "lock_delay";
+	protected static final String OPTION_SPIN_DETECTOR = "spin_detector";
 
 	protected transient Wini properties;
 
 	protected int numPreviews = NUM_PREVIEWS;
 	protected PieceFactory kickTable;
 
-	protected double initGravity = INIT_GRAVITY;
-	protected double gravityIncrease = GRAVITY_INCREASE;
-	protected int gravityIncreaseInterval = GRAVITY_INCREASE_INTERVAL;
-	protected double lockDelay = LOCK_DELAY;
+	protected int boardHeight = Constants.BOARD_HEIGHT;
+	protected int boardWidth = Constants.BOARD_WIDTH;
+	protected SpinDetector spinDetector = SpinDetector.NONE;
 
 	public GameSettings() {
 		getProperties();
 		try {
-			this.kickTable = new PieceFactory(PieceBuilder.getPieces(new File(getKickTableLocationINI())));
+			File location = new File(Utils.getKickTableLocation(getKickTableLocationINI()));
+			this.kickTable = new PieceFactory(PieceBuilder.getPieces(location));
 		} catch (IOException | ParseException e) {
 			throw new IllegalStateException("Could not find default kick table.");
 		}
 	}
 
-	public GameSettings(int numPreviews, PieceFactory kickTable, double initGravity, double gravityIncrease, int gravityIncreaseInterval, double lockDelay) {
+	public GameSettings(int numPreviews, PieceFactory kickTable, int boardHeight, int boardWidth, SpinDetector spinDetector) {
 		this.numPreviews = numPreviews;
 		this.kickTable = kickTable;
-		this.initGravity = initGravity;
-		this.gravityIncrease = gravityIncrease;
-		this.gravityIncreaseInterval = gravityIncreaseInterval;
-		this.lockDelay = lockDelay;
+		this.boardHeight = boardHeight;
+		this.boardWidth = boardWidth;
+		this.spinDetector = spinDetector;
 
 		properties = getProperties();
 	}
@@ -67,12 +66,11 @@ public class GameSettings {
 		this.filePath = filePath;
 		getProperties();
 		this.numPreviews = getNumPreviewsINI();
-		this.kickTable = new PieceFactory(PieceBuilder.getPieces(new File(getKickTableLocationINI())));
-
-		this.initGravity = getInitGravityINI();
-		this.gravityIncrease = getGravityIncreaseINI();
-		this.gravityIncreaseInterval = getGravityIncreaseIntervalINI();
-		this.lockDelay = getLockDelayINI();
+		File kickTableLocation = new File(Utils.getKickTableLocation(getKickTableLocationINI()));
+		this.kickTable = new PieceFactory(PieceBuilder.getPieces(kickTableLocation));
+		this.boardHeight = getBoardHeightINI();
+		this.boardWidth = getBoardWidthINI();
+		this.spinDetector = getSpinDetectorINI();
 	}
 
 	protected Wini getProperties() {
@@ -100,25 +98,17 @@ public class GameSettings {
 
 	public void setDefaultProperties() {
 		properties = new Wini();
-		//properties.put(SECTION_GENERAL, OPTION_BOARD_HEIGHT, BOARD_HEIGHT);
-		//properties.put(SECTION_GENERAL, OPTION_BOARD_WIDTH, BOARD_WIDTH);
 		properties.put(SECTION_GENERAL, OPTION_NUM_PREVIEWS, NUM_PREVIEWS);
 		properties.put(SECTION_GENERAL, OPTION_KICK_TABLE, SRS_KICK_TABLE);
 
-		properties.put(SECTION_GRAVITY, OPTION_INIT_GRAVITY, INIT_GRAVITY);
-		properties.put(SECTION_GRAVITY, OPTION_GRAVITY_INCREASE, GRAVITY_INCREASE);
-		properties.put(SECTION_GRAVITY, OPTIONS_GRAVITY_INCREASE_INTERVAL, GRAVITY_INCREASE_INTERVAL);
-		properties.put(SECTION_GRAVITY, OPTION_LOCK_DELAY, LOCK_DELAY);
+		properties.put(SECTION_GENERAL, OPTION_BOARD_HEIGHT, Constants.BOARD_HEIGHT);
+		properties.put(SECTION_GENERAL, OPTION_BOARD_WIDTH, Constants.BOARD_WIDTH);
+
+		properties.put(SECTION_GENERAL, OPTION_SPIN_DETECTOR, "T_SPIN");
 	}
 
 	public void saveSettings() {
 		Wini p = getProperties();
-		setNumPreviewsINI(this.numPreviews);
-		setInitGravityINI(this.initGravity);
-		setGravityIncreaseINI(this.gravityIncrease);
-		setGravityIncreaseIntervalINI(this.gravityIncreaseInterval);
-		setLockDelayINI(this.lockDelay);
-
 		File destination = new File(filePath);
 
 		try {
@@ -147,62 +137,6 @@ public class GameSettings {
 		p.put(SECTION_GENERAL, OPTION_NUM_PREVIEWS, numPreviews);
 	}
 
-	private double getInitGravityINI() {
-		Object propertyObject = getProperty(SECTION_GRAVITY, OPTION_INIT_GRAVITY);
-		if (!(propertyObject instanceof String)) {
-			setDefaultProperties();
-			return INIT_GRAVITY;
-		}
-		return Double.parseDouble((String) propertyObject);
-	}
-
-	private void setInitGravityINI(double initGravity) {
-		Wini p = getProperties();
-		p.put(SECTION_GRAVITY, OPTION_INIT_GRAVITY, initGravity);
-	}
-
-	private double getGravityIncreaseINI() {
-		Object propertyObject = getProperty(SECTION_GRAVITY, OPTION_GRAVITY_INCREASE);
-		if (!(propertyObject instanceof String)) {
-			setDefaultProperties();
-			return GRAVITY_INCREASE;
-		}
-		return Double.parseDouble((String) propertyObject);
-	}
-
-	private void setGravityIncreaseINI(double gravityIncrease) {
-		Wini p = getProperties();
-		p.put(SECTION_GRAVITY, OPTION_GRAVITY_INCREASE, gravityIncrease);
-	}
-
-	private int getGravityIncreaseIntervalINI() {
-		Object propertyObject = getProperty(SECTION_GRAVITY, OPTIONS_GRAVITY_INCREASE_INTERVAL);
-		if (!(propertyObject instanceof String)) {
-			setDefaultProperties();
-			return GRAVITY_INCREASE_INTERVAL;
-		}
-		return Integer.parseInt((String) propertyObject);
-	}
-
-	private void setGravityIncreaseIntervalINI(int gravityIncreaseInterval) {
-		Wini p = getProperties();
-		p.put(SECTION_GRAVITY, OPTIONS_GRAVITY_INCREASE_INTERVAL, gravityIncreaseInterval);
-	}
-
-	private double getLockDelayINI() {
-		Object propertyObject = getProperty(SECTION_GRAVITY, OPTION_LOCK_DELAY);
-		if (!(propertyObject instanceof String)) {
-			setDefaultProperties();
-			return LOCK_DELAY;
-		}
-		return Double.parseDouble((String) propertyObject);
-	}
-
-	private void setLockDelayINI(double lockDelay) {
-		Wini p = getProperties();
-		p.put(SECTION_GRAVITY, OPTION_LOCK_DELAY, lockDelay);
-	}
-
 	private String getKickTableLocationINI() {
 		Object propertyObject = getProperty(SECTION_GENERAL, OPTION_KICK_TABLE);
 		if (!(propertyObject instanceof String)) {
@@ -217,74 +151,58 @@ public class GameSettings {
 		p.put(SECTION_GENERAL, OPTION_KICK_TABLE, location);
 	}
 
-	/*
-	public static int getBoardHeight() {
+	private int getBoardHeightINI() {
 		Object propertyObject = getProperty(SECTION_GENERAL, OPTION_BOARD_HEIGHT);
 		if (!(propertyObject instanceof String)) {
 			setDefaultProperties();
-			return BOARD_HEIGHT;
+			return Constants.BOARD_HEIGHT;
 		}
 		return Integer.parseInt((String) propertyObject);
 	}
 
-	public static void setBoardHeight(int boardHeight) {
+	private void setBoardHeightINI(int boardHeight) {
 		Wini p = getProperties();
 		p.put(SECTION_GENERAL, OPTION_BOARD_HEIGHT, boardHeight);
 	}
 
-	public static int getBoardWidth() {
+	private int getBoardWidthINI() {
 		Object propertyObject = getProperty(SECTION_GENERAL, OPTION_BOARD_WIDTH);
 		if (!(propertyObject instanceof String)) {
 			setDefaultProperties();
-			return BOARD_WIDTH;
+			return Constants.BOARD_WIDTH;
 		}
 		return Integer.parseInt((String) propertyObject);
 	}
 
-	public static void setBoardWidth(int boardWidth) {
+	private void setBoardWidthINI(int boardWidth) {
 		Wini p = getProperties();
 		p.put(SECTION_GENERAL, OPTION_BOARD_WIDTH, boardWidth);
 	}
-	 */
+
+	private SpinDetector getSpinDetectorINI() {
+		Object propertyObject = getProperty(SECTION_GENERAL, OPTION_SPIN_DETECTOR);
+		if (!(propertyObject instanceof String)) {
+			setDefaultProperties();
+			return SpinDetector.T_SPIN;
+		}
+		return SpinDetector.getEnum((String) propertyObject);
+	}
+
+	private void setSpinDetectorINI(SpinDetector detector) {
+		Wini p = getProperties();
+		p.put(SECTION_GENERAL, OPTION_SPIN_DETECTOR, detector.name());
+	}
 
 	public int getNumPreviews() {
 		return numPreviews;
 	}
 
 	public void setNumPreviews(int numPreviews) {
+		if (this.numPreviews < 0) {
+			throw new IllegalArgumentException("Number of previews must be greater than or equal to 0.");
+		}
 		this.numPreviews = numPreviews;
-	}
-
-	public double getInitGravity() {
-		return initGravity;
-	}
-
-	public void setInitGravity(double initGravity) {
-		this.initGravity = initGravity;
-	}
-
-	public double getGravityIncrease() {
-		return gravityIncrease;
-	}
-
-	public void setGravityIncrease(double gravityIncrease) {
-		this.gravityIncrease = gravityIncrease;
-	}
-
-	public int getGravityIncreaseInterval() {
-		return gravityIncreaseInterval;
-	}
-
-	public void setGravityIncreaseInterval(int gravityIncreaseInterval) {
-		this.gravityIncreaseInterval = gravityIncreaseInterval;
-	}
-
-	public double getLockDelay() {
-		return lockDelay;
-	}
-
-	public void setLockDelay(double lockDelay) {
-		this.lockDelay = lockDelay;
+		setNumPreviewsINI(this.numPreviews);
 	}
 
 	public PieceFactory getKickTable() {
@@ -292,8 +210,45 @@ public class GameSettings {
 	}
 
 	public void setKickTableLocation(String location) throws IOException, ParseException {
-		this.kickTable = new PieceFactory(PieceBuilder.getPieces(new File(location)));
-		Wini p = getProperties();
-		p.put(SECTION_GENERAL, OPTION_KICK_TABLE, location);
+		File kickTableLocation = new File(Utils.getKickTableLocation(location));
+		this.kickTable = new PieceFactory(PieceBuilder.getPieces(kickTableLocation));
+		setKickTableLocationINI(location);
+	}
+
+	public int getBoardHeight() {
+		return boardHeight;
+	}
+
+	public void setBoardHeight(int boardHeight) {
+		if (boardHeight <= 0) {
+			throw new IllegalArgumentException("Board height must be greater than 0.");
+		}
+		this.boardHeight = boardHeight;
+		setBoardHeightINI(this.boardHeight);
+	}
+
+	public int getBoardWidth() {
+		return boardWidth;
+	}
+
+	public void setBoardWidth(int boardWidth) {
+		if (boardWidth <= 0) {
+			throw new IllegalArgumentException("Board width must be greater than 0.");
+		}
+		this.boardWidth = boardWidth;
+		setBoardWidthINI(this.boardWidth);
+	}
+
+	public String getKickTableLocation() {
+		return getKickTableLocationINI();
+	}
+
+	public SpinDetector getSpinDetector() {
+		return spinDetector;
+	}
+
+	public void setSpinDetector(SpinDetector spinDetector) {
+		this.spinDetector = spinDetector;
+		setSpinDetectorINI(spinDetector);
 	}
 }

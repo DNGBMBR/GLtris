@@ -1,5 +1,6 @@
 package network.general;
 
+import game.SpinDetector;
 import game.pieces.PieceFactory;
 import network.lobby.Player;
 import org.json.simple.parser.ParseException;
@@ -41,7 +42,8 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 			byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
 			playerByteSize += Byte.BYTES + Short.BYTES + bytes.length;
 		}
-		byte[] data = new byte[3 + 3 * Double.BYTES + 2 * Integer.BYTES + Short.BYTES + playerByteSize + Integer.BYTES + kickTableBytes.length];
+		byte[] spinTypeBytes = this.settings.getSpinDetector().name().getBytes(StandardCharsets.UTF_8);
+		byte[] data = new byte[3 + 3 * Short.BYTES + Short.BYTES + playerByteSize + Short.BYTES + spinTypeBytes.length + Integer.BYTES + kickTableBytes.length];
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 		buffer.put(MessageConstants.SERVER);
 		buffer.put(MessageConstants.MESSAGE_SERVER_LOBBY_STATE);
@@ -57,12 +59,12 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 			buffer.put(bytes);
 		}
 
-		buffer.putDouble(settings.getInitGravity());
-		buffer.putDouble(settings.getGravityIncrease());
-		buffer.putDouble(settings.getLockDelay());
+		buffer.putShort((short) settings.getBoardHeight());
+		buffer.putShort((short) settings.getBoardWidth());
+		buffer.putShort((short) settings.getNumPreviews());
 
-		buffer.putInt(settings.getGravityIncreaseInterval());
-		buffer.putInt(settings.getNumPreviews());
+		buffer.putShort((short) spinTypeBytes.length);
+		buffer.put(spinTypeBytes);
 
 		buffer.putInt(kickTableBytes.length);
 		buffer.put(kickTableBytes);
@@ -89,12 +91,15 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 			this.players.add(new Player(playerName, isReady, isSpectating));
 		}
 
-		double initGravity = buffer.getDouble();
-		double gravityIncrease = buffer.getDouble();
-		double lockDelay = buffer.getDouble();
+		int boardHeight = buffer.getShort();
+		int boardWidth = buffer.getShort();
+		int numPreviews = buffer.getShort();
 
-		int gravityIncreaseInterval = buffer.getInt();
-		int numPreviews = buffer.getInt();
+		int spinDetectorNameLength = buffer.getShort();
+		byte[] spinDetectorNameBytes = new byte[spinDetectorNameLength];
+		buffer.get(spinDetectorNameBytes);
+		String spinDetectorName = new String(spinDetectorNameBytes, StandardCharsets.UTF_8);
+		SpinDetector detector = SpinDetector.getEnum(spinDetectorName);
 
 		int kickTableLength = buffer.getInt();
 		byte[] kickTableBytes = new byte[kickTableLength];
@@ -105,8 +110,8 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 			kickTable = new PieceFactory(kickTableJSON);
 		} catch (ParseException e) {
 			//there should probably be a new exception for this
-			throw new IllegalArgumentException("Could not parse kick table.");
+			throw new IllegalStateException("Could not parse kick table.");
 		}
-		this.settings = new GameSettings(numPreviews, kickTable, initGravity, gravityIncrease, gravityIncreaseInterval, lockDelay);
+		this.settings = new GameSettings(numPreviews, kickTable, boardHeight, boardWidth, detector);
 	}
 }

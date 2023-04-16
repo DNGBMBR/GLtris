@@ -4,9 +4,8 @@ import fr.slaynash.communication.rudp.RUDPClient;
 import fr.slaynash.communication.rudp.RUDPServer;
 import network.general.*;
 import org.joml.Random;
-import org.json.simple.parser.ParseException;
 import server_interface.ServerPanel;
-import settings.LobbySettings;
+import settings.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -15,20 +14,12 @@ import java.util.*;
 public class GameServer extends RUDPServer implements AutoCloseable{
 	ServerLobby lobby;
 
-	int port = 2678;
 	ServerPanel display;
 	Random rng = new Random();
 	Map<String, RUDPClient> clients = new HashMap<>();
 
-	public GameServer(int port) throws IOException {
-		super(port);
-		this.setPacketHandler(ServerHandler.class);
-		this.port = port;
-	}
-
-	public GameServer(int port, ServerPanel display) throws IOException {
-		super(port);
-		this.port = port;
+	public GameServer(ServerSettings settings, ServerPanel display) throws IOException {
+		super(settings.getPort());
 		this.display = display;
 		display.addCommandCallback((String s) -> {
 			ServerState state = lobby.getState();
@@ -46,7 +37,7 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 				switch(s) {
 					case "end" -> {
 						display.log("Ending game.");
-						//TODO: end game
+						endGame(new ArrayList<>());
 					}
 					default -> {
 						display.log("Could not parse command: \"" + s + "\" in state: IN_GAME");
@@ -54,12 +45,8 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 				}
 			}
 		});
-
-		try {
-			lobby = new ServerLobby(new LobbySettings("./lobby_settings.ini"));
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-		}
+		GameSettings gameSettings = new GameSettings(settings.getNumPreviews(), settings.getKickTable(), settings.getBoardHeight(), settings.getBoardWidth(), settings.getSpinDetector());
+		lobby = new ServerLobby(gameSettings);
 	}
 
 	@Override
@@ -80,6 +67,7 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 		for (RUDPClient client : getConnectedClients()) {
 			((ServerHandler) (client.getPacketHandler())).gameServer = this;
 		}
+		updateUsers();
 	}
 
 	public void startGame() {
@@ -88,7 +76,7 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 			return;
 		}
 		for (Player player : lobby.getPlayers()) {
-			if (!player.isSpectator() && !player.isReady()) {
+			if (!(player.isSpectator() || player.isReady())) {
 				log("Could not start game; one or more players are not ready.");
 				return;
 			}
@@ -117,6 +105,7 @@ public class GameServer extends RUDPServer implements AutoCloseable{
 		synchronized (lobby) {
 			for (Player player : lobby.getPlayers()) {
 				player.setPrepared(false);
+				player.setAlive(!player.isSpectator());
 			}
 		}
 

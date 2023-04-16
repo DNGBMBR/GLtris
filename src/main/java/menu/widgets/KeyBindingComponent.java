@@ -20,21 +20,18 @@ public class KeyBindingComponent extends Component implements GLFWKeyCallbackI {
 	int currentScancode;
 
 	TextureAtlas texture;
-	int px, py;
 
 	OnKeyBindingChange callback;
 
 	public KeyBindingComponent(double xPos, double yPos, double width, double height,
 							   String displayText, boolean isActive, int currentScancode,
-							   TextureAtlas texture, int px, int py,
+							   TextureAtlas texture,
 							   OnKeyBindingChange callback) {
 		super(xPos, yPos, width, height, displayText, isActive);
 		this.currentScancode = currentScancode;
 		currentKeyName = Utils.getKeyName(currentScancode);
 
 		this.texture = texture;
-		this.px = px;
-		this.py = py;
 
 		this.callback = callback;
 
@@ -44,7 +41,7 @@ public class KeyBindingComponent extends Component implements GLFWKeyCallbackI {
 	@Override
 	public float[] generateVertices() {
 		float[] vertices = new float[Constants.WIDGET_ATTRIBUTES_PER_VERTEX * Constants.WIDGET_ELEMENTS_PER_QUAD];
-		float[] uvs = texture.getElementUVs(px, py, 1, 1);
+		float[] uvs = texture.getElementUVs(Constants.KEY_BINDING_PX, Constants.KEY_BINDING_PY, Constants.KEY_BINDING_TEX_WIDTH, Constants.KEY_BINDING_TEX_HEIGHT);
 
 		float p0x = (float) xPos;
 		float p0y = (float) yPos;
