@@ -60,4 +60,10 @@ public class GLTrisDisplayComponent extends Component {
 	public void setQueue(String[] queue) {
 		display.setQueue(queue);
 	}
+
+	public void setTileSize(float tileSize) {
+		renderer.setTileSize(tileSize);
+		this.width = tileSize * 5.0f + (display.getBoardWidth() + 1) * tileSize + tileSize * 5.0f;
+		this.height = display.getBoardHeight() * tileSize;
+	}
 }

@@ -79,5 +79,8 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 
 	public void setQueue(String[] queue) {
 		this.queue = queue;
+		for (BoardUpdateCallback callback : this.boardUpdateCallbacks) {
+			callback.onBoardUpdate();
+		}
 	}
 }

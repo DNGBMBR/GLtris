@@ -49,28 +49,12 @@ public class GLTrisBoardRenderer extends Component {
 		super(xPos, yPos,
 			xPos + tileSize * 5.0f + (game.getBoardWidth() + 1) * tileSize + tileSize * 5.0f, (game.getBoardHeight()) * tileSize,
 			"Game", isActive);
-		TileState[][] board = game.getBoard();
 		this.pieces = pieces;
 		boardHeight = game.getBoardHeight();
 		boardWidth = game.getBoardWidth();
 		this.tileSize = tileSize;
 
-		heldPieceBoundSize = tileSize * 5.0f;
-		xOffsetHeld = (float) 0.0;
-		yOffsetHeld = (float) (0.0 + boardHeight * tileSize - heldPieceBoundSize);
-
-		xOffsetGarbage = (float) (0.0 + heldPieceBoundSize + 0.5 * tileSize);
-		yOffsetGarbage = (float) 0.0;
-		garbageMargin = (tileSize * 0.0625f);
-		garbageBoundSize = tileSize;
-
-		xOffsetBoard = (float) (0.0 + heldPieceBoundSize + 2.0 * tileSize);
-		yOffsetBoard = (float) 0.0;
-
-		queuePieceBoundSizeX = tileSize * 5.0f;
-		queuePieceBoundSizeY = tileSize * 3.5f;
-		xOffsetQueue = (float) (0.0 + xOffsetBoard + (boardWidth + 1) * tileSize);
-		yOffsetQueue = (float) (0.0 + boardHeight * tileSize - queuePieceBoundSizeY - tileSize);
+		updateBoardElements();
 
 		backgroundTexture = ResourceManager.getTextureNineSliceByName("images/game_background.png");
 		tileTexture = ResourceManager.getAtlasByName("images/default_skin.png");
@@ -361,7 +345,7 @@ public class GLTrisBoardRenderer extends Component {
 		}
 
 		//queue
-		for (int index = 0; index < (game.getNumPreviews() < currentQueue.length ? game.getNumPreviews() : currentQueue.length); index++) {
+		for (int index = 0; index < (Math.min(game.getNumPreviews(), currentQueue.length)); index++) {
 			pieceBuilder = pieces.getBuilder(currentQueue[index]);
 			tileMap = pieceBuilder.getTileMapE();
 			pieceColour = pieceBuilder.getPieceColour();
@@ -439,5 +423,29 @@ public class GLTrisBoardRenderer extends Component {
 	@Override
 	public void onScroll(double mouseX, double mouseY, double xOffset, double yOffset) {
 
+	}
+
+	public void setTileSize(float tileSize) {
+		this.tileSize = tileSize;
+		updateBoardElements();
+	}
+
+	private void updateBoardElements() {
+		heldPieceBoundSize = tileSize * 5.0f;
+		xOffsetHeld = (float) 0.0;
+		yOffsetHeld = (float) (0.0 + boardHeight * tileSize - heldPieceBoundSize);
+
+		xOffsetGarbage = (float) (0.0 + heldPieceBoundSize + 0.5 * tileSize);
+		yOffsetGarbage = (float) 0.0;
+		garbageMargin = (tileSize * 0.0625f);
+		garbageBoundSize = tileSize;
+
+		xOffsetBoard = (float) (0.0 + heldPieceBoundSize + 2.0 * tileSize);
+		yOffsetBoard = (float) 0.0;
+
+		queuePieceBoundSizeX = tileSize * 5.0f;
+		queuePieceBoundSizeY = tileSize * 3.5f;
+		xOffsetQueue = (float) (0.0 + xOffsetBoard + (boardWidth + 1) * tileSize);
+		yOffsetQueue = (float) (0.0 + boardHeight * tileSize - queuePieceBoundSizeY - tileSize);
 	}
 }

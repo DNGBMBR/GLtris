@@ -38,7 +38,7 @@ public class ServerSettings {
 		}
 		this.boardHeight = 20;
 		this.boardWidth = 10;
-		this.spinDetector = SpinDetector.NONE;
+		this.spinDetector = SpinDetector.T_SPIN;
 	}
 
 	public ServerSettings(File file) throws IOException, ParseException {
