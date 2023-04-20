@@ -2,6 +2,7 @@ package scenes;
 
 import game.*;
 import game.callbacks.PiecePlacedCallback;
+import game.pieces.util.PieceColour;
 import game.pieces.util.TileState;
 import menu.component.TopFrame;
 import menu.widgets.TextComponent;
@@ -74,7 +75,9 @@ public class MultiplayerGameScene extends Scene{
 			shouldSetNextScene = true;
 			this.winner = winner;
 		};
-		boardUpdateCallback = (String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) -> {
+		boardUpdateCallback = (String username, boolean isToppedOut, String hold, String[] queue,
+							   int pieceX, int pieceY, boolean[][] tileMap, PieceColour pieceColour,
+							   int[] garbageQueue, TileState[][] board) -> {
 			GLTrisDisplayComponent player = otherPlayerComponents.get(username);
 			if (player == null) {
 				return;
@@ -87,6 +90,8 @@ public class MultiplayerGameScene extends Scene{
 			player.setBoard(board);
 			player.setHeldPiece(hold);
 			player.setQueue(queue);
+			player.setGarbageQueue(garbageQueue);
+			player.setCurrentPieceInfo(pieceX, pieceY, tileMap, pieceColour);
 		};
 		client.registerOnGameFinish(finishCallback);
 		client.registerOnBoardUpdate(boardUpdateCallback);
@@ -184,7 +189,7 @@ public class MultiplayerGameScene extends Scene{
 			if (nextBoardUpdateAccumulator >= BOARD_UPDATE_INTERVAL) {
 				nextBoardUpdateAccumulator = 0.0;
 				GLTris game = this.gameComponent.getGame();
-				client.sendBoardUpdate(game.isGameOver(), game.getBoard(), game.getPieceQueue(), game.getHeldPiece());
+				client.sendBoardUpdate(game.isGameOver(), game.getHeldPiece(), game.getPieceQueue(), game.getCurrentPiece(), game.getGarbageQueue(), game.getBoard());
 			}
 		}
 

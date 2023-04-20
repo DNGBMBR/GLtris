@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="GLtris:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/GLtris</output-path>
+  <artifact type="jar" name="GLtrisServer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/GLtrisServer</output-path>
     <root id="archive" name="GLtris.jar">
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/src/main/META-INF/MANIFEST.MF" />
@@ -35,7 +35,6 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jRUDP-1.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl/3.3.1/ae58664f88e18a9bb2c77b063833ca7aaec484cb/lwjgl-3.3.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.lwjgl/lwjgl-opengl/3.3.1/831a5533a21a5f4f81bbc51bb13e9899319b5411/lwjgl-opengl-3.3.1.jar" path-in-jar="/" />
-      <element id="dir-copy" path="$PROJECT_DIR$/src/main/resources" />
     </root>
   </artifact>
 </component>

@@ -2,7 +2,8 @@ package network.lobby;
 
 import fr.slaynash.communication.rudp.RUDPClient;
 import game.Garbage;
-import game.pieces.util.TileState;
+import game.pieces.PieceBuilder;
+import game.pieces.util.*;
 import network.general.*;
 import settings.GameSettings;
 
@@ -75,12 +76,12 @@ public class GameClient extends RUDPClient {
 	}
 
 	public void sendGameOver() {
-		ClientBoardMessage topOutMessage = new ClientBoardMessage(username, true, null, null, null);
+		ClientBoardMessage topOutMessage = new ClientBoardMessage(username, true, null, null, null, null, null);
 		this.sendReliablePacket(topOutMessage.serialize());
 	}
 
-	public void sendBoardUpdate(boolean gameOver, TileState[][] board, String[] queue, String hold) {
-		ClientBoardMessage message = new ClientBoardMessage(this.username, gameOver, board, queue, hold);
+	public void sendBoardUpdate(boolean gameOver, String hold, String[] queue, Piece currentPiece, int[] garbageQueue, TileState[][] board) {
+		ClientBoardMessage message = new ClientBoardMessage(this.username, gameOver, hold, queue, currentPiece, garbageQueue, board);
 		this.sendPacket(message.serialize());
 	}
 
@@ -147,15 +148,39 @@ public class GameClient extends RUDPClient {
 		}
 	}
 
-	public void updatePlayer(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
+	public void updatePlayer(String username, boolean isToppedOut, String hold, String[] queue,
+							 int pieceX, int pieceY, Orientation orientation, String pieceName,
+							 int[] garbageQueue, TileState[][] board) {
 		Player player = this.getPlayer(username);
 		if (player != null) {
 			if (isToppedOut) {
 				player.setAlive(false);
 			}
 		}
-		for (OnBoardUpdate callback : this.boardUpdateCallbacks) {
-			callback.onBoardUpdate(username, isToppedOut, board, queue, hold);
+		PieceBuilder pieceBuilder = this.lobbySettings.getKickTable().getBuilder(pieceName);
+		if (pieceBuilder != null) {
+			PieceColour colour = pieceBuilder.getPieceColour();
+			boolean[][] tileMap = null;
+			switch(orientation) {
+				case E -> {
+					tileMap = pieceBuilder.getTileMapE();
+				}
+				case R -> {
+					tileMap = pieceBuilder.getTileMapR();
+				}
+				case R2 -> {
+					tileMap = pieceBuilder.getTileMapR2();
+				}
+				case R3 -> {
+					tileMap = pieceBuilder.getTileMapR3();
+				}
+			}
+			for (OnBoardUpdate callback : this.boardUpdateCallbacks) {
+				callback.onBoardUpdate(
+					username, isToppedOut, hold, queue,
+					pieceX, pieceY, tileMap, colour,
+					garbageQueue, board);
+			}
 		}
 	}
 

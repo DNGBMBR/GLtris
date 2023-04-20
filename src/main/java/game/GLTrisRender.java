@@ -1,9 +1,7 @@
 package game;
 
 import game.callbacks.BoardUpdateCallback;
-import game.callbacks.PiecePlacedCallback;
-import game.pieces.util.Piece;
-import game.pieces.util.TileState;
+import game.pieces.util.*;
 
 import java.util.*;
 
@@ -13,11 +11,14 @@ public abstract class GLTrisRender {
 	abstract int getBoardWidth();
 	abstract int getBoardHeight();
 	abstract TileState[][] getBoard();
-	abstract Piece getCurrentPiece();
+	abstract int getPieceX();
+	abstract int getPieceY();
+	abstract boolean[][] getTileMap();
+	abstract PieceColour getPieceColour();
 	abstract String getHeldPiece();
 	abstract String[] getPieceQueue();
 	abstract int getNumPreviews();
-	abstract List<Garbage> getGarbageQueue();
+	abstract int[] getGarbageQueue();
 
 	public void registerOnBoardUpdate(BoardUpdateCallback callback) {
 		boardUpdateCallbacks.add(callback);

@@ -126,7 +126,10 @@ public class ClientHandler extends PacketHandler {
 				}
 				case MessageConstants.MESSAGE_SERVER_BOARD -> {
 					ServerBoardMessage msg = new ServerBoardMessage(bytes);
-					this.gameClient.updatePlayer(msg.username, msg.isToppedOut, msg.board, msg.queue, msg.hold);
+					this.gameClient.updatePlayer(
+						msg.username, msg.isToppedOut, msg.hold, msg.queue,
+						msg.pieceX, msg.pieceY, msg.pieceOrientation, msg.pieceName,
+						msg.garbageQueue, msg.board);
 				}
 			}
 		}

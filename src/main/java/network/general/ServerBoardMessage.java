@@ -1,28 +1,41 @@
 package network.general;
 
-import game.pieces.util.TileState;
+import game.Garbage;
+import game.pieces.util.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ServerBoardMessage extends MessageSerializer{
 	private static final byte IS_TOPPED_OUT_MASK = 0x01;
 
 	public String username;
 	public boolean isToppedOut;
-	public TileState[][] board;
 	public String[] queue;
 	public String hold;
+	public int pieceX, pieceY;
+	public Orientation pieceOrientation;
+	public String pieceName;
+	public int[] garbageQueue;
+	public TileState[][] board;
 
 	public ServerBoardMessage(byte[] data) {
 		super(data);
 	}
 
-	public ServerBoardMessage(String username, boolean isToppedOut, TileState[][] board, String[] queue, String hold) {
+	public ServerBoardMessage(String username, boolean isToppedOut, String hold, String[] queue,
+							  int pieceX, int pieceY, Orientation pieceOrientation, String pieceName,
+							  int[] garbageQueue, TileState[][] board) {
 		this.username = username;
 		this.isToppedOut = isToppedOut;
 		this.hold = hold;
 		this.queue = queue;
+		this.pieceX = pieceX;
+		this.pieceY = pieceY;
+		this.pieceOrientation = pieceOrientation;
+		this.pieceName = pieceName;
+		this.garbageQueue = garbageQueue;
 		this.board = board;
 	}
 
@@ -44,12 +57,16 @@ public class ServerBoardMessage extends MessageSerializer{
 			queueBytes[i] = queue[i].getBytes(StandardCharsets.UTF_8);
 			queueByteSize += queueBytes[i].length;
 		}
+		byte[] currentPieceNameBytes = this.pieceName.getBytes(StandardCharsets.UTF_8);
+
 		byte[] data = new byte[
 			2 + 1 +
-				Short.BYTES + usernameBytes.length +
-				Short.BYTES + holdBytes.length +
-				Byte.BYTES + queueBytes.length * Short.BYTES + queueByteSize +
-				2 * Short.BYTES + (board.length * board[0].length + 1) / 2];
+			Short.BYTES + usernameBytes.length +
+			Short.BYTES + holdBytes.length +
+			Byte.BYTES + queueBytes.length * Short.BYTES + queueByteSize +
+			2 * Byte.BYTES + Byte.BYTES + Short.BYTES + currentPieceNameBytes.length +
+			Short.BYTES + garbageQueue.length * Byte.BYTES +
+			2 * Short.BYTES + (board.length * board[0].length + 1) / 2];
 		ByteBuffer buffer = ByteBuffer.wrap(data);
 
 		buffer.put(MessageConstants.SERVER);
@@ -66,6 +83,17 @@ public class ServerBoardMessage extends MessageSerializer{
 		for (byte[] queueByte : queueBytes) {
 			buffer.putShort((short) queueByte.length);
 			buffer.put(queueByte);
+		}
+		//current piece
+		buffer.put((byte) pieceX);
+		buffer.put((byte) pieceY);
+		buffer.put((byte) pieceOrientation.getVal());
+		buffer.putShort((short) currentPieceNameBytes.length);
+		buffer.put(currentPieceNameBytes);
+		//garbage queue
+		buffer.putShort((short) garbageQueue.length);
+		for (int amount : garbageQueue) {
+			buffer.put((byte) amount);
 		}
 		//board
 		buffer.putShort((short) board.length);
@@ -114,6 +142,20 @@ public class ServerBoardMessage extends MessageSerializer{
 			byte[] queueNameBytes = new byte[queueNameLength];
 			buffer.get(queueNameBytes);
 			queue[i] = new String(queueNameBytes, StandardCharsets.UTF_8);
+		}
+
+		this.pieceX = buffer.get();
+		this.pieceY = buffer.get();
+		this.pieceOrientation = Orientation.getEnum(buffer.get());
+		int pieceNameLength = buffer.getShort();
+		byte[] pieceNameBytes = new byte[pieceNameLength];
+		buffer.get(pieceNameBytes);
+		this.pieceName = new String(pieceNameBytes, StandardCharsets.UTF_8);
+
+		int garbageQueueLength = buffer.getShort();
+		this.garbageQueue = new int[garbageQueueLength];
+		for (int i = 0; i < garbageQueueLength; i++) {
+			this.garbageQueue[i] = buffer.get();
 		}
 
 		int boardHeight = buffer.getShort();

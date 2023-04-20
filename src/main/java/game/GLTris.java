@@ -12,7 +12,6 @@ import util.*;
 import java.util.*;
 
 import static game.SpinType.*;
-import static game.pieces.util.Orientation.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public class GLTris extends GLTrisRender {
@@ -645,9 +644,28 @@ public class GLTris extends GLTrisRender {
 		return this.board;
 	}
 
-	@Override
 	public Piece getCurrentPiece() {
-		return currentPiece;
+		return this.currentPiece.copy();
+	}
+
+	@Override
+	int getPieceX() {
+		return currentPiece.getBottomLeftX();
+	}
+
+	@Override
+	int getPieceY() {
+		return currentPiece.getBottomLeftY();
+	}
+
+	@Override
+	boolean[][] getTileMap() {
+		return currentPiece.getTileMap();
+	}
+
+	@Override
+	PieceColour getPieceColour() {
+		return currentPiece.getPieceColour();
 	}
 
 	@Override
@@ -663,10 +681,15 @@ public class GLTris extends GLTrisRender {
 	}
 
 	@Override
-	public List<Garbage> getGarbageQueue() {
-		List<Garbage> list = new ArrayList<>();
+	public int[] getGarbageQueue() {
+		int[] list = new int[garbageQueue.size()];
+		int i = 0;
 		for (Garbage garbage : garbageQueue) {
-			list.add(garbage);
+			if (i > list.length) {
+				break;
+			}
+			list[i] = garbage.amount;
+			i++;
 		}
 		return list;
 	}

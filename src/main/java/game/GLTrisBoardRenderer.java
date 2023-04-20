@@ -42,7 +42,7 @@ public class GLTrisBoardRenderer extends Component {
 	private int boardHeight;
 	private int boardWidth;
 	private String[] currentQueue;
-	private List<Garbage> garbageQueue;
+	private int[] garbageQueue;
 	private PieceFactory pieces;
 
 	public GLTrisBoardRenderer(double xPos, double yPos, float tileSize, boolean isActive, GLTrisRender game, PieceFactory pieces) {
@@ -81,7 +81,7 @@ public class GLTrisBoardRenderer extends Component {
 				boardHeight * boardWidth * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
 					9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
 					9 * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD +
-					garbageQueue.size() * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
+					garbageQueue.length * Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD];
 		}
 
 		float[] uvsBoard = backgroundTexture.getElementUVs(0, 3, 1, 1);
@@ -122,15 +122,15 @@ public class GLTrisBoardRenderer extends Component {
 			//garbage queue
 			int increment = 0;
 			float[] uvsGarbage = backgroundTexture.getElementUVs(0, 2, 1, 1);
-			for (Garbage garbage : garbageQueue) {
+			for (int garbageAmount : garbageQueue) {
 				Utils.addBlockVertices(vertices, index,
 					(float) xPos + xOffsetGarbage + garbageMargin,
 					(float) yPos + yOffsetGarbage + increment * garbageBoundSize + garbageMargin,
 					uvsGarbage[0], uvsGarbage[1],
 					(float) xPos + xOffsetGarbage + garbageBoundSize - garbageMargin,
-					(float) yPos + yOffsetGarbage + (increment + garbage.amount) * garbageBoundSize - garbageMargin,
+					(float) yPos + yOffsetGarbage + (increment + garbageAmount) * garbageBoundSize - garbageMargin,
 					uvsGarbage[2], uvsGarbage[3]);
-				increment += garbage.amount;
+				increment += garbageAmount;
 				index += Constants.BLOCK_ATTRIBUTES_PER_VERTEX * Constants.BLOCK_ELEMENTS_PER_QUAD;
 			}
 		}
@@ -194,20 +194,21 @@ public class GLTrisBoardRenderer extends Component {
 				}
 			}
 		}
-		boolean[][] tileMap;
 
-		Piece currentPiece = game.getCurrentPiece();
-		if (currentPiece != null) {
-			tileMap = currentPiece.getTileMap();
+		int pieceX = game.getPieceX();
+		int pieceY = game.getPieceY();
+		boolean[][] tileMap = game.getTileMap();
+		PieceColour pieceColour = game.getPieceColour();
+		if (tileMap != null) {
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						float p0x = (float) xPos + (currentPiece.getBottomLeftX() + j) * tileSize + xOffsetBoard;
-						float p0y = (float) yPos + (currentPiece.getBottomLeftY() + i) * tileSize + yOffsetBoard;
+						float p0x = (float) xPos + (pieceX + j) * tileSize + xOffsetBoard;
+						float p0y = (float) yPos + (pieceY + i) * tileSize + yOffsetBoard;
 						float p1x = p0x + tileSize;
 						float p1y = p0y + tileSize;
 
-						switch(currentPiece.getPieceColour()) {
+						switch(pieceColour) {
 							case I -> {
 								px = 1; py = 0;
 							}
@@ -243,11 +244,24 @@ public class GLTrisBoardRenderer extends Component {
 				}
 			}
 
-			Piece ghostPiece = currentPiece.copy();
-			while (ghostPiece.move(Direction.DOWN, board));
-
-			tileMap = ghostPiece.getTileMap();
-			switch(ghostPiece.getPieceColour()) {
+			boolean moveDown = true;
+			while (moveDown && tileMap.length > 0) {
+				for (int i = 0; i < tileMap.length; i++) {
+					for (int j = 0; j < tileMap[i].length; j++) {
+						if (tileMap[i][j] &&
+							!(pieceX + j >= 0 && pieceX + j < board[i].length &&
+							pieceY - 1 + i >= 0 && pieceY - 1 + i < board.length &&
+							board[pieceY - 1 + i][pieceX + j] == TileState.EMPTY)) {
+							moveDown = false;
+							break;
+						}
+					}
+				}
+				if (moveDown) {
+					pieceY--;
+				}
+			}
+			switch(pieceColour) {
 				case I -> {
 					px = 1; py = 2;
 				}
@@ -279,8 +293,8 @@ public class GLTrisBoardRenderer extends Component {
 			for (int i = 0; i < tileMap.length; i++) {
 				for (int j = 0; j < tileMap[i].length; j++) {
 					if (tileMap[i][j]) {
-						float p0x = (float) xPos + (ghostPiece.getBottomLeftX() + j) * tileSize + xOffsetBoard;
-						float p0y = (float) yPos + (ghostPiece.getBottomLeftY() + i) * tileSize + yOffsetBoard;
+						float p0x = (float) xPos + (pieceX + j) * tileSize + xOffsetBoard;
+						float p0y = (float) yPos + (pieceY + i) * tileSize + yOffsetBoard;
 						float p1x = p0x + tileSize;
 						float p1y = p0y + tileSize;
 
@@ -296,10 +310,10 @@ public class GLTrisBoardRenderer extends Component {
 		String heldPiece = game.getHeldPiece();
 		PieceBuilder pieceBuilder = pieces.getBuilder(heldPiece);
 		tileMap = pieceBuilder == null ? new boolean[0][0] : pieceBuilder.getTileMapE();
-		PieceColour pieceColour = pieceBuilder == null ? null : pieceBuilder.getPieceColour();
+		PieceColour heldPieceColour = pieceBuilder == null ? null : pieceBuilder.getPieceColour();
 
-		if (pieceColour != null) {
-			switch(pieceColour) {
+		if (heldPieceColour != null) {
+			switch(heldPieceColour) {
 				case I -> {
 					px = 1; py = 0;
 				}
@@ -348,8 +362,8 @@ public class GLTrisBoardRenderer extends Component {
 		for (int index = 0; index < (Math.min(game.getNumPreviews(), currentQueue.length)); index++) {
 			pieceBuilder = pieces.getBuilder(currentQueue[index]);
 			tileMap = pieceBuilder.getTileMapE();
-			pieceColour = pieceBuilder.getPieceColour();
-			switch (pieceColour) {
+			heldPieceColour = pieceBuilder.getPieceColour();
+			switch (heldPieceColour) {
 				case I -> {
 					px = 1; py = 0;
 				}

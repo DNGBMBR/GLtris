@@ -1,20 +1,20 @@
 package game;
 
 import game.callbacks.BoardUpdateCallback;
-import game.pieces.util.Piece;
-import game.pieces.util.TileState;
+import game.pieces.util.*;
 import util.Constants;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class GLTrisUpdatableDisplay extends GLTrisRender{
+
 	TileState[][] board;
 	String[] queue;
 	String heldPiece;
 	int numPreviews;
 
-	List<Garbage> emptyGarbageList = new ArrayList<>();
+	int[] garbageQueue;
+	int pieceX, pieceY;
+	boolean[][] tileMap;
+	PieceColour pieceColour;
 
 	public GLTrisUpdatableDisplay(int numPreviews) {
 		this.numPreviews = numPreviews;
@@ -26,6 +26,7 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 		}
 		queue = new String[0];
 		heldPiece = null;
+		garbageQueue = new int[0];
 	}
 
 	@Override
@@ -44,9 +45,23 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 	}
 
 	@Override
-	public Piece getCurrentPiece() {
-		//TODO: add the current piece in message instead of baking it into the board
-		return null;
+	int getPieceX() {
+		return pieceX;
+	}
+
+	@Override
+	int getPieceY() {
+		return pieceY;
+	}
+
+	@Override
+	boolean[][] getTileMap() {
+		return tileMap;
+	}
+
+	@Override
+	PieceColour getPieceColour() {
+		return pieceColour;
 	}
 
 	@Override
@@ -65,8 +80,8 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 	}
 
 	@Override
-	public List<Garbage> getGarbageQueue() {
-		return emptyGarbageList;
+	public int[] getGarbageQueue() {
+		return garbageQueue;
 	}
 
 	public void setBoard(TileState[][] board) {
@@ -82,5 +97,16 @@ public class GLTrisUpdatableDisplay extends GLTrisRender{
 		for (BoardUpdateCallback callback : this.boardUpdateCallbacks) {
 			callback.onBoardUpdate();
 		}
+	}
+
+	public void setGarbageQueue(int[] garbageQueue) {
+		this.garbageQueue = garbageQueue;
+	}
+
+	public void setCurrentPieceInfo(int pieceX, int pieceY, boolean[][] tileMap, PieceColour pieceColour) {
+		this.pieceX = pieceX;
+		this.pieceY = pieceY;
+		this.tileMap = tileMap;
+		this.pieceColour = pieceColour;
 	}
 }

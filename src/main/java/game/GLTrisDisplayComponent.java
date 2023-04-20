@@ -1,5 +1,6 @@
 package game;
 
+import game.pieces.util.PieceColour;
 import game.pieces.util.TileState;
 import menu.component.Component;
 import settings.GameSettings;
@@ -59,6 +60,14 @@ public class GLTrisDisplayComponent extends Component {
 
 	public void setQueue(String[] queue) {
 		display.setQueue(queue);
+	}
+
+	public void setGarbageQueue(int[] garbageQueue) {
+		display.setGarbageQueue(garbageQueue);
+	}
+
+	public void setCurrentPieceInfo(int pieceX, int pieceY, boolean[][] tileMap, PieceColour pieceColour) {
+		display.setCurrentPieceInfo(pieceX, pieceY, tileMap, pieceColour);
 	}
 
 	public void setTileSize(float tileSize) {

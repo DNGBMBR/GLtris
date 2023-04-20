@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="GLTris:full">
+    <output-path>$PROJECT_DIR$/out/artifacts/GLTris</output-path>
+    <root id="root">
+      <element id="directory" name="kicks">
+        <element id="dir-copy" path="$PROJECT_DIR$/kicks" />
+      </element>
+      <element id="file-copy" path="$PROJECT_DIR$/game_settings.ini" />
+      <element id="file-copy" path="$PROJECT_DIR$/settings.nbt" />
+      <element id="file-copy" path="$PROJECT_DIR$/keysettings.nbt" />
+    </root>
+  </artifact>
+</component>

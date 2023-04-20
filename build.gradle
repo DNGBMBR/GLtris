@@ -35,6 +35,12 @@ dependencies {
     implementation 'org.ini4j:ini4j:0.5.4'
 }
 
+jar {
+    from('src/main/resources') {
+        include '**.**'
+    }
+}
+
 import org.gradle.internal.os.OperatingSystem
 
 project.ext.lwjglVersion = "3.3.1"
