@@ -126,6 +126,7 @@ public class ServerHandler extends PacketHandler {
 				}
 				case MessageConstants.MESSAGE_CLIENT_BOARD -> {
 					ClientBoardMessage msg = new ClientBoardMessage(bytes);
+					System.out.println("piece received from player " + this.username + ": " + msg.pieceName);
 					if (msg.isToppedOut) {
 						this.gameServer.lobby.getPlayer(username).setAlive(!msg.isToppedOut);
 						List<Player> livingPlayers = getLivingPlayers();

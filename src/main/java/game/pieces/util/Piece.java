@@ -59,6 +59,7 @@ public abstract class Piece {
 		this.placed = false;
 		this.tileMap = src.tileMap;
 		this.orientation = src.orientation;
+		this.name = src.name;
 		this.pieceColour = src.pieceColour;
 
 		this.tileMapE = src.tileMapE;

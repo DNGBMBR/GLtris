@@ -35,6 +35,7 @@ public class ClientBoardMessage extends MessageSerializer {
 			this.pieceOrientation = currentPiece.getOrientation();
 			this.pieceName = currentPiece.getName();
 		}
+		System.out.println("piece name client board message constructor: " + this.pieceName);
 		this.garbageQueue = garbageQueue;
 		this.board = board;
 	}
@@ -151,6 +152,7 @@ public class ClientBoardMessage extends MessageSerializer {
 		byte[] pieceNameBytes = new byte[pieceNameLength];
 		buffer.get(pieceNameBytes);
 		this.pieceName = new String(pieceNameBytes, StandardCharsets.UTF_8);
+		System.out.println("deserialized piece name: " + this.pieceName);
 
 		int garbageQueueLength = buffer.getShort();
 		this.garbageQueue = new int[garbageQueueLength];
