@@ -32,6 +32,7 @@ public class ServerGameEndMessage extends MessageSerializer{
 		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);
 		int nameLength = buffer.getShort();
 		byte[] nameBytes = new byte[nameLength];
+		buffer.get(nameBytes);
 		this.winningPlayer = new String(nameBytes, StandardCharsets.UTF_8);
 	}
 }

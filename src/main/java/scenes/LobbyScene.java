@@ -49,7 +49,7 @@ public class LobbyScene extends Scene {
 		super(windowID, client);
 		createUIElements();
 		postGameFrame.addComponent(new TextComponent(Constants.VIEWPORT_W * 0.5, Constants.VIEWPORT_H * 0.5, winner, 36, 0.0f, 0.0f, 0.0f, true));
-		//TODO: interface for post game
+
 		postGameFrame.addComponent(new Button(Constants.VIEWPORT_W - 600 - 50, 50, true,
 			600, 100, 20, "Next",
 			widgetTexture,

@@ -61,7 +61,6 @@ public class GameScene extends Scene{
 
 		shaderBlocks = ResourceManager.getShaderByName("shaders/block_vertex.glsl", "shaders/block_fragment.glsl");
 
-		//TODO: register pieces from file to factory in a way that's not hardcoded
 		try {
 			settings = new GameSettings("./game_settings.ini");
 		} catch (IOException e) {
