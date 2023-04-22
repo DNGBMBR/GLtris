@@ -3,11 +3,18 @@ package network.lobby;
 import fr.slaynash.communication.handlers.PacketHandler;
 import network.general.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class ClientHandler extends PacketHandler {
 
+	private static final byte[][] EMPTY_BUFFER = new byte[0][];
+	private static final boolean[] EMPTY_FLAGS = new boolean[0];
+
 	GameClient gameClient;
+
+	byte[][] lobbyStateMessageBuffer = EMPTY_BUFFER;
+	boolean[] lobbyStateMessageReceived = EMPTY_FLAGS;
 
 	public ClientHandler() {
 	}
@@ -29,6 +36,8 @@ public class ClientHandler extends PacketHandler {
 
 	private void onDisconnect(String s) {
 		this.gameClient.clearPlayers();
+		lobbyStateMessageBuffer = EMPTY_BUFFER;
+		lobbyStateMessageReceived = EMPTY_FLAGS;
 	}
 
 	@Override
@@ -64,16 +73,45 @@ public class ClientHandler extends PacketHandler {
 		if (bytes[0] == MessageConstants.SERVER) {
 			switch (bytes[1]) {
 				case MessageConstants.MESSAGE_SERVER_LOBBY_STATE -> {
-					ServerLobbyStateMessage msg = new ServerLobbyStateMessage(bytes);
-					this.gameClient.setLobbySettings(msg.settings);
-					for (Player player : msg.players) {
-						this.gameClient.addPlayer(player.getName());
-						Player currentPlayer = this.gameClient.getPlayer(player.getName());
-						currentPlayer.setReady(player.isReady());
-						currentPlayer.setSpectator(player.isSpectator());
+					int numSegments = MessageSerializerLarge.getNumSegments(bytes);
+					if (this.lobbyStateMessageBuffer == EMPTY_BUFFER) {
+						this.lobbyStateMessageBuffer = new byte[numSegments][];
+						this.lobbyStateMessageReceived = new boolean[numSegments];
+						Arrays.fill(this.lobbyStateMessageReceived, false);
 					}
-					for (OnLobbyUpdate callback : this.gameClient.lobbyUpdateCallbacks) {
-						callback.onLobbyUpdate(msg.players);
+
+					if (numSegments != this.lobbyStateMessageBuffer.length) {
+						throw new IllegalStateException("Lobby state message is erroneous.");
+					}
+
+					int segmentNumber = MessageSerializerLarge.getSegmentNumber(bytes);
+					if (this.lobbyStateMessageReceived[segmentNumber]) {
+						throw new IllegalStateException("Already received segment number " + segmentNumber + ".");
+					}
+
+					this.lobbyStateMessageBuffer[segmentNumber] = bytes;
+					this.lobbyStateMessageReceived[segmentNumber] = true;
+
+					boolean isAllReceived = true;
+					for (int i = 0; i < numSegments; i++) {
+						if (!this.lobbyStateMessageReceived[i]) {
+							isAllReceived = false;
+							break;
+						}
+					}
+
+					if (isAllReceived) {
+						ServerLobbyStateMessage msg = new ServerLobbyStateMessage(this.lobbyStateMessageBuffer);
+						this.gameClient.setLobbySettings(msg.settings);
+						for (Player player : msg.players) {
+							this.gameClient.addPlayer(player.getName());
+							Player currentPlayer = this.gameClient.getPlayer(player.getName());
+							currentPlayer.setReady(player.isReady());
+							currentPlayer.setSpectator(player.isSpectator());
+						}
+						for (OnLobbyUpdate callback : this.gameClient.lobbyUpdateCallbacks) {
+							callback.onLobbyUpdate(msg.players);
+						}
 					}
 				}
 				case MessageConstants.MESSAGE_SERVER_LOBBY_UPDATE_PLAYER -> {

@@ -33,7 +33,7 @@ public class GameClient extends RUDPClient {
 		setPacketHandler(ClientHandler.class);
 
 		this.state = GameState.LOBBY;
-		this.lobbySettings = new GameSettings();
+		//this.lobbySettings = new GameSettings();
 	}
 
 	public void setAddress(InetAddress address, int port, String username) {
@@ -189,6 +189,7 @@ public class GameClient extends RUDPClient {
 			return false;
 		}
 		players.put(name, new Player(name));
+
 		return true;
 	}
 

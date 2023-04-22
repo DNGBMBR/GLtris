@@ -110,6 +110,11 @@ public class GameSetupScene extends Scene{
 					int boardHeightNew = Integer.parseInt(textFieldBoardHeight.getText());
 					int boardWidthNew = Integer.parseInt(textFieldBoardWidth.getText());
 
+					if (numPreviewsNew < 0 || boardHeightNew < 0 || boardWidthNew < 0) {
+						//TODO: display error that data could not be saved
+						return;
+					}
+
 					settings.setNumPreviews(numPreviewsNew);
 					settings.setBoardHeight(boardHeightNew);
 					settings.setBoardWidth(boardWidthNew);

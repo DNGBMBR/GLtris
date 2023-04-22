@@ -38,6 +38,7 @@ public class ServerMain {
 		try {
 			settings = new ServerSettings(new File(PROPERTIES_LOCATION));
 		} catch (Exception e) {
+			System.out.println("could not find usual properties, using defaults.");
 			settings = new ServerSettings();
 			try {
 				settings.writeSettings(new File(PROPERTIES_LOCATION));

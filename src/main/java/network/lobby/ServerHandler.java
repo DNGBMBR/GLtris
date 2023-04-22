@@ -77,7 +77,10 @@ public class ServerHandler extends PacketHandler {
 						gameServer.clients.put(this.username, this.rudp);
 						gameServer.log(msg.username + " has connected.");
 						ServerLobbyStateMessage response = new ServerLobbyStateMessage(gameServer.lobby.getLobbySettings(), gameServer.lobby.getPlayers().stream().toList(), false);
-						this.rudp.sendReliablePacket(response.serialize());
+						byte[][] serializedResponse = response.serialize();
+						for (int i = 0; i < serializedResponse.length; i++) {
+							this.rudp.sendReliablePacket(serializedResponse[i]);
+						}
 						ServerLobbyPlayerUpdateMessage updatePlayer = new ServerLobbyPlayerUpdateMessage(msg.username, false, false, false);
 						gameServer.sendAll(updatePlayer);
 					}

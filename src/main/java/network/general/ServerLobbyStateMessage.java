@@ -11,7 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerLobbyStateMessage extends MessageSerializer{
+public class ServerLobbyStateMessage extends MessageSerializerLarge{
+
+
 	private static final byte IS_STARTING_MASK = 0x01;
 
 	private static final byte PLAYER_READY_MASK = 0x01;
@@ -21,7 +23,7 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 	public List<Player> players;
 	public boolean isStarting;
 
-	public ServerLobbyStateMessage(byte[] data) {
+	public ServerLobbyStateMessage(byte[][] data) {
 		super(data);
 	}
 
@@ -32,7 +34,7 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 	}
 
 	@Override
-	public byte[] serialize() {
+	public byte[][] serialize() {
 		String kickTable = this.settings.getKickTable().getJson();
 		byte flags = isStarting ? IS_STARTING_MASK : 0;
 		byte[] kickTableBytes = kickTable.getBytes(StandardCharsets.UTF_8);
@@ -43,10 +45,9 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 			playerByteSize += Byte.BYTES + Short.BYTES + bytes.length;
 		}
 		byte[] spinTypeBytes = this.settings.getSpinDetector().name().getBytes(StandardCharsets.UTF_8);
-		byte[] data = new byte[3 + 3 * Short.BYTES + Short.BYTES + playerByteSize + Short.BYTES + spinTypeBytes.length + Integer.BYTES + kickTableBytes.length];
+		byte[] data = new byte[Byte.BYTES + 3 * Short.BYTES + Short.BYTES + playerByteSize + 3 * Short.BYTES + Short.BYTES + spinTypeBytes.length + Integer.BYTES + kickTableBytes.length];
+
 		ByteBuffer buffer = ByteBuffer.wrap(data);
-		buffer.put(MessageConstants.SERVER);
-		buffer.put(MessageConstants.MESSAGE_SERVER_LOBBY_STATE);
 		buffer.put(flags);
 
 		buffer.putShort((short) players.size());
@@ -68,13 +69,18 @@ public class ServerLobbyStateMessage extends MessageSerializer{
 
 		buffer.putInt(kickTableBytes.length);
 		buffer.put(kickTableBytes);
-		return data;
+
+		byte[][] segmentedData = segment(data);
+		return segmentedData;
 	}
 
 	@Override
-	public void deserialize(byte[] data) {
-		assert data[0] == MessageConstants.SERVER && data[1] == MessageConstants.MESSAGE_SERVER_LOBBY_STATE : "Illegal message type given to deserialize.";
-		ByteBuffer buffer = ByteBuffer.wrap(data, 2, data.length - 2);
+	public void deserialize(byte[][] data) {
+		assert data.length > 0 : "Illegal message type given to deserialize.";
+
+		byte[] fullData = assemble(data);
+
+		ByteBuffer buffer = ByteBuffer.wrap(fullData, 0, fullData.length);
 		byte flags = buffer.get();
 		this.isStarting = (flags & IS_STARTING_MASK) != 0;
 
