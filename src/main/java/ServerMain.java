@@ -1,16 +1,11 @@
-import game.pieces.PieceFactory;
 import network.lobby.GameServer;
-import network.lobby.ServerHandler;
-import org.json.simple.parser.ParseException;
 import server_interface.ServerPanel;
-import settings.GameSettings;
 import settings.ServerSettings;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
-import java.util.Properties;
 
 public class ServerMain {
 	public static final String PROPERTIES_LOCATION = "./server.properties";
@@ -49,13 +44,12 @@ public class ServerMain {
 
 		try {
 			GameServer server = new GameServer(settings, panel);
-			server.setPacketHandler(ServerHandler.class);
 			server.start();
 
 			frame.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(WindowEvent e) {
-					server.stop();
+					server.close();
 					super.windowClosing(e);
 					e.getWindow().dispose();
 				}

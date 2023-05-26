@@ -2,7 +2,6 @@ import network.lobby.GameClient;
 import render.manager.TextRenderer;
 import scenes.*;
 
-import java.io.IOException;
 import java.net.InetAddress;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -47,11 +46,7 @@ public class Engine {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		try {
-			client = new GameClient(InetAddress.getLoopbackAddress(), 2678, "");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		client = new GameClient(InetAddress.getLoopbackAddress(), 2678, "");
 
 		changeScene(new MenuScene(windowID, client));
 	}

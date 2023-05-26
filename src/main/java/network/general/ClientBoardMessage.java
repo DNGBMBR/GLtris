@@ -1,11 +1,9 @@
 package network.general;
 
-import game.Garbage;
 import game.pieces.util.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 public class ClientBoardMessage extends MessageSerializer {
 	private static final byte IS_TOPPED_OUT_MASK = 0x01;

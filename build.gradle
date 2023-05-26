@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation name: 'jRUDP-1.0'
+    implementation name: 'GLNetwork'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
@@ -28,7 +28,7 @@ test {
 }
 
 dependencies {
-
+    implementation 'com.google.guava:guava:31.1-jre'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'dev.dewy:nbt:1.5.1'
 

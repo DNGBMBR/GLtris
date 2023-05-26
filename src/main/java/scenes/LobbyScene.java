@@ -14,7 +14,6 @@ import util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
 
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
@@ -87,7 +86,7 @@ public class LobbyScene extends Scene {
 			widgetTexture,
 			(double mouseX, double mouseY, int button, int action, int mods) -> {
 				if (action == GLFW_RELEASE) {
-					client.close();
+					client.disconnect();
 					nextScene = new LobbySearchScene(windowID, client);
 					shouldChangeScene = true;
 				}

@@ -11,8 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerLobbyStateMessage extends MessageSerializerLarge{
-
+public class ServerLobbyStateMessage extends MessageSerializer{
 
 	private static final byte IS_STARTING_MASK = 0x01;
 
@@ -23,7 +22,7 @@ public class ServerLobbyStateMessage extends MessageSerializerLarge{
 	public List<Player> players;
 	public boolean isStarting;
 
-	public ServerLobbyStateMessage(byte[][] data) {
+	public ServerLobbyStateMessage(byte[] data) {
 		super(data);
 	}
 
@@ -34,7 +33,7 @@ public class ServerLobbyStateMessage extends MessageSerializerLarge{
 	}
 
 	@Override
-	public byte[][] serialize() {
+	public byte[] serialize() {
 		String kickTable = this.settings.getKickTable().getJson();
 		byte flags = isStarting ? IS_STARTING_MASK : 0;
 		byte[] kickTableBytes = kickTable.getBytes(StandardCharsets.UTF_8);
@@ -70,17 +69,16 @@ public class ServerLobbyStateMessage extends MessageSerializerLarge{
 		buffer.putInt(kickTableBytes.length);
 		buffer.put(kickTableBytes);
 
-		byte[][] segmentedData = segment(data);
-		return segmentedData;
+		System.out.println("data length: " + data.length);
+		return data;
 	}
 
 	@Override
-	public void deserialize(byte[][] data) {
+	public void deserialize(byte[] data) {
 		assert data.length > 0 : "Illegal message type given to deserialize.";
+		System.out.println("Data length: " + data.length);
 
-		byte[] fullData = assemble(data);
-
-		ByteBuffer buffer = ByteBuffer.wrap(fullData, 0, fullData.length);
+		ByteBuffer buffer = ByteBuffer.wrap(data, 0, data.length);
 		byte flags = buffer.get();
 		this.isStarting = (flags & IS_STARTING_MASK) != 0;
 
